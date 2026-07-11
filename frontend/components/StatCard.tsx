@@ -32,7 +32,7 @@ type StatCardProps = {
   mutation?: number;
 };
 
-const mutationData = (mutation: number) => {
+const mutationIndicator = (mutation: number) => {
   if (mutation === 0) {
     return (
       <div className="p-1 slashed-zero tabular-nums font-medium flex items-center gap-2 text-sm text-surface-600">
@@ -54,8 +54,6 @@ const mutationData = (mutation: number) => {
         <p>{mutation}</p>
       </div>
     );
-  } else {
-    return;
   }
 };
 
@@ -83,7 +81,7 @@ export default function StatCard({
           <p className="text-surface-600 text-sm">{title}</p>
         </div>
       </div>
-      {mutationData(mutation)}
+      {mutationIndicator(mutation)}
     </div>
   );
 }
