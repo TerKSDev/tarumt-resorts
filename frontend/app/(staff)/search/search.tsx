@@ -1,9 +1,49 @@
 import { type MetaFunction } from "react-router";
+import GuestSearchBar from "./components/GuestSearchBar";
+import GuestDetails from "./components/GuestDetails";
+import ReportGeneration from "./components/ReportGeneration";
+import { motion } from "motion/react";
+import { useState } from "react";
 
 export const meta: MetaFunction = () => [
   { title: "Guest Search | TARUMT Resorts" },
 ];
 
+const staggerItem = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0 },
+};
+
 export default function GuestSearch() {
-  return <main className="flex-1 min-h-screen">GuestSearch</main>;
+  const [showGuestDetail, setShowGuestDetail] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-8 w-full">
+      <motion.div
+        variants={staggerItem}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+      >
+        <GuestSearchBar
+          showGuestDetail={showGuestDetail}
+          setShowGuestDetail={setShowGuestDetail}
+        />
+      </motion.div>
+
+      {showGuestDetail && (
+        <motion.div
+          variants={staggerItem}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
+          <GuestDetails />
+        </motion.div>
+      )}
+
+      <motion.div
+        variants={staggerItem}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+      >
+        <ReportGeneration />
+      </motion.div>
+    </div>
+  );
 }
