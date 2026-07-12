@@ -16,16 +16,17 @@ const staggerItem = {
 
 export default function GuestSearch() {
   const [showGuestDetail, setShowGuestDetail] = useState(false);
+  const [guestData, setGuestData] = useState<any>(null);
 
   return (
-    <div className="flex flex-col gap-8 w-full">
+    <div className="flex flex-col gap-4 md:gap-8 w-full">
       <motion.div
         variants={staggerItem}
         transition={{ duration: 0.35, ease: "easeOut" }}
       >
         <GuestSearchBar
-          showGuestDetail={showGuestDetail}
           setShowGuestDetail={setShowGuestDetail}
+          setGuestData={setGuestData}
         />
       </motion.div>
 
@@ -34,7 +35,7 @@ export default function GuestSearch() {
           variants={staggerItem}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
-          <GuestDetails />
+          <GuestDetails guestData={guestData} />
         </motion.div>
       )}
 

@@ -27,14 +27,14 @@ public class Booking {
     @Column(name = "check_out_date")
     private LocalDateTime checkOutDate;
 
-    @Column(name = "total_amount")
+    @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
     @Column(name = "is_paid")
     private Boolean isPaid = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "booking_status")
+    @Column(name = "status")
     private BookingStatus status;
 
     @CreationTimestamp

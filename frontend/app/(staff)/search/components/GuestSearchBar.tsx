@@ -3,13 +3,13 @@ import { Hash, Search, Ticket } from "lucide-react";
 import { useState } from "react";
 
 type GuestSearchBarProps = {
-  showGuestDetail: boolean;
   setShowGuestDetail: (value: boolean) => void;
+  setGuestData: (data: any) => void;
 };
 
 export default function GuestSearchBar({
-  showGuestDetail,
   setShowGuestDetail,
+  setGuestData,
 }: GuestSearchBarProps) {
   const [confirmationNo, setConfirmationNo] = useState("");
 
@@ -32,6 +32,7 @@ export default function GuestSearchBar({
       const guestData = response.data;
 
       if (guestData) {
+        setGuestData(guestData);
         setShowGuestDetail(true);
         return;
       }
@@ -46,14 +47,16 @@ export default function GuestSearchBar({
   };
 
   return (
-    <div className="flex flex-col rounded-xl gap-5 border p-6 border-surface-300 bg-surface-50">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col rounded-xl gap-5 border p-4 md:p-6 border-surface-300 bg-surface-50">
+      <div className="flex items-center gap-3 md:gap-4">
         <div className="flex items-center justify-center w-10.5 h-10.5 bg-brand-50 text-brand-600 rounded-xl">
           <Ticket size={20} />
         </div>
         <div className="flex flex-col gap-1.5 justify-between">
-          <h2 className="text-lg font-semibold leading-none">Guest Search</h2>
-          <p className="text-sm text-surface-600 leading-tight">
+          <h2 className="text-base md:text-lg font-semibold leading-none">
+            Guest Search
+          </h2>
+          <p className="text-xs md:text-sm text-surface-600 leading-tight">
             Enter the 8-digit confirmation number to check customer bookings and
             bills.
           </p>
@@ -67,7 +70,7 @@ export default function GuestSearchBar({
             className="text-surface-500 bg-transparent"
           >
             <Hash
-              size={18}
+              size={16}
               className="mx-1 text-surface-600 group-focus-within:text-brand-600 transition-all duration-300 group-focus-within:-rotate-8 group-focus-within:scale-115"
             />
           </label>
@@ -78,10 +81,12 @@ export default function GuestSearchBar({
             name="confirmation_no"
             type="text"
             placeholder="E.g. XXXXXXXX"
-            className="flex h-14 px-2.5 outline-none flex-1 text-base placeholder:text-surface-500 text-surface-800 bg-transparent"
+            className="flex h-14 px-2 mb-px placeholder:tracking-[.25rem] tracking-[.4rem] [transition-delay:9999s] [transition-property:background-color,color] tabular-nums slashed-zero outline-none flex-1 text-lg placeholder:text-surface-500 text-surface-800 bg-transparent"
             required
             pattern="[0-9]{8}"
             title="Confirmation number must be 8 digits"
+            maxLength={8}
+            minLength={8}
           />
         </div>
         <button
