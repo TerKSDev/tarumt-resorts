@@ -19,7 +19,7 @@ export default function AdminLayout() {
           desc={path?.desc || "Unavailable"}
           setMenuOpen={setMenuOpen}
         />
-        <div className="overflow-y-auto p-8">
+        <div className="overflow-y-auto">
           <Outlet />
         </div>
       </section>

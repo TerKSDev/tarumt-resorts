@@ -16,7 +16,7 @@ export default function Dashboard() {
           icon={DollarSign}
           color="emerald"
           mutation={3000000}
-        />
+              />        
         <StatCard title="Occupancy" value="85%" icon={Bed} color="brand" />
         <StatCard
           title="Check-Ins"
