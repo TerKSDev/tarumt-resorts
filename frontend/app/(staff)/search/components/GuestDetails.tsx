@@ -1,11 +1,20 @@
-import { Bed, Calendar, CircleCheckBig, Trophy, Users } from "lucide-react";
+import {
+  Bed,
+  Calendar,
+  CircleCheckBig,
+  Receipt,
+  Trophy,
+  Users,
+} from "lucide-react";
 import {
   format2DigitMonthDate,
   formatDigitDate,
   getDayBetween,
-} from "../../../../lib/config/util/date";
+} from "../../../../lib/util/date";
+import { LOYALTY_TIER } from "../../../../lib/config/loyalty";
+import { useBilling } from "../../../../hooks/useBilling";
 
-type GuestDetailsProps = {
+export type GuestDetailsProps = {
   guestData: {
     bookingId: number;
     confirmationNo: string;
@@ -63,28 +72,9 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
     },
   };
 
-  const loyaltyTierMap = {
-    BRONZE: {
-      badge: "text-brown-500 border-brown-200",
-      dot: "bg-brown-500",
-      content: "Bronze",
-    },
-    SILVER: {
-      badge: "text-zinc-500 border-zinc-200",
-      dot: "bg-zinc-500",
-      content: "Silver",
-    },
-    GOLD: {
-      badge: "text-yellow-500 border-yellow-200",
-      dot: "bg-amber-500",
-      content: "Gold",
-    },
-    PLATINUM: {
-      badge: "text-brand-500 border-brand-200",
-      dot: "bg-brand-500",
-      content: "Platinum",
-    },
-  };
+  const billing = useBilling(guestData);
+
+  if (!billing) return null;
 
   return (
     <div className="flex flex-col rounded-xl border border-surface-300 bg-surface-50">
@@ -115,7 +105,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-5 py-4">
+        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Users size={14} className="text-surface-600" />
             <span className="leading-none">Guest</span>
@@ -130,7 +120,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-5 py-4">
+        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Bed size={14} className="text-surface-600" />
             <span className="leading-none">Room</span>
@@ -145,7 +135,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-5 py-4">
+        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Calendar size={14} className="text-surface-600" />
             <span className="leading-none">Check-In / Check-Out</span>
@@ -160,12 +150,13 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
               {getDayBetween(
                 guestData.checkInDate || "",
                 guestData.checkOutDate || "",
-              )}
+              )}{" "}
+              day(s)
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-5 py-4">
+        <div className="flex flex-col gap-3 border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Trophy size={14} className="text-surface-600" />
             <span className="leading-none">Loyalty Tier</span>
@@ -173,17 +164,16 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           <div className="flex flex-col gap-1">
             <div
               className={`text-base leading-none font-semibold gap-1.5 flex items-center tracking-wider ${
-                loyaltyTierMap[
-                  guestData.customer.loyaltyTier as keyof typeof loyaltyTierMap
-                ].badge
+                LOYALTY_TIER[
+                  guestData.customer.loyaltyTier as keyof typeof LOYALTY_TIER
+                ].color
               }`}
             >
               <span>
                 {
-                  loyaltyTierMap[
-                    guestData.customer
-                      .loyaltyTier as keyof typeof loyaltyTierMap
-                  ].content
+                  LOYALTY_TIER[
+                    guestData.customer.loyaltyTier as keyof typeof LOYALTY_TIER
+                  ].name
                 }
               </span>
             </div>
@@ -191,6 +181,115 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
               {formatDigitDate(guestData.customer.updatedAt) ||
                 formatDigitDate(guestData.customer.createdAt)}
             </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col p-6 py-4 gap-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Receipt size={16} className="text-brand-600 mt-px" />
+            <h1 className="text-base leading-none font-semibold">
+              Billing Details
+            </h1>
+          </div>
+          <div
+            className={`text-xs border rounded-full font-medium leading-none px-3 py-1 ${
+              guestData.isPaid
+                ? "bg-green-50 text-green-600 border-green-200"
+                : "bg-yellow-50 text-yellow-600 border-yellow-200"
+            }`}
+          >
+            {guestData.isPaid ? "Paid" : "Pending"}
+          </div>
+        </div>
+        <div className="overflow-x-auto w-full">
+          <div className="grid grid-cols-4 text-sm min-w-[600px]">
+            <div className="w-full flex flex-col">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2">
+                Items
+              </h1>
+              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5">
+                Room ({guestData.room.type})
+              </div>
+              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5">
+                Tax
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2 text-center">
+                Details
+              </h1>
+              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-center">
+                {getDayBetween(
+                  guestData.checkInDate || "",
+                  guestData.checkOutDate || "",
+                )}{" "}
+                day(s)
+              </div>
+              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-center">
+                10%
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2 text-right">
+                Unit Price
+              </h1>
+              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-right">
+                RM {guestData.room.pricePerNight.toFixed(2)}
+              </div>
+              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-right">
+                RM {(guestData.room.pricePerNight * 0.1).toFixed(2)}
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2 text-right">
+                Subtotal
+              </h1>
+              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5 text-right">
+                RM {billing?.roomSubtotal.toFixed(2)}
+              </div>
+              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5 text-right">
+                RM {billing?.tax.toFixed(2)}
+              </div>
+            </div>
+
+            <div className="col-start-3 px-1.5 text-surface-600">
+              <div className="flex flex-col gap-3 border-surface-300 border-b py-3">
+                <div>Subtotal</div>
+                {guestData.customer.loyaltyTier !== "BRONZE" && (
+                  <div>Member Discount:</div>
+                )}
+                <div>Deposit Paid (30%):</div>
+              </div>
+              <div className="font-medium text-base text-green-600 py-3">
+                Total Amount
+              </div>
+            </div>
+
+            <div className="col-start-4 font-medium px-1.5 text-surface-800 text-right">
+              <div className="flex flex-col gap-3 border-surface-300 border-b py-3">
+                <div>RM {billing?.subtotal.toFixed(2)}</div>
+
+                {guestData.customer.loyaltyTier !== "BRONZE" && (
+                  <div className="text-brand-600">
+                    - RM {billing?.memberDiscount.toFixed(2)}
+                  </div>
+                )}
+
+                <div className="text-brand-600">
+                  - RM {billing?.depositPaid.toFixed(2)}
+                </div>
+              </div>
+              <div
+                className={`font-medium text-base py-3 ${guestData.isPaid ? "text-green-600" : "text-red-600"}`}
+              >
+                RM {billing?.totalAmount.toFixed(2)}
+              </div>
+            </div>
           </div>
         </div>
       </div>

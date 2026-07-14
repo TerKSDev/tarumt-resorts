@@ -74,7 +74,7 @@ export const PATHS = [
   },
   {
     label: "Guest Search",
-    desc: "Search for existing guests",
+    desc: "Search for existing guests and check booking and billing details.",
     to: "/search",
     icon: UserRoundSearch,
     category: CATEGORIES.FRONT_DESK,

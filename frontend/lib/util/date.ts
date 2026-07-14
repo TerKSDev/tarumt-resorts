@@ -18,5 +18,5 @@ export function getDayBetween(
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffMs = end.getTime() - start.getTime();
-  return `${Math.round(diffMs / (1000 * 60 * 60 * 24))} day(s)`;
+  return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }

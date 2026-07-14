@@ -12,7 +12,7 @@ export default function ReportGeneration() {
   return (
     <div className="flex flex-col rounded-xl gap-5 border p-4 md:p-6 border-surface-300 bg-surface-50">
       <div className="flex items-center gap-3 md:gap-4">
-        <div className="flex items-center justify-center w-10.5 h-10.5 bg-brand-50 text-brand-600 rounded-xl">
+        <div className="flex items-center justify-center min-w-10.5 min-h-10.5 bg-brand-50 text-brand-600 rounded-xl">
           <FileChartColumnIncreasing size={20} />
         </div>
         <div className="flex flex-col gap-1.5 justify-between">
