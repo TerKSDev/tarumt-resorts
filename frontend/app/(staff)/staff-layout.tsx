@@ -21,7 +21,7 @@ export default function AdminLayout() {
           setMenuOpen={setMenuOpen}
         />
         <motion.div
-          className="overflow-y-auto flex-1 flex flex-col p-3 sm:p-6 lg:p-8 border border-surface-300"
+          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8 border-r border-surface-400"
           initial="hidden"
           animate="visible"
           transition={{ staggerChildren: 0.1 }}

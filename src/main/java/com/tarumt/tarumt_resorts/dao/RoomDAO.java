@@ -7,5 +7,5 @@ import com.tarumt.tarumt_resorts.entity.Room;
 
 @Repository
 public interface RoomDAO extends JpaRepository<Room, String> {
-    
+    Room[] findAllBy();
 }

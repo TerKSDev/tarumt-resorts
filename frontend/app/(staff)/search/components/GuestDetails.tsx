@@ -51,8 +51,8 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
       content: "Active",
     },
     CHECKED_IN: {
-      badge: "bg-green-50 text-green-600 border-green-200",
-      dot: "bg-green-500",
+      badge: "bg-emerald-50 text-emerald-600 border-emerald-200",
+      dot: "bg-emerald-500",
       content: "Checked In",
     },
     CHECKED_OUT: {
@@ -61,8 +61,8 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
       content: "Checked Out",
     },
     CANCELLED: {
-      badge: "bg-red-50 text-red-600 border-red-200",
-      dot: "bg-red-500",
+      badge: "bg-rose-50 text-rose-600 border-rose-200",
+      dot: "bg-rose-500",
       content: "Cancelled",
     },
     REFUNDED: {
@@ -77,10 +77,10 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
   if (!billing) return null;
 
   return (
-    <div className="flex flex-col rounded-xl border border-surface-300 bg-surface-50">
-      <div className="flex items-center justify-between gap-2 p-4 md:p-6 border-b border-surface-300">
+    <div className="flex flex-col rounded-xl border border-surface-400 bg-surface-50">
+      <div className="flex items-center justify-between gap-2 p-4 md:p-6 border-b border-surface-400">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="flex items-center justify-center w-10.5 h-10.5 bg-green-50 text-green-600 rounded-xl">
+          <div className="flex items-center justify-center w-10.5 h-10.5 bg-emerald-50 text-emerald-600 rounded-xl">
             <CircleCheckBig size={20} />
           </div>
           <div className="flex flex-col gap-1.5 justify-between">
@@ -105,7 +105,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
+        <div className="flex flex-col gap-3 border-r border-surface-400 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Users size={14} className="text-surface-600" />
             <span className="leading-none">Guest</span>
@@ -120,7 +120,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
+        <div className="flex flex-col gap-3 border-r border-surface-400 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Bed size={14} className="text-surface-600" />
             <span className="leading-none">Room</span>
@@ -135,7 +135,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
+        <div className="flex flex-col gap-3 border-r border-surface-400 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Calendar size={14} className="text-surface-600" />
             <span className="leading-none">Check-In / Check-Out</span>
@@ -156,7 +156,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-surface-300 border-b p-6 py-5 hover:bg-surface-100/80">
+        <div className="flex flex-col gap-3 border-surface-400 border-b p-6 py-5 hover:bg-surface-100/80">
           <div className="flex items-center gap-1.5 text-sm text-surface-600 leading-none">
             <Trophy size={14} className="text-surface-600" />
             <span className="leading-none">Loyalty Tier</span>
@@ -196,7 +196,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
           <div
             className={`text-xs border rounded-full font-medium leading-none px-3 py-1 ${
               guestData.isPaid
-                ? "bg-green-50 text-green-600 border-green-200"
+                ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                 : "bg-yellow-50 text-yellow-600 border-yellow-200"
             }`}
           >
@@ -206,72 +206,72 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
         <div className="overflow-x-auto w-full">
           <div className="grid grid-cols-4 text-sm min-w-[600px]">
             <div className="w-full flex flex-col">
-              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-400 py-2">
                 Items
               </h1>
-              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5">
+              <div className="font-medium border-b px-1.5 border-surface-400 text-surface-800 py-2.5">
                 Room ({guestData.room.type})
               </div>
-              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5">
+              <div className="font-medium border-b px-1.5 border-surface-400 text-surface-800 py-2.5">
                 Tax
               </div>
             </div>
 
             <div className="w-full flex flex-col">
-              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2 text-center">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-400 py-2 text-center">
                 Details
               </h1>
-              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-center">
+              <div className="border-b px-1.5 border-surface-400 text-surface-600 py-2.5 text-center">
                 {getDayBetween(
                   guestData.checkInDate || "",
                   guestData.checkOutDate || "",
                 )}{" "}
                 day(s)
               </div>
-              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-center">
+              <div className="border-b px-1.5 border-surface-400 text-surface-600 py-2.5 text-center">
                 10%
               </div>
             </div>
 
             <div className="w-full flex flex-col">
-              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2 text-right">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-400 py-2 text-right">
                 Unit Price
               </h1>
-              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-right">
+              <div className="border-b px-1.5 border-surface-400 text-surface-600 py-2.5 text-right">
                 RM {guestData.room.pricePerNight.toFixed(2)}
               </div>
-              <div className="border-b px-1.5 border-surface-300 text-surface-600 py-2.5 text-right">
+              <div className="border-b px-1.5 border-surface-400 text-surface-600 py-2.5 text-right">
                 RM {(guestData.room.pricePerNight * 0.1).toFixed(2)}
               </div>
             </div>
 
             <div className="w-full flex flex-col">
-              <h1 className="text-surface-600 px-1.5 border-b border-surface-300 py-2 text-right">
+              <h1 className="text-surface-600 px-1.5 border-b border-surface-400 py-2 text-right">
                 Subtotal
               </h1>
-              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5 text-right">
+              <div className="font-medium border-b px-1.5 border-surface-400 text-surface-800 py-2.5 text-right">
                 RM {billing?.roomSubtotal.toFixed(2)}
               </div>
-              <div className="font-medium border-b px-1.5 border-surface-300 text-surface-800 py-2.5 text-right">
+              <div className="font-medium border-b px-1.5 border-surface-400 text-surface-800 py-2.5 text-right">
                 RM {billing?.tax.toFixed(2)}
               </div>
             </div>
 
             <div className="col-start-3 px-1.5 text-surface-600">
-              <div className="flex flex-col gap-3 border-surface-300 border-b py-3">
+              <div className="flex flex-col gap-3 border-surface-400 border-b py-3">
                 <div>Subtotal</div>
                 {guestData.customer.loyaltyTier !== "BRONZE" && (
                   <div>Member Discount:</div>
                 )}
                 <div>Deposit Paid (30%):</div>
               </div>
-              <div className="font-medium text-base text-green-600 py-3">
+              <div className="font-medium text-base text-emerald-600 py-3">
                 Total Amount
               </div>
             </div>
 
             <div className="col-start-4 font-medium px-1.5 text-surface-800 text-right">
-              <div className="flex flex-col gap-3 border-surface-300 border-b py-3">
+              <div className="flex flex-col gap-3 border-surface-400 border-b py-3">
                 <div>RM {billing?.subtotal.toFixed(2)}</div>
 
                 {guestData.customer.loyaltyTier !== "BRONZE" && (
@@ -285,7 +285,7 @@ export default function GuestDetails({ guestData }: GuestDetailsProps) {
                 </div>
               </div>
               <div
-                className={`font-medium text-base py-3 ${guestData.isPaid ? "text-green-600" : "text-red-600"}`}
+                className={`font-medium text-base py-3 ${guestData.isPaid ? "text-emerald-600" : "text-rose-600"}`}
               >
                 RM {billing?.totalAmount.toFixed(2)}
               </div>

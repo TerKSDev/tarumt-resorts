@@ -78,7 +78,7 @@ export default function GuestSearchBar({
   };
 
   return (
-    <div className="flex flex-col rounded-xl gap-5 border p-4 md:p-6 border-surface-300 bg-surface-50">
+    <div className="flex flex-col rounded-xl gap-5 border p-4 md:p-6 border-surface-400 bg-surface-50">
       <div className="flex items-center gap-3 md:gap-4">
         <div className="flex items-center justify-center min-w-10.5 min-h-10.5 bg-brand-50 text-brand-600 rounded-xl">
           <Ticket size={20} />
@@ -98,7 +98,7 @@ export default function GuestSearchBar({
         action={handleSearchGuest}
         className="flex items-center gap-2 sm:gap-4 sm:flex-row flex-col"
       >
-        <div className="min-w-0 group flex items-center flex-1 focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:shadow-sm transition-all duration-300 focus-within:scale-101 focus-within:bg-surface-50 shadow-xs bg-surface-100 border border-surface-300 hover:border-surface-400 rounded-xl px-4 h-12.5 w-full gap-2.5">
+        <div className="min-w-0 group flex items-center flex-1 focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:shadow-sm transition-all duration-300 focus-within:scale-101 focus-within:bg-surface-50 shadow-xs bg-surface-100 border border-surface-400 hover:border-surface-500 rounded-xl px-4 h-12.5 w-full gap-2.5">
           <label
             htmlFor="confirmation-no"
             className="text-surface-500 bg-transparent"
@@ -149,7 +149,7 @@ export default function GuestSearchBar({
                   performSearch(no);
                 }}
                 key={index}
-                className="text-xs leading-none font-medium shadow-xs text-surface-800 hover:border-brand-300 cursor-pointer hover:text-brand-600 hover:bg-brand-50 transition-all duration-300 bg-surface-100 rounded-md border border-surface-300 px-2.5 py-1.5"
+                className="text-xs leading-none font-medium shadow-xs text-surface-800 hover:border-brand-300 cursor-pointer hover:text-brand-600 hover:bg-brand-50 transition-all duration-300 bg-surface-100 rounded-md border border-surface-400 px-2.5 py-1.5"
               >
                 {no}
               </button>

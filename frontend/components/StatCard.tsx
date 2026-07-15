@@ -42,14 +42,14 @@ const mutationIndicator = (mutation: number) => {
     );
   } else if (mutation > 0) {
     return (
-      <div className="p-1 slashed-zero tabular-nums font-medium flex items-center gap-2 text-sm text-green-600">
+      <div className="p-1 slashed-zero tabular-nums font-medium flex items-center gap-2 text-sm text-emerald-600">
         <TrendingUp size={14} />
         <p>+{mutation}</p>
       </div>
     );
   } else if (mutation < 0) {
     return (
-      <div className="p-1 slashed-zero tabular-nums font-medium flex items-center gap-2 text-sm text-red-600">
+      <div className="p-1 slashed-zero tabular-nums font-medium flex items-center gap-2 text-sm text-rose-600">
         <TrendingDown size={14} />
         <p>{mutation}</p>
       </div>
@@ -67,7 +67,7 @@ export default function StatCard({
   const Icon = icon;
 
   return (
-    <div className="flex gap-4 justify-between items-start bg-surface-50 border border-surface-300 shadow-xs p-5 rounded-xl hover:shadow-sm hover:-translate-y-1 transition-all duration-300 hover:border-surface-400">
+    <div className="flex gap-4 justify-between items-start bg-surface-50 border border-surface-400 shadow-xs p-5 rounded-xl hover:shadow-sm hover:-translate-y-1 transition-all duration-300 hover:border-surface-500">
       <div className="flex flex-col gap-4">
         <div
           className={`flex items-center justify-center rounded-xl w-12 h-12 ${colorMap[color].icon}`}
