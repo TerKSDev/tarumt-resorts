@@ -35,9 +35,29 @@ body {
   width: 100%;
   background: var(--color-surface-100);
   color: var(--color-surface-950);
-  overflow: hidden;
 }
 
 ::-webkit-scrollbar {
-  display: none;
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border: none;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-600);
+  border: none;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-600);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-400) transparent;
 }
