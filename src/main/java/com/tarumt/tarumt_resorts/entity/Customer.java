@@ -17,8 +17,8 @@ public class Customer {
     @Column(name = "customer_id")
     private String customerId;
 
-    @Column(name = "confirmation_no", nullable = false, unique = true)
-    private Integer confirmationNo;
+    //@Column(name = "confirmation_no", nullable = false, unique = true)
+    //private Integer confirmationNo;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -41,9 +41,9 @@ public class Customer {
     // Constructor
     public Customer() {}
 
-    public Customer(String customerId, Integer confirmationNo, String name, LoyaltyTier loyaltyTier, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean isActive) {
+    public Customer(String customerId, String name, LoyaltyTier loyaltyTier, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean isActive) {
         this.customerId = customerId;   
-        this.confirmationNo = confirmationNo;   
+        //this.confirmationNo = confirmationNo;   
         this.name = name;   
         this.loyaltyTier = loyaltyTier;   
         this.createdAt = createdAt;   
@@ -56,9 +56,7 @@ public class Customer {
         return this.customerId;    
     }
 
-    public Integer getConfirmationNo() {
-        return this.confirmationNo;    
-    }
+
 
     public String getName() {
         return this.name;    
@@ -85,9 +83,7 @@ public class Customer {
         this.customerId = customerId;   
     }
 
-    public void setConfirmationNo(Integer confirmationNo) {
-        this.confirmationNo = confirmationNo;   
-    }
+
 
     public void setName(String name) {
         this.name = name;   

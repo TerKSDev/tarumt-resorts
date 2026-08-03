@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode, type SVGProps } from "react";
+import { useEffect, useMemo, useState, type ReactNode, type SVGProps } from "react";
 import { type LinksFunction, type MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [
@@ -18,7 +18,7 @@ const DISPLAY_FONT = "'Space Grotesk', ui-sans-serif, system-ui, sans-serif";
    TYPES
    ========================================================================= */
 
-type TierName = "Silver" | "Gold" | "Platinum";
+type TierName = "Bronze" | "Silver" | "Gold" | "Platinum";
 type LedgerType = "earn" | "redeem";
 type RequestStatus = "Pending" | "Approved" | "Rejected";
 
@@ -59,7 +59,7 @@ interface RedemptionRequest {
     pointsCost: number;
     status: RequestStatus;
     requestDate: string;
-    decisionDate?: string;
+    decisionDate?: string; // when approved/rejected
 }
 
 type TabKey =
@@ -76,12 +76,14 @@ type TabKey =
    ========================================================================= */
 
 const TIER_THRESHOLDS: { tier: TierName; min: number }[] = [
-    { tier: "Silver", min: 0 },
-    { tier: "Gold", min: 3000 },
-    { tier: "Platinum", min: 8000 },
+    { tier: "Bronze", min: 0 },
+    { tier: "Silver", min: 3000 },
+    { tier: "Gold", min: 10000 },
+    { tier: "Platinum", min: 50000 },
 ];
 
 const TIER_STYLES: Record<TierName, { badge: string; ring: string }> = {
+    Bronze: { badge: "bg-orange-50 text-orange-700 border-orange-300", ring: "text-orange-500" },
     Silver: { badge: "bg-slate-100 text-slate-600 border-slate-300", ring: "text-slate-400" },
     Gold: { badge: "bg-amber-50 text-amber-700 border-amber-300", ring: "text-amber-500" },
     Platinum: { badge: "bg-teal-50 text-teal-700 border-teal-300", ring: "text-teal-500" },
@@ -225,6 +227,17 @@ function padL(str: string | number, len: number): string {
     return String(str).padStart(len, " ");
 }
 
+// Format date to dd/MM/yyyy
+function formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
 /* =========================================================================
    ALGORITHMS: sorting + searching (implemented explicitly, not just .sort())
    ========================================================================= */
@@ -268,100 +281,219 @@ function filterItems<T>(items: T[], predicates: Array<(item: T) => boolean>): T[
 }
 
 /* =========================================================================
-   SAMPLE DATA
+   REAL DATA — fetched from the backend `customers` table
    ========================================================================= */
 
-function buildMember(
-    id: string,
-    name: string,
-    email: string,
-    city: string,
-    lifetimePoints: number,
-    joinOffsetDays: number,
-    ledger: PointsLedgerEntry[],
-    promotions: string[]
-): Member {
-    const redeemed = ledger.filter((l) => l.type === "redeem").reduce((s, l) => s + l.amount, 0);
-    const earned = ledger.filter((l) => l.type === "earn").reduce((s, l) => s + l.amount, 0);
+// Shape returned by the Spring Boot CustomerController — this is the
+// Customer entity serialized directly by Jackson, so field names come out
+// camelCase (matching the Java getters), not snake_case like the DB columns.
+// Only `name` and `loyaltyTier` are guaranteed useful today — everything
+// else on Member (email, city, points, ledger, promotions...) doesn't exist
+// in the customers table yet, so it's left empty/zeroed for now.
+interface CustomerApiResponse {
+    customerId: string;
+    confirmationNo?: number;
+    createdAt?: string;
+    isActive?: boolean;
+    loyaltyTier: string;
+    name: string;
+    updatedAt?: string;
+}
+
+// Spring Boot runs on port 8081 (see application.properties), the React
+// dev server on a different port — so this must be an absolute URL.
+// Adjust if you deploy behind a different host/port.
+const API_BASE_URL = "http://localhost:8081";
+const CUSTOMERS_ENDPOINT = `${API_BASE_URL}/api/customers`;
+
+function normalizeTier(raw: string | undefined): TierName {
+    const upper = (raw ?? "").toUpperCase();
+    if (upper === "BRONZE" || upper === "SILVER" || upper === "GOLD" || upper === "PLATINUM") {
+        return (upper.charAt(0) + upper.slice(1).toLowerCase()) as TierName;
+    }
+    return "Bronze";
+}
+
+function mapCustomerToMember(c: CustomerApiResponse): Member {
     return {
-        id,
-        name,
-        email,
-        city,
-        tier: tierForPoints(lifetimePoints),
-        points: Math.max(0, earned - redeemed),
-        lifetimePoints,
-        joinDate: daysFromNow(-joinOffsetDays),
-        lastActivity: daysFromNow(-Math.min(joinOffsetDays, 6)),
-        ledger,
-        promotions,
+        id: c.customerId,
+        name: c.name,
+        email: "", // not in customers table yet
+        city: "", // not in customers table yet
+        tier: normalizeTier(c.loyaltyTier),
+        points: 0, // not in customers table yet
+        lifetimePoints: 0, // not in customers table yet
+        joinDate: c.createdAt ?? "",
+        lastActivity: c.updatedAt ?? "",
+        ledger: [], // not in customers table yet
+        promotions: [], // not in customers table yet
     };
 }
 
-function seedMembers(): Member[] {
-    return [
-        buildMember("M1001", "Aisha Rahman", "aisha.rahman@mail.com", "Kuala Lumpur", 9200, 620,
-            [
-                { id: "L1", date: daysFromNow(-40), type: "earn", amount: 4200, description: "Stay: 3 nights, Deluxe Suite", expiryDate: daysFromNow(15) },
-                { id: "L2", date: daysFromNow(-10), type: "earn", amount: 5000, description: "Promo: Anniversary bonus", expiryDate: daysFromNow(320) },
-            ],
-            ["Complimentary breakfast on next stay", "Priority late checkout"]),
-        buildMember("M1002", "Wei Chen Tan", "weichen.tan@mail.com", "Penang", 6400, 410,
-            [
-                { id: "L3", date: daysFromNow(-90), type: "earn", amount: 3600, description: "Stay: 2 nights, City View", expiryDate: daysFromNow(-3) },
-                { id: "L4", date: daysFromNow(-20), type: "earn", amount: 2800, description: "Stay: Weekend package", expiryDate: daysFromNow(7) },
-                { id: "L5", date: daysFromNow(-5), type: "redeem", amount: 800, description: "Redeemed: Airport Transfer" },
-            ],
-            ["Room upgrade offer, valid 30 days"]),
-        buildMember("M1003", "Nur Fatimah Ismail", "nur.fatimah@mail.com", "Malacca", 2100, 95,
-            [{ id: "L6", date: daysFromNow(-30), type: "earn", amount: 2100, description: "Stay: 1 night, Standard Room", expiryDate: daysFromNow(20) }],
-            ["Welcome dining credit"]),
-        buildMember("M1004", "Kevin Lim", "kevin.lim@mail.com", "Johor Bahru", 12500, 900,
-            [
-                { id: "L7", date: daysFromNow(-200), type: "earn", amount: 7000, description: "Stay: Corporate block booking", expiryDate: daysFromNow(-40) },
-                { id: "L8", date: daysFromNow(-60), type: "earn", amount: 5500, description: "Stay: 4 nights, Executive Suite", expiryDate: daysFromNow(305) },
-                { id: "L9", date: daysFromNow(-15), type: "redeem", amount: 6000, description: "Redeemed: Free Night Stay" },
-            ],
-            ["Platinum lounge access", "Complimentary spa upgrade"]),
-        buildMember("M1005", "Siti Nabila", "siti.nabila@mail.com", "Ipoh", 800, 40,
-            [{ id: "L10", date: daysFromNow(-12), type: "earn", amount: 800, description: "Stay: 1 night, Standard Room", expiryDate: daysFromNow(28) }],
-            ["Welcome dining credit"]),
-        buildMember("M1006", "Ryan Ooi", "ryan.ooi@mail.com", "Kuala Lumpur", 4300, 260,
-            [
-                { id: "L11", date: daysFromNow(-70), type: "earn", amount: 2600, description: "Stay: 2 nights, Deluxe Room", expiryDate: daysFromNow(10) },
-                { id: "L12", date: daysFromNow(-25), type: "earn", amount: 1700, description: "Promo: Weekday special", expiryDate: daysFromNow(60) },
-            ],
-            ["Gold tier: free spa voucher on next stay"]),
-        buildMember("M1007", "Priya Sundaram", "priya.sundaram@mail.com", "Seremban", 15800, 1100,
-            [
-                { id: "L13", date: daysFromNow(-400), type: "earn", amount: 9000, description: "Stay: Long-term corporate stay", expiryDate: daysFromNow(-100) },
-                { id: "L14", date: daysFromNow(-45), type: "earn", amount: 6800, description: "Stay: 5 nights, Presidential Suite", expiryDate: daysFromNow(275) },
-            ],
-            ["Platinum lounge access", "Dedicated concierge"]),
-        buildMember("M1008", "Farid Hakim", "farid.hakim@mail.com", "Malacca", 1450, 70,
-            [{ id: "L15", date: daysFromNow(-18), type: "earn", amount: 1450, description: "Stay: 1 night, City View", expiryDate: daysFromNow(5) }],
-            ["Welcome dining credit"]),
-        buildMember("M1009", "Grace Lau", "grace.lau@mail.com", "Kuching", 5200, 330,
-            [
-                { id: "L16", date: daysFromNow(-100), type: "earn", amount: 3200, description: "Stay: 3 nights, Deluxe Room", expiryDate: daysFromNow(-8) },
-                { id: "L17", date: daysFromNow(-14), type: "earn", amount: 2000, description: "Promo: Referral bonus", expiryDate: daysFromNow(18) },
-            ],
-            ["Gold tier: free spa voucher on next stay"]),
-        buildMember("M1010", "Daniel Wong", "daniel.wong@mail.com", "Kota Kinabalu", 300, 15,
-            [{ id: "L18", date: daysFromNow(-8), type: "earn", amount: 300, description: "Stay: 1 night, Standard Room", expiryDate: daysFromNow(3) }],
-            ["Welcome dining credit"]),
-    ];
+async function fetchMembersFromApi(): Promise<Member[]> {
+    const res = await fetch(CUSTOMERS_ENDPOINT);
+    if (!res.ok) {
+        throw new Error(`Failed to load customers (${res.status})`);
+    }
+    const data: CustomerApiResponse[] = await res.json();
+    return data.map(mapCustomerToMember);
 }
 
-function seedRedemptionRequests(): RedemptionRequest[] {
-    return [
-        { id: "RQ501", memberId: "M1004", rewardId: "R1", pointsCost: 6000, status: "Approved", requestDate: daysFromNow(-15), decisionDate: daysFromNow(-14) },
-        { id: "RQ502", memberId: "M1002", rewardId: "R4", pointsCost: 800, status: "Approved", requestDate: daysFromNow(-5), decisionDate: daysFromNow(-5) },
-        { id: "RQ503", memberId: "M1001", rewardId: "R3", pointsCost: 1500, status: "Pending", requestDate: daysFromNow(-2) },
-        { id: "RQ504", memberId: "M1007", rewardId: "R2", pointsCost: 2000, status: "Pending", requestDate: daysFromNow(-1) },
-        { id: "RQ505", memberId: "M1006", rewardId: "R5", pointsCost: 1000, status: "Rejected", requestDate: daysFromNow(-20), decisionDate: daysFromNow(-19) },
-        { id: "RQ506", memberId: "M1009", rewardId: "R6", pointsCost: 400, status: "Pending", requestDate: daysFromNow(0) },
-    ];
+// Persists a tier change to the backend so it's saved in customers.loyalty_tier,
+// not just held in local state.
+async function updateCustomerTierApi(customerId: string, tier: TierName): Promise<void> {
+    const res = await fetch(`${CUSTOMERS_ENDPOINT}/${customerId}/tier`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loyaltyTier: tier.toUpperCase() }),
+    });
+    if (!res.ok) {
+        throw new Error(`Failed to update tier (${res.status})`);
+    }
+}
+
+// Shape returned by / sent to the Spring Boot PointController (also
+// camelCase, entity-serialized).
+interface PointApiResponse {
+    id: string;
+    customerId: string;
+    point: number;
+    description?: string;
+    date?: string; // when the points were earned
+    expireDate?: string; // date + 180 days, set by the backend
+}
+
+const POINTS_ENDPOINT = `${API_BASE_URL}/api/points`;
+
+async function fetchPointsFromApi(): Promise<PointApiResponse[]> {
+    const res = await fetch(POINTS_ENDPOINT);
+    if (!res.ok) {
+        throw new Error(`Failed to load points (${res.status})`);
+    }
+    return res.json();
+}
+
+async function awardPointsApi(customerId: string, point: number, description: string): Promise<void> {
+    const res = await fetch(POINTS_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, point, description }),
+    });
+    if (!res.ok) {
+        throw new Error(`Failed to award points (${res.status})`);
+    }
+}
+
+// Combines base member records with their points rows: `points` is the sum
+// of rows that haven't expired yet, `lifetimePoints` is the sum of all rows
+// ever earned, and `ledger` is built from the raw rows for display.
+function applyPointsToMembers(members: Member[], pointsRows: PointApiResponse[]): Member[] {
+    const now = Date.now();
+    return members.map((m) => {
+        const rows = pointsRows.filter((p) => p.customerId === m.id);
+        const lifetimePoints = rows.reduce((sum, p) => sum + (p.point ?? 0), 0);
+        const activePoints = rows
+            .filter((p) => !p.expireDate || new Date(p.expireDate).getTime() > now)
+            .reduce((sum, p) => sum + (p.point ?? 0), 0);
+        const ledger: PointsLedgerEntry[] = rows
+            .slice()
+            .sort((a, b) => {
+                // Sort by full timestamp, latest first
+                const dateA = new Date(a.date ?? 0).getTime();
+                const dateB = new Date(b.date ?? 0).getTime();
+                return dateB - dateA;
+            })
+            .map((p) => ({
+                id: p.id,
+                date: p.date ?? "",
+                type: "earn",
+                amount: p.point ?? 0,
+                description: p.description ?? "",
+                expiryDate: p.expireDate ?? "",
+            }));
+        return { ...m, points: activePoints, lifetimePoints, ledger };
+    });
+}
+
+// Shape returned by / sent to the Spring Boot RedeemController. There's no
+// request-date column on this table, so RedemptionRequest.requestDate is
+// left blank for real rows.
+interface RedeemApiResponse {
+    id: number;
+    customerId: string;
+    point: number;
+    status: boolean | null; // null = pending, true = approved, false = rejected
+    description: string;
+    date?: string; // request date
+    decisionDate?: string; // when approved/rejected
+}
+
+const REDEEM_ENDPOINT = `${API_BASE_URL}/api/redeem`;
+
+async function fetchRedeemFromApi(): Promise<RedeemApiResponse[]> {
+    const res = await fetch(REDEEM_ENDPOINT);
+    if (!res.ok) {
+        throw new Error(`Failed to load redemption requests (${res.status})`);
+    }
+    return res.json();
+}
+
+async function createRedeemApi(customerId: string, point: number, description: string): Promise<void> {
+    const res = await fetch(REDEEM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, point, description }),
+    });
+    if (!res.ok) {
+        throw new Error(`Failed to submit redemption request (${res.status})`);
+    }
+}
+
+async function updateRedeemStatusApi(id: string, status: boolean): Promise<void> {
+    const res = await fetch(`${REDEEM_ENDPOINT}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+    });
+    if (!res.ok) {
+        throw new Error(`Failed to update request (${res.status})`);
+    }
+}
+
+function mapRedeemToRequest(r: RedeemApiResponse): RedemptionRequest {
+    return {
+        id: String(r.id),
+        memberId: r.customerId,
+        rewardId: r.description,
+        pointsCost: r.point ?? 0,
+        status: r.status === true ? "Approved" : r.status === false ? "Rejected" : "Pending",
+        requestDate: r.date ?? "",
+        decisionDate: r.decisionDate ?? "",
+    };
+}
+
+// Subtracts approved redemptions from each member's redeemable balance and
+// adds them to the ledger as "redeem" entries. Applied as a derived layer
+// on top of the Points-only balances from applyPointsToMembers, so it never
+// double-counts even if this runs again after the raw data refreshes.
+function applyApprovedRedemptions(members: Member[], requests: RedemptionRequest[]): Member[] {
+    return members.map((m) => {
+        const approved = requests.filter((r) => r.memberId === m.id && r.status === "Approved");
+        if (approved.length === 0) return m;
+        const redeemed = approved.reduce((sum, r) => sum + r.pointsCost, 0);
+        const redeemEntries: PointsLedgerEntry[] = approved.map((r) => ({
+            id: `RD${r.id}`,
+            date: r.decisionDate || r.requestDate || "",
+            type: "redeem",
+            amount: r.pointsCost,
+            description: `Redeemed: ${r.rewardId}`,
+        }));
+        return {
+            ...m,
+            points: Math.max(0, m.points - redeemed),
+            ledger: [...redeemEntries, ...m.ledger],
+        };
+    });
 }
 
 /* =========================================================================
@@ -451,14 +583,15 @@ function TierRing({ pct, tier }: { pct: number; tier: TierName }) {
    Insights) still reads clearly without needing a full-height rail.
    ========================================================================= */
 
-function TopNav({ tab, setTab, notificationCount, memberCount }: {
+function TopNav({ tab, setTab, notificationCount, redemptionCount, memberCount }: {
     tab: TabKey;
     setTab: (t: TabKey) => void;
     notificationCount: number;
+    redemptionCount: number;
     memberCount: number;
 }) {
     return (
-        <header className="flex h-16 shrink-0 items-center gap-1 border-b border-slate-200 bg-white px-6">          
+        <header className="flex h-16 shrink-0 items-center gap-1 border-b border-slate-200 bg-white px-6">
             {/* Grouped tabs */}
             <nav className="flex flex-1 items-center gap-0.5 overflow-x-auto">
                 {NAV_GROUPS.map((group, gi) => (
@@ -483,6 +616,11 @@ function TopNav({ tab, setTab, notificationCount, memberCount }: {
                                             {notificationCount}
                                         </span>
                                     )}
+                                    {item.key === "redemption" && redemptionCount > 0 && (
+                                        <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white">
+                                            {redemptionCount}
+                                        </span>
+                                    )}
                                     <span
                                         className={`absolute inset-x-2 -bottom-[1px] h-[2px] rounded-full transition-opacity ${active ? "bg-blue-600 opacity-100" : "opacity-0"
                                             }`}
@@ -492,7 +630,7 @@ function TopNav({ tab, setTab, notificationCount, memberCount }: {
                         })}
                     </div>
                 ))}
-            </nav>          
+            </nav>
         </header>
     );
 }
@@ -503,9 +641,11 @@ function TopNav({ tab, setTab, notificationCount, memberCount }: {
 
 export default function LoyaltyAndMember() {
     const [tab, setTab] = useState<TabKey>("dashboard");
-    const [members, setMembers] = useState<Member[]>(() => seedMembers());
-    const [requests, setRequests] = useState<RedemptionRequest[]>(() => seedRedemptionRequests());
-    const [selectedMemberId, setSelectedMemberId] = useState<string>("M1001");
+    const [rawMembers, setRawMembers] = useState<Member[]>([]);
+    const [membersLoading, setMembersLoading] = useState(true);
+    const [membersError, setMembersError] = useState<string | null>(null);
+    const [requests, setRequests] = useState<RedemptionRequest[]>([]);
+    const [selectedMemberId, setSelectedMemberId] = useState<string>("");
     const [toast, setToast] = useState<string | null>(null);
 
     const flash = (msg: string) => {
@@ -513,36 +653,69 @@ export default function LoyaltyAndMember() {
         window.setTimeout(() => setToast(null), 2600);
     };
 
+    // Approved redemptions are layered on top of the raw (Points-only)
+    // member records here, rather than baked into rawMembers permanently —
+    // that way re-deriving this never double-subtracts a redemption.
+    const members = useMemo(() => applyApprovedRedemptions(rawMembers, requests), [rawMembers, requests]);
+
+    useEffect(() => {
+        let cancelled = false;
+        setMembersLoading(true);
+        setMembersError(null);
+        Promise.all([fetchMembersFromApi(), fetchPointsFromApi(), fetchRedeemFromApi()])
+            .then(([customers, points, redeemRows]) => {
+                if (cancelled) return;
+                const merged = applyPointsToMembers(customers, points);
+                setRawMembers(merged);
+                setRequests(redeemRows.map(mapRedeemToRequest));
+                setSelectedMemberId((prev) => prev || merged[0]?.id || "");
+            })
+            .catch((err: unknown) => {
+                if (cancelled) return;
+                setMembersError(err instanceof Error ? err.message : "Failed to load members");
+            })
+            .finally(() => {
+                if (!cancelled) setMembersLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     const selectedMember = members.find((m) => m.id === selectedMemberId) ?? members[0];
 
     /* --------------------------- domain actions --------------------------- */
 
     function addPoints(memberId: string, amount: number, description: string) {
-        setMembers((prev) =>
-            prev.map((m) => {
-                if (m.id !== memberId || amount <= 0) return m;
-                const newLifetime = m.lifetimePoints + amount;
-                const entry: PointsLedgerEntry = {
-                    id: `L${Date.now()}`,
-                    date: isoDate(new Date()),
-                    type: "earn",
-                    amount,
-                    description,
-                    expiryDate: daysFromNow(365),
-                };
-                const oldTier = m.tier;
-                const newTier = tierForPoints(newLifetime);
-                if (newTier !== oldTier) flash(`${m.name} upgraded from ${oldTier} to ${newTier}!`);
-                return {
-                    ...m,
-                    points: m.points + amount,
-                    lifetimePoints: newLifetime,
-                    tier: newTier,
-                    lastActivity: isoDate(new Date()),
-                    ledger: [entry, ...m.ledger],
-                };
+        if (amount <= 0) return;
+        const member = members.find((m) => m.id === memberId);
+        awardPointsApi(memberId, amount, description)
+            .then(() => fetchPointsFromApi())
+            .then((points) => {
+                const merged = applyPointsToMembers(rawMembers, points);
+                const updated = merged.find((m) => m.id === memberId);
+                const newTier = updated ? tierForPoints(updated.lifetimePoints) : undefined;
+
+                if (updated && newTier && newTier !== updated.tier) {
+                    const oldTier = updated.tier;
+                    return updateCustomerTierApi(memberId, newTier)
+                        .then(() => {
+                            setRawMembers(merged.map((m) => (m.id === memberId ? { ...m, tier: newTier } : m)));
+                            flash(`${updated.name} upgraded from ${oldTier} to ${newTier}!`);
+                        })
+                        .catch((err: unknown) => {
+                            // points were saved even if the tier update failed — show both states
+                            setRawMembers(merged);
+                            flash(err instanceof Error ? `Points added, but tier update failed: ${err.message}` : "Points added, but tier update failed");
+                        });
+                }
+
+                setRawMembers(merged);
+                flash(member ? `Added ${amount} points to ${member.name}` : `Added ${amount} points`);
             })
-        );
+            .catch((err: unknown) => {
+                flash(err instanceof Error ? err.message : "Failed to award points");
+            });
     }
 
     function requestRedemption(memberId: string, rewardId: string) {
@@ -553,39 +726,27 @@ export default function LoyaltyAndMember() {
             flash(`${member.name} does not have enough points for ${reward.name}.`);
             return;
         }
-        const newRequest: RedemptionRequest = {
-            id: `RQ${Math.floor(Math.random() * 9000) + 1000}`,
-            memberId,
-            rewardId,
-            pointsCost: reward.cost,
-            status: "Pending",
-            requestDate: isoDate(new Date()),
-        };
-        setRequests((prev) => [newRequest, ...prev]);
-        flash(`Redemption request for ${reward.name} submitted — awaiting processing.`);
+        createRedeemApi(memberId, reward.cost, reward.name)
+            .then(() => fetchRedeemFromApi())
+            .then((redeemRows) => {
+                setRequests(redeemRows.map(mapRedeemToRequest));
+                flash(`Redemption request for ${reward.name} submitted — awaiting processing.`);
+            })
+            .catch((err: unknown) => {
+                flash(err instanceof Error ? err.message : "Failed to submit redemption request");
+            });
     }
 
     function processRequest(requestId: string, action: "Approved" | "Rejected") {
-        setRequests((prev) =>
-            prev.map((r) => (r.id === requestId ? { ...r, status: action, decisionDate: isoDate(new Date()) } : r))
-        );
-        const req = requests.find((r) => r.id === requestId);
-        if (req && action === "Approved") {
-            setMembers((prev) =>
-                prev.map((m) => {
-                    if (m.id !== req.memberId) return m;
-                    const reward = REWARDS.find((rw) => rw.id === req.rewardId);
-                    const entry: PointsLedgerEntry = {
-                        id: `L${Date.now()}`,
-                        date: isoDate(new Date()),
-                        type: "redeem",
-                        amount: req.pointsCost,
-                        description: `Redeemed: ${reward?.name ?? req.rewardId}`,
-                    };
-                    return { ...m, points: Math.max(0, m.points - req.pointsCost), ledger: [entry, ...m.ledger] };
-                })
-            );
-        }
+        updateRedeemStatusApi(requestId, action === "Approved")
+            .then(() => fetchRedeemFromApi())
+            .then((redeemRows) => {
+                setRequests(redeemRows.map(mapRedeemToRequest));
+                flash(`Redemption Request ${action.toLowerCase()}.`);
+            })
+            .catch((err: unknown) => {
+                flash(err instanceof Error ? err.message : `Failed to ${action.toLowerCase()} request`);
+            });
     }
 
     /* ------------------------------ derived -------------------------------- */
@@ -610,18 +771,28 @@ export default function LoyaltyAndMember() {
     /* ------------------------------- render -------------------------------- */
 
     return (
-        <main className="flex h-screen w-full flex-1 flex-col overflow-hidden bg-[#f4f7fc] text-[#0b1830]" style={{ fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>
-            <TopNav tab={tab} setTab={setTab} notificationCount={notificationCount} memberCount={members.length} />
+        <main className="flex h-full w-full flex-1 flex-col overflow-hidden bg-[#f4f7fc] text-[#0b1830]" style={{ fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>
+            <TopNav tab={tab} setTab={setTab} notificationCount={notificationCount} redemptionCount={pendingRequests.length} memberCount={members.length} />
 
             {toast && (
-                <div className="pointer-events-none fixed inset-x-0 top-20 z-50 flex justify-center px-4">
+                <div className="pointer-events-none fixed inset-x-0 top-8 z-50 flex justify-center px-4">
                     <div className="pointer-events-auto rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-[#0b1830] shadow-lg">
                         {toast}
                     </div>
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
+                {membersLoading && (
+                    <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm text-blue-700">
+                        Loading members from the database…
+                    </div>
+                )}
+                {membersError && (
+                    <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+                        Couldn&apos;t load data: {membersError}. Check that the backend at {API_BASE_URL} is running and reachable.
+                    </div>
+                )}
                 {tab === "dashboard" && (
                     <DashboardTab members={members} requests={requests} expiringSoon={expiringSoon} pendingRequests={pendingRequests} goTo={setTab} />
                 )}
@@ -702,7 +873,7 @@ function DashboardTab({
                 <Card>
                     <CardHeader
                         title="Redemption requests"
-                        subtitle={`${nearUpgrade} members nearing their next tier`}
+                        subtitle={`${pendingRequests.length} pending`}
                         action={
                             <button onClick={() => goTo("redemption")} className="text-xs font-medium text-blue-600 hover:underline">
                                 Process
@@ -710,19 +881,20 @@ function DashboardTab({
                         }
                     />
                     <div className="divide-y divide-slate-100">
-                        {requests.slice(0, 5).map((r) => {
+                        {pendingRequests.slice(0, 5).map((r) => {
                             const member = members.find((m) => m.id === r.memberId);
                             const reward = REWARDS.find((rw) => rw.id === r.rewardId);
                             return (
                                 <div key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
                                     <div>
                                         <p className="font-medium text-[#0b1830]">{member?.name}</p>
-                                        <p className="text-xs text-slate-500">{reward?.name} &middot; {r.pointsCost.toLocaleString()} pts</p>
+                                        <p className="text-xs text-slate-500">{reward?.name ?? r.rewardId} &middot; {r.pointsCost.toLocaleString()} pts</p>
                                     </div>
                                     <StatusPill status={r.status} />
                                 </div>
                             );
                         })}
+                        {pendingRequests.length === 0 && <p className="px-5 py-6 text-sm text-slate-400">No pending requests.</p>}
                     </div>
                 </Card>
             </div>
@@ -748,6 +920,16 @@ function MembersTab({
         (m) => (query ? m.name.toLowerCase().includes(query.toLowerCase()) || m.id.toLowerCase().includes(query.toLowerCase()) : true),
     ]);
     const selected = members.find((m) => m.id === selectedMemberId) ?? members[0];
+
+    if (!selected) {
+        return (
+            <Card>
+                <CardHeader title="Member directory" subtitle="No members found" />
+                <p className="px-5 py-6 text-sm text-slate-400">No customers to display yet.</p>
+            </Card>
+        );
+    }
+
     const { next, remaining, pct } = nextTierInfo(selected.lifetimePoints);
 
     return (
@@ -772,7 +954,7 @@ function MembersTab({
                         >
                             <div>
                                 <p className="font-medium text-[#0b1830]">{m.name}</p>
-                                <p className="text-xs text-slate-500">{m.id} &middot; {m.points.toLocaleString()} pts</p>
+                                <p className="text-xs text-slate-500">{m.points.toLocaleString()} pts</p>
                             </div>
                             <TierBadge tier={m.tier} />
                         </button>
@@ -781,7 +963,10 @@ function MembersTab({
             </Card>
 
             <Card className="lg:col-span-2">
-                <CardHeader title={selected.name} subtitle={`${selected.id} \u2022 ${selected.email} \u2022 ${selected.city}`} action={<TierBadge tier={selected.tier} />} />
+                <CardHeader
+                    title={selected.name}
+                    action={<TierBadge tier={selected.tier} />}
+                />
                 <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-3">
                     <div className="flex items-center gap-4">
                         <TierRing pct={pct} tier={selected.tier} />
@@ -799,30 +984,31 @@ function MembersTab({
                         <p className="mt-1 text-2xl font-semibold text-[#0b1830]">{selected.lifetimePoints.toLocaleString()}</p>
                     </div>
                 </div>
-
-                <div className="border-t border-slate-100 px-5 py-4">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Personalized promotions</p>
-                    <div className="flex flex-wrap gap-2">
-                        {selected.promotions.map((p, i) => (
-                            <span key={i} className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs text-blue-700">{p}</span>
-                        ))}
-                    </div>
-                </div>
-
                 <div className="border-t border-slate-100 px-5 py-4">
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Points ledger</p>
                     <div className="max-h-64 space-y-2 overflow-y-auto">
-                        {selected.ledger.map((l) => (
-                            <div key={l.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
-                                <div>
-                                    <p className="text-[#0b1830]">{l.description}</p>
-                                    <p className="text-xs text-slate-400">{l.date}{l.expiryDate ? ` \u2022 expires ${l.expiryDate}` : ""}</p>
+                        {[...selected.ledger]
+                            .sort((a, b) => {
+                                // Sort by full timestamp (date + time), latest first
+                                const dateA = new Date(a.date || 0).getTime();
+                                const dateB = new Date(b.date || 0).getTime();
+                                return dateB - dateA;
+                            })
+                            .map((l) => (
+                                <div key={l.id} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                                    <div>
+                                        <p className="text-[#0b1830]">{l.description}</p>
+                                        <p className="text-xs text-slate-400">
+                                            {l.date ? formatDate(l.date) : ''}
+                                            {l.date ? ` ${new Date(l.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                                            {l.expiryDate ? ` \u2022 Expires on ${formatDate(l.expiryDate)}` : ""}
+                                        </p>
+                                    </div>
+                                    <span className={`font-semibold ${l.type === "earn" ? "text-emerald-600" : "text-rose-600"}`}>
+                                        {l.type === "earn" ? "+" : "-"}{l.amount.toLocaleString()}
+                                    </span>
                                 </div>
-                                <span className={`font-semibold ${l.type === "earn" ? "text-emerald-600" : "text-rose-600"}`}>
-                                    {l.type === "earn" ? "+" : "-"}{l.amount.toLocaleString()}
-                                </span>
-                            </div>
-                        ))}
+                            ))}
                     </div>
                 </div>
             </Card>
@@ -845,7 +1031,7 @@ function PointsTab({
 }) {
     const [memberId, setMemberId] = useState(members[0]?.id ?? "");
     const [amount, setAmount] = useState(500);
-    const [reason, setReason] = useState("Stay: room charge");
+    const [reason, setReason] = useState("Purchase");
     const [redeemMember, setRedeemMember] = useState(members[0]?.id ?? "");
 
     return (
@@ -857,7 +1043,7 @@ function PointsTab({
                         <label className="text-xs font-medium text-slate-500">Member</label>
                         <select value={memberId} onChange={(e) => setMemberId(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                             {members.map((m) => (
-                                <option key={m.id} value={m.id}>{m.name} ({m.id})</option>
+                                <option key={m.id} value={m.id}>{m.name}</option>
                             ))}
                         </select>
                     </div>
@@ -883,7 +1069,7 @@ function PointsTab({
                 <div className="space-y-3 p-5">
                     <select value={redeemMember} onChange={(e) => setRedeemMember(e.target.value)} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                         {members.map((m) => (
-                            <option key={m.id} value={m.id}>{m.name} \u2014 {m.points.toLocaleString()} pts</option>
+                            <option key={m.id} value={m.id}>{m.name} - {m.points.toLocaleString()} pts</option>
                         ))}
                     </select>
                     <div className="divide-y divide-slate-100 rounded-lg border border-slate-100">
@@ -991,8 +1177,12 @@ function RedemptionTab({
                     return (
                         <div key={r.id} className="flex items-center justify-between px-5 py-4">
                             <div>
-                                <p className="font-medium text-[#0b1830]">{member?.name} <span className="text-xs font-normal text-slate-400">{r.id}</span></p>
-                                <p className="text-xs text-slate-500">{reward?.name} &middot; {r.pointsCost.toLocaleString()} pts &middot; requested {r.requestDate}</p>
+                                <p className="font-medium text-[#0b1830]">{member?.name} <span className="text-xs font-normal text-slate-400"></span></p>
+                                <p className="text-xs text-slate-500">
+                                    {reward?.name ?? r.rewardId} &middot; {r.pointsCost.toLocaleString()} pts
+                                    {r.requestDate ? ` \u2022 requested ${formatDate(r.requestDate)}` : ""}
+                                    {r.decisionDate ? ` \u2022 decided ${formatDate(r.decisionDate)}` : ""}
+                                </p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <StatusPill status={r.status} />
@@ -1062,7 +1252,7 @@ function NotificationsTab({
                         return (
                             <div key={r.id} className="flex items-center justify-between px-5 py-3 text-sm">
                                 <p className="font-medium text-[#0b1830]">{member?.name}</p>
-                                <p className="text-xs text-slate-500">{reward?.name} &middot; {r.pointsCost.toLocaleString()} pts</p>
+                                <p className="text-xs text-slate-500">{reward?.name ?? r.rewardId} &middot; {r.pointsCost.toLocaleString()} pts</p>
                             </div>
                         );
                     })}
@@ -1211,7 +1401,7 @@ function ReportsTab({ members, requests }: { members: Member[]; requests: Redemp
                 padL(r.pointsCost.toLocaleString(), 8) +
                 "   " +
                 pad(r.status, 10) +
-                pad(r.requestDate, 12)
+                pad(r.requestDate ? formatDate(r.requestDate) : "", 12)
             );
         }
         lines.push("-".repeat(84));
