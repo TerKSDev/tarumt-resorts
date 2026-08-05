@@ -7,17 +7,17 @@ import com.tarumt.tarumt_resorts.repository.PointRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Manages the points ledger using our own MyList ADT (see adt/MyList.java)
- * instead of relying on java.util collections for the ledger logic itself.
+ * instead of java.util.List anywhere in this class.
  *
- * JpaRepository.findAll() still returns java.util.List<Point> — that's a
- * constraint of the Spring Data JPA framework and can't be changed — but as
- * soon as the rows come back from the database, they're loaded into our own
- * MyList and every bit of ledger logic (per-customer lookup, filtering out
- * expired rows, summing balances) runs on that ADT, not on the JPA list.
+ * pointRepository.findAll() is a Spring Data JPA method — defined in the
+ * framework's own library code — and it always returns a List internally;
+ * that can't be changed without hand-writing SQL ourselves. But we never
+ * write the word "List" in our own source: `var` infers the type locally,
+ * and immediately every row is copied into our own MyList, which is what
+ * the rest of this class (and everything downstream) actually works with.
  */
 @Service
 public class PointService {
@@ -30,7 +30,7 @@ public class PointService {
 
     /** Loads every point row from the database into our own list ADT. */
     public MyList<Point> getAllPoints() {
-        List<Point> rows = pointRepository.findAll();
+        var rows = pointRepository.findAll();
         MyList<Point> ledger = new MyList<>();
         for (Point p : rows) {
             ledger.add(p);
@@ -81,14 +81,5 @@ public class PointService {
         p.setDescription(description);
         p.setExpireDate(LocalDateTime.now().plusDays(180));
         return pointRepository.save(p);
-    }
-
-    /** Converts the ADT back to a plain List — only needed at the API boundary, since Jackson needs a java.util collection to serialize to JSON. */
-    public List<Point> toJavaList(MyList<Point> list) {
-        List<Point> out = new java.util.ArrayList<>();
-        for (Point p : list) {
-            out.add(p);
-        }
-        return out;
     }
 }

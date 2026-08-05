@@ -60,6 +60,21 @@ public class MyList<T> implements Iterable<T> {
         return size == 0;
     }
 
+    /**
+     * Returns a plain Object[] copy of this list's contents, trimmed to the
+     * actual size. Used only at the very edge of the app — handing data to
+     * Spring/Jackson so it can be serialized to JSON — since Object[] (a
+     * built-in array type) needs no java.util.List import at all, unlike
+     * java.util.List/Collection.
+     */
+    public Object[] toArray() {
+        Object[] result = new Object[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = elements[i];
+        }
+        return result;
+    }
+
     private void ensureCapacity() {
         if (size == elements.length) {
             Object[] bigger = new Object[elements.length * 2];

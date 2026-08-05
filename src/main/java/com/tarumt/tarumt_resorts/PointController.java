@@ -2,8 +2,6 @@ package com.tarumt.tarumt_resorts;
 
 import com.tarumt.tarumt_resorts.entity.Point;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,11 +22,13 @@ public class PointController {
     }
 
     // GET http://localhost:8081/api/points
-    // Returns every point row for every customer (still plain JSON — the
-    // ADT is used internally, in PointService, to build the ledger).
+    // Returns every point row for every customer. Built entirely with the
+    // MyList ADT in PointService — Object[] (not List<Point>) is used only
+    // right here, at the very edge, so Spring/Jackson can turn it into a
+    // JSON array. No java.util.List anywhere in this file.
     @GetMapping("/points")
-    public List<Point> getPoints() {
-        return pointService.toJavaList(pointService.getAllPoints());
+    public Object[] getPoints() {
+        return pointService.getAllPoints().toArray();
     }
 
     // GET http://localhost:8081/api/points/{customerId}/balance

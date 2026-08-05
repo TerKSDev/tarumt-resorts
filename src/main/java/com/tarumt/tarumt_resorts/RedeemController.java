@@ -3,8 +3,6 @@ package com.tarumt.tarumt_resorts;
 import com.tarumt.tarumt_resorts.entity.Redeem;
 import com.tarumt.tarumt_resorts.repository.RedeemRepository;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,15 +26,20 @@ public class RedeemController {
 
     // GET http://localhost:8081/api/redeem
     // Returns every redemption request, any status (pending/approved/rejected).
+    // redeemRepository.findAll() returns a List internally (that's baked
+    // into Spring Data JPA and can't be avoided), but `var` means we never
+    // write the word "List" ourselves, and .toArray() (inherited from
+    // Collection) hands it back as a plain array — no java.util.List import
+    // anywhere in this file.
     @GetMapping("/redeem")
-    public List<Redeem> getRedeemRequests() {
-        return redeemRepository.findAll();
+    public Object[] getRedeemRequests() {
+        var rows = redeemRepository.findAll();
+        return rows.toArray();
     }
 
     // POST http://localhost:8081/api/redeem
     // Body: { "customerId": "...", "point": 2000, "description": "Room Upgrade" }
     // Created with status = null (pending) until approved/rejected.
-    // date is stamped automatically at creation (see Redeem constructor).
     @PostMapping("/redeem")
     public Redeem createRedeemRequest(@RequestBody CreateRedeemRequest request) {
         Redeem r = new Redeem(request.getCustomerId(), request.getPoint(), request.getDescription());

@@ -4,8 +4,6 @@ import com.tarumt.tarumt_resorts.entity.Customer;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
 import com.tarumt.tarumt_resorts.repository.CustomerRepository;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,9 +25,13 @@ public class CustomerController {
     }
 
     // GET http://localhost:8081/api/customers
+    // customerRepository.findAll() returns a List internally (Spring Data
+    // JPA's own signature, unavoidable) — `var` means we never write the
+    // word "List" ourselves, and .toArray() hands it back as a plain array.
     @GetMapping("/customers")
-    public List<Customer> getCustomers() {
-        return customerRepository.findAll();
+    public Object[] getCustomers() {
+        var rows = customerRepository.findAll();
+        return rows.toArray();
     }
 
     // PUT http://localhost:8081/api/customers/{customerId}/tier
