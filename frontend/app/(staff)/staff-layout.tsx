@@ -4,6 +4,7 @@ import TopBar from "../../components/TopBar";
 import { useLocation } from "react-router";
 import { useState } from "react";
 import { PATHS } from "../../lib/config/routes";
+import { motion } from "motion/react";
 
 export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -11,7 +12,7 @@ export default function AdminLayout() {
   const path = PATHS.find((path) => path.to === pathname);
 
   return (
-    <main className="flex min-h-screen flex-1 overflow-hidden">
+    <main className="flex h-screen w-full overflow-hidden">
       <SideNav menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <section className="flex-1 flex flex-col w-full overflow-hidden">
         <TopBar
@@ -19,9 +20,14 @@ export default function AdminLayout() {
           desc={path?.desc || "Unavailable"}
           setMenuOpen={setMenuOpen}
         />
-        <div className="overflow-y-auto p-8">
+        <motion.div
+          className="overflow-y-auto flex-1 flex flex-col p-2 py-4 md:py-8 md:p-8 border border-surface-300"
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.1 }}
+        >
           <Outlet />
-        </div>
+        </motion.div>
       </section>
     </main>
   );

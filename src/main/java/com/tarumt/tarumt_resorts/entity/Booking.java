@@ -2,10 +2,8 @@ package com.tarumt.tarumt_resorts.entity;
 
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
@@ -20,20 +18,23 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bookingId;
 
+    @Column(name = "confirmation_no", unique = true, nullable = false, length = 8)
+    private String confirmationNo;
+
     @Column(name = "check_in_date")
     private LocalDateTime checkInDate;
 
     @Column(name = "check_out_date")
     private LocalDateTime checkOutDate;
 
-    @Column(name = "total_amount")
+    @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
     @Column(name = "is_paid")
     private Boolean isPaid = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "booking_status")
+    @Column(name = "status")
     private BookingStatus status;
 
     @CreationTimestamp
@@ -55,8 +56,9 @@ public class Booking {
     // Constructor
     public Booking() {}
 
-    public Booking(Long bookingId, LocalDateTime checkInDate, LocalDateTime checkOutDate, BigDecimal totalAmount, Boolean isPaid, BookingStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, Customer customer, Room room) {
+    public Booking(Long bookingId, String confirmationNo, LocalDateTime checkInDate, LocalDateTime checkOutDate, BigDecimal totalAmount, Boolean isPaid, BookingStatus status, LocalDateTime createdAt, LocalDateTime updatedAt, Customer customer, Room room) {
         this.bookingId = bookingId;
+        this.confirmationNo = confirmationNo;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.totalAmount = totalAmount;
@@ -71,6 +73,10 @@ public class Booking {
     // Getters
     public Long getBookingId() {
         return this.bookingId;
+    }
+
+    public String getConfirmationNo() {
+        return this.confirmationNo;
     }
 
     public LocalDateTime getCheckInDate() {
@@ -112,6 +118,10 @@ public class Booking {
     // Setters
     public void setBookingId(Long bookingId) {
         this.bookingId = bookingId;
+    }
+
+    public void setConfirmationNo(String confirmationNo) {
+        this.confirmationNo = confirmationNo;
     }
 
     public void setCheckInDate(LocalDateTime checkInDate) {
