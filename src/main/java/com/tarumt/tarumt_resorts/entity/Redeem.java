@@ -1,3 +1,5 @@
+//By Tek Shao Xian
+
 package com.tarumt.tarumt_resorts.entity;
 
 import jakarta.persistence.*;
@@ -7,7 +9,6 @@ import java.time.Instant;
 @Table(name = "Redeem")
 public class Redeem {
 
-    // id is an auto-increment INTEGER PRIMARY KEY in the real table.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -19,15 +20,12 @@ public class Redeem {
     @Column(name = "point")
     private Integer point;
 
-    // null = pending, true = approved, false = rejected
     @Column(name = "status")
     private Boolean status;
 
-    // the redeemed reward's name
     @Column(name = "description")
     private String description;
 
-    // when the request was submitted
     @Column(name = "date")
     private Instant date;
 
@@ -37,7 +35,7 @@ public class Redeem {
         this.customerId = customerId;
         this.point = point;
         this.description = description;
-        this.status = null; // pending until approved/rejected
+        this.status = null;
         this.date = Instant.now();
     }
 

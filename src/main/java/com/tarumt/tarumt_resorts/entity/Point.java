@@ -1,3 +1,5 @@
+//By Tek Shao Xian
+
 package com.tarumt.tarumt_resorts.entity;
 
 import org.hibernate.annotations.CreationTimestamp;

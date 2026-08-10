@@ -1,18 +1,10 @@
+//By Tek Shao Xian
+
 package com.tarumt.tarumt_resorts.adt;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-/**
- * A minimal, self-contained List ADT: a resizable array of elements
- * supporting add / get / size / iteration.
- *
- * This is written from scratch (no java.util.ArrayList underneath) to
- * satisfy the "implement your own collection ADT" assignment requirement.
- * Backed by a plain Object[] that doubles in capacity when full — the
- * same underlying strategy java.util.ArrayList itself uses, but built
- * here manually so all resizing/index logic is our own.
- */
 public class MyList<T> implements Iterable<T> {
 
     private static final int DEFAULT_CAPACITY = 10;
@@ -25,21 +17,18 @@ public class MyList<T> implements Iterable<T> {
         size = 0;
     }
 
-    /** Appends an item to the end of the list. */
     public void add(T item) {
         ensureCapacity();
         elements[size] = item;
         size++;
     }
 
-    /** Returns the item at the given index. */
     @SuppressWarnings("unchecked")
     public T get(int index) {
         checkIndex(index);
         return (T) elements[index];
     }
 
-    /** Removes and returns the item at the given index, shifting later items left. */
     @SuppressWarnings("unchecked")
     public T remove(int index) {
         checkIndex(index);
@@ -60,13 +49,6 @@ public class MyList<T> implements Iterable<T> {
         return size == 0;
     }
 
-    /**
-     * Returns a plain Object[] copy of this list's contents, trimmed to the
-     * actual size. Used only at the very edge of the app — handing data to
-     * Spring/Jackson so it can be serialized to JSON — since Object[] (a
-     * built-in array type) needs no java.util.List import at all, unlike
-     * java.util.List/Collection.
-     */
     public Object[] toArray() {
         Object[] result = new Object[size];
         for (int i = 0; i < size; i++) {

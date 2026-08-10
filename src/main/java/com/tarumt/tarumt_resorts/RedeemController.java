@@ -1,3 +1,5 @@
+//By Tek Shao Xian
+
 package com.tarumt.tarumt_resorts;
 
 import com.tarumt.tarumt_resorts.entity.Redeem;
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // same as HelloController — open for React dev
+@CrossOrigin(origins = "*")
 public class RedeemController {
 
     private final RedeemRepository redeemRepository;
@@ -25,12 +27,6 @@ public class RedeemController {
     }
 
     // GET http://localhost:8081/api/redeem
-    // Returns every redemption request, any status (pending/approved/rejected).
-    // redeemRepository.findAll() returns a List internally (that's baked
-    // into Spring Data JPA and can't be avoided), but `var` means we never
-    // write the word "List" ourselves, and .toArray() (inherited from
-    // Collection) hands it back as a plain array — no java.util.List import
-    // anywhere in this file.
     @GetMapping("/redeem")
     public Object[] getRedeemRequests() {
         var rows = redeemRepository.findAll();
@@ -38,8 +34,6 @@ public class RedeemController {
     }
 
     // POST http://localhost:8081/api/redeem
-    // Body: { "customerId": "...", "point": 2000, "description": "Room Upgrade" }
-    // Created with status = null (pending) until approved/rejected.
     @PostMapping("/redeem")
     public Redeem createRedeemRequest(@RequestBody CreateRedeemRequest request) {
         Redeem r = new Redeem(request.getCustomerId(), request.getPoint(), request.getDescription());
@@ -47,8 +41,6 @@ public class RedeemController {
     }
 
     // PUT http://localhost:8081/api/redeem/{id}
-    // Body: { "status": true }  -> approve
-    // Body: { "status": false } -> reject
     @PutMapping("/redeem/{id}")
     public ResponseEntity<Redeem> updateStatus(@PathVariable Long id, @RequestBody UpdateStatusRequest request) {
         return redeemRepository.findById(id)
@@ -60,7 +52,6 @@ public class RedeemController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Request body shape for POST /api/redeem
     public static class CreateRedeemRequest {
         private String customerId;
         private Integer point;
@@ -74,7 +65,6 @@ public class RedeemController {
         public void setDescription(String description) { this.description = description; }
     }
 
-    // Request body shape for PUT /api/redeem/{id}
     public static class UpdateStatusRequest {
         private Boolean status;
 

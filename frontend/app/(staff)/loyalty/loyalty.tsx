@@ -1,3 +1,5 @@
+//By Tek Shao Xian
+
 import { useEffect, useMemo, useState, type ReactNode, type SVGProps } from "react";
 import { type LinksFunction, type MetaFunction } from "react-router";
 
@@ -24,11 +26,11 @@ type RequestStatus = "Pending" | "Approved" | "Rejected";
 
 interface PointsLedgerEntry {
     id: string;
-    date: string; // ISO date
+    date: string;
     type: LedgerType;
     amount: number;
     description: string;
-    expiryDate?: string; // only set for "earn" entries
+    expiryDate?: string;
 }
 
 interface Member {
@@ -37,8 +39,8 @@ interface Member {
     email: string;
     city: string;
     tier: TierName;
-    points: number; // current redeemable balance
-    lifetimePoints: number; // drives tier progression
+    points: number;
+    lifetimePoints: number;
     joinDate: string;
     lastActivity: string;
     ledger: PointsLedgerEntry[];
@@ -59,7 +61,7 @@ interface RedemptionRequest {
     pointsCost: number;
     status: RequestStatus;
     requestDate: string;
-    decisionDate?: string; // when approved/rejected
+    decisionDate?: string;
 }
 
 type TabKey =
@@ -227,7 +229,6 @@ function padL(str: string | number, len: number): string {
     return String(str).padStart(len, " ");
 }
 
-// Format date to dd/MM/yyyy
 function formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -242,7 +243,6 @@ function formatDate(dateStr: string): string {
    ALGORITHMS: sorting + searching (implemented explicitly, not just .sort())
    ========================================================================= */
 
-// Generic merge sort — O(n log n), stable.
 function mergeSort<T>(items: T[], compare: (a: T, b: T) => number): T[] {
     if (items.length <= 1) return items;
     const mid = Math.floor(items.length / 2);
@@ -260,7 +260,6 @@ function mergeSort<T>(items: T[], compare: (a: T, b: T) => number): T[] {
     return merged;
 }
 
-// Binary search by id — requires input already sorted by id. O(log n).
 function binarySearchById<T extends { id: string }>(sortedById: T[], id: string): T | null {
     let lo = 0;
     let hi = sortedById.length - 1;
@@ -275,7 +274,6 @@ function binarySearchById<T extends { id: string }>(sortedById: T[], id: string)
     return null;
 }
 
-// Linear multi-criteria filter — O(n), applies every active predicate.
 function filterItems<T>(items: T[], predicates: Array<(item: T) => boolean>): T[] {
     return items.filter((item) => predicates.every((p) => p(item)));
 }
@@ -284,12 +282,6 @@ function filterItems<T>(items: T[], predicates: Array<(item: T) => boolean>): T[
    REAL DATA — fetched from the backend `customers` table
    ========================================================================= */
 
-// Shape returned by the Spring Boot CustomerController — this is the
-// Customer entity serialized directly by Jackson, so field names come out
-// camelCase (matching the Java getters), not snake_case like the DB columns.
-// Only `name` and `loyaltyTier` are guaranteed useful today — everything
-// else on Member (email, city, points, ledger, promotions...) doesn't exist
-// in the customers table yet, so it's left empty/zeroed for now.
 interface CustomerApiResponse {
     customerId: string;
     confirmationNo?: number;
@@ -300,9 +292,6 @@ interface CustomerApiResponse {
     updatedAt?: string;
 }
 
-// Spring Boot runs on port 8081 (see application.properties), the React
-// dev server on a different port — so this must be an absolute URL.
-// Adjust if you deploy behind a different host/port.
 const API_BASE_URL = "http://localhost:8081";
 const CUSTOMERS_ENDPOINT = `${API_BASE_URL}/api/customers`;
 
@@ -339,8 +328,6 @@ async function fetchMembersFromApi(): Promise<Member[]> {
     return data.map(mapCustomerToMember);
 }
 
-// Persists a tier change to the backend so it's saved in customers.loyalty_tier,
-// not just held in local state.
 async function updateCustomerTierApi(customerId: string, tier: TierName): Promise<void> {
     const res = await fetch(`${CUSTOMERS_ENDPOINT}/${customerId}/tier`, {
         method: "PUT",
@@ -352,15 +339,13 @@ async function updateCustomerTierApi(customerId: string, tier: TierName): Promis
     }
 }
 
-// Shape returned by / sent to the Spring Boot PointController (also
-// camelCase, entity-serialized).
 interface PointApiResponse {
     id: string;
     customerId: string;
     point: number;
     description?: string;
-    date?: string; // when the points were earned
-    expireDate?: string; // date + 180 days, set by the backend
+    date?: string;
+    expireDate?: string;
 }
 
 const POINTS_ENDPOINT = `${API_BASE_URL}/api/points`;
@@ -383,10 +368,6 @@ async function awardPointsApi(customerId: string, point: number, description: st
         throw new Error(`Failed to award points (${res.status})`);
     }
 }
-
-// Combines base member records with their points rows: `points` is the sum
-// of rows that haven't expired yet, `lifetimePoints` is the sum of all rows
-// ever earned, and `ledger` is built from the raw rows for display.
 function applyPointsToMembers(members: Member[], pointsRows: PointApiResponse[]): Member[] {
     const now = Date.now();
     return members.map((m) => {
@@ -398,7 +379,6 @@ function applyPointsToMembers(members: Member[], pointsRows: PointApiResponse[])
         const ledger: PointsLedgerEntry[] = rows
             .slice()
             .sort((a, b) => {
-                // Sort by full timestamp, latest first
                 const dateA = new Date(a.date ?? 0).getTime();
                 const dateB = new Date(b.date ?? 0).getTime();
                 return dateB - dateA;
@@ -415,17 +395,14 @@ function applyPointsToMembers(members: Member[], pointsRows: PointApiResponse[])
     });
 }
 
-// Shape returned by / sent to the Spring Boot RedeemController. There's no
-// request-date column on this table, so RedemptionRequest.requestDate is
-// left blank for real rows.
 interface RedeemApiResponse {
     id: number;
     customerId: string;
     point: number;
-    status: boolean | null; // null = pending, true = approved, false = rejected
+    status: boolean | null;
     description: string;
-    date?: string; // request date
-    decisionDate?: string; // when approved/rejected
+    date?: string;
+    decisionDate?: string;
 }
 
 const REDEEM_ENDPOINT = `${API_BASE_URL}/api/redeem`;
@@ -471,11 +448,6 @@ function mapRedeemToRequest(r: RedeemApiResponse): RedemptionRequest {
         decisionDate: r.decisionDate ?? "",
     };
 }
-
-// Subtracts approved redemptions from each member's redeemable balance and
-// adds them to the ledger as "redeem" entries. Applied as a derived layer
-// on top of the Points-only balances from applyPointsToMembers, so it never
-// double-counts even if this runs again after the raw data refreshes.
 function applyApprovedRedemptions(members: Member[], requests: RedemptionRequest[]): Member[] {
     return members.map((m) => {
         const approved = requests.filter((r) => r.memberId === m.id && r.status === "Approved");
@@ -547,7 +519,6 @@ function KpiCard({ label, value, hint }: { label: string; value: string; hint?: 
     );
 }
 
-// Circular tier-progress ring — signature element linking a member to their next tier.
 function TierRing({ pct, tier }: { pct: number; tier: TierName }) {
     const r = 26;
     const c = 2 * Math.PI * r;
@@ -574,14 +545,6 @@ function TierRing({ pct, tier }: { pct: number; tier: TierName }) {
         </svg>
     );
 }
-
-/* =========================================================================
-   TOP NAVIGATION
-   Horizontal, grouped tab bar with an underline indicator — replaces the
-   previous dark vertical sidebar. Groups are visually separated by hairline
-   dividers so the operational structure (Overview / Member Operations /
-   Insights) still reads clearly without needing a full-height rail.
-   ========================================================================= */
 
 function TopNav({ tab, setTab, notificationCount, redemptionCount, memberCount }: {
     tab: TabKey;
@@ -653,9 +616,6 @@ export default function LoyaltyAndMember() {
         window.setTimeout(() => setToast(null), 2600);
     };
 
-    // Approved redemptions are layered on top of the raw (Points-only)
-    // member records here, rather than baked into rawMembers permanently —
-    // that way re-deriving this never double-subtracts a redemption.
     const members = useMemo(() => applyApprovedRedemptions(rawMembers, requests), [rawMembers, requests]);
 
     useEffect(() => {
@@ -684,8 +644,6 @@ export default function LoyaltyAndMember() {
 
     const selectedMember = members.find((m) => m.id === selectedMemberId) ?? members[0];
 
-    /* --------------------------- domain actions --------------------------- */
-
     function addPoints(memberId: string, amount: number, description: string) {
         if (amount <= 0) return;
         const member = members.find((m) => m.id === memberId);
@@ -704,7 +662,6 @@ export default function LoyaltyAndMember() {
                             flash(`${updated.name} upgraded from ${oldTier} to ${newTier}!`);
                         })
                         .catch((err: unknown) => {
-                            // points were saved even if the tier update failed — show both states
                             setRawMembers(merged);
                             flash(err instanceof Error ? `Points added, but tier update failed: ${err.message}` : "Points added, but tier update failed");
                         });
@@ -749,7 +706,6 @@ export default function LoyaltyAndMember() {
             });
     }
 
-    /* ------------------------------ derived -------------------------------- */
 
     const expiringSoon = useMemo(() => {
         const out: { member: Member; entry: PointsLedgerEntry; days: number }[] = [];
@@ -768,7 +724,6 @@ export default function LoyaltyAndMember() {
 
     const notificationCount = expiringSoon.length + pendingRequests.length;
 
-    /* ------------------------------- render -------------------------------- */
 
     return (
         <main className="flex h-full w-full flex-1 flex-col overflow-hidden bg-[#f4f7fc] text-[#0b1830]" style={{ fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif" }}>
@@ -989,7 +944,6 @@ function MembersTab({
                     <div className="max-h-64 space-y-2 overflow-y-auto">
                         {[...selected.ledger]
                             .sort((a, b) => {
-                                // Sort by full timestamp (date + time), latest first
                                 const dateA = new Date(a.date || 0).getTime();
                                 const dateB = new Date(b.date || 0).getTime();
                                 return dateB - dateA;
@@ -1332,22 +1286,22 @@ function ReportsTab({ members, requests }: { members: Member[]; requests: Redemp
         lines.push("=".repeat(78));
         lines.push("MEMBER PERFORMANCE REPORT".padEnd(50) + `Generated: ${isoDate(new Date())}`);
         lines.push("=".repeat(78));
-        lines.push(`Filters -> Tier: ${mTier} | Min points: ${mMinPoints} | Search: "${bySearch || "(none)"}" | Sort: ${mSortBy}`);
+        lines.push(`Filters -> Tier: ${mTier} | Min points: ${mMinPoints} | Search: "${bySearch || "none"}" | Sort: ${mSortBy}`);
         lines.push("-".repeat(78));
 
         if (directHit) {
             lines.push(`DIRECT LOOKUP (binary search on ID "${directHit.id}"): FOUND`);
-            lines.push(`  ${directHit.name} | ${directHit.tier} | ${directHit.points.toLocaleString()} pts | joined ${directHit.joinDate}`);
+            lines.push(`  ${directHit.name} | ${directHit.tier} | ${directHit.points.toLocaleString()} pts | joined ${formatDate(directHit.joinDate)}`);
             lines.push("-".repeat(78));
         } else if (bySearch && /^M?\d+$/i.test(bySearch)) {
             lines.push(`DIRECT LOOKUP (binary search on ID "${bySearch}"): NOT FOUND`);
             lines.push("-".repeat(78));
         }
 
-        lines.push(pad("ID", 8) + pad("NAME", 20) + pad("TIER", 10) + padL("POINTS", 10) + "   " + pad("JOINED", 12));
+        lines.push(pad("NAME", 22) + pad("TIER", 10) + padL("POINTS", 10) + "   " + pad("JOINED", 12));
         lines.push("-".repeat(78));
         for (const m of sorted) {
-            lines.push(pad(m.id, 8) + pad(m.name, 20) + pad(m.tier, 10) + padL(m.points.toLocaleString(), 10) + "   " + pad(m.joinDate, 12));
+            lines.push(pad(m.name, 22) + pad(m.tier, 10) + padL(m.points.toLocaleString(), 10) + "   " + pad(formatDate(m.joinDate), 12));
         }
         lines.push("-".repeat(78));
 
@@ -1357,7 +1311,7 @@ function ReportsTab({ members, requests }: { members: Member[]; requests: Redemp
         for (const m of sorted) byTier[m.tier] = (byTier[m.tier] ?? 0) + 1;
 
         lines.push(`Matched records: ${sorted.length}`);
-        lines.push(`Total points (matched): ${totalPoints.toLocaleString()}   Average per member: ${avgPoints.toLocaleString()}`);
+        lines.push(`Total points: ${totalPoints.toLocaleString()}   Average per member: ${avgPoints.toLocaleString()}`);
         lines.push(`Tier breakdown: ${Object.entries(byTier).map(([t, c]) => `${t}=${c}`).join("  ") || "none"}`);
         lines.push("=".repeat(78));
 
