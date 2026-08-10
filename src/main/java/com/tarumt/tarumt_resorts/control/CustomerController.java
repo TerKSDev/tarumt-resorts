@@ -1,4 +1,4 @@
-package com.tarumt.tarumt_resorts;
+package com.tarumt.tarumt_resorts.control;
 
 import com.tarumt.tarumt_resorts.entity.Customer;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;

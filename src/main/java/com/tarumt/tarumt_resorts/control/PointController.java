@@ -1,8 +1,9 @@
 //By Tek Shao Xian
 
-package com.tarumt.tarumt_resorts;
+package com.tarumt.tarumt_resorts.control;
 
 import com.tarumt.tarumt_resorts.entity.Point;
+import com.tarumt.tarumt_resorts.service.PointService;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;

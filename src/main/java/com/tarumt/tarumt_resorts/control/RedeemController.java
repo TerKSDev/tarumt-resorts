@@ -1,6 +1,6 @@
 //By Tek Shao Xian
 
-package com.tarumt.tarumt_resorts;
+package com.tarumt.tarumt_resorts.control;
 
 import com.tarumt.tarumt_resorts.entity.Redeem;
 import com.tarumt.tarumt_resorts.repository.RedeemRepository;
