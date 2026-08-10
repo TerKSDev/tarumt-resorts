@@ -61,3 +61,13 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--color-surface-400) transparent;
 }
+
+/* Hide scrollbar but keep scrolling functionality */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

@@ -19,9 +19,14 @@ export default function AdminLayout() {
           desc={path?.desc || "Unavailable"}
           setMenuOpen={setMenuOpen}
         />
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <motion.div
+          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8 border-r border-surface-400"
+          initial="hidden"
+          animate="visible"
+          transition={{ staggerChildren: 0.1 }}
+        >
           <Outlet />
-        </div>
+        </motion.div>
       </section>
     </main>
   );
