@@ -1,6 +1,6 @@
 //By Tek Shao Xian
 
-package com.tarumt.tarumt_resorts;
+package com.tarumt.tarumt_resorts.service;
 
 import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.entity.Point;
