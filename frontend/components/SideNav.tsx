@@ -2,13 +2,30 @@ import { Building2, LogOut, X } from "lucide-react";
 import { PATHS, CATEGORIES } from "../lib/config/routes";
 import { Link, NavLink } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 
 type SideNavProps = {
   setMenuOpen: (menuOpen: boolean) => void;
   menuOpen: boolean;
 };
 
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return isDesktop;
+}
+
 export default function SideNav({ setMenuOpen, menuOpen }: SideNavProps) {
+  const isDesktop = useIsDesktop();
+
   return (
     <>
       <AnimatePresence>
@@ -24,9 +41,9 @@ export default function SideNav({ setMenuOpen, menuOpen }: SideNavProps) {
       </AnimatePresence>
 
       <motion.aside
-        className="fixed lg:relative inset-y-0 left-0 z-100 w-64 bg-brand-950 h-screen flex flex-col lg:transform-none!"
+        className="fixed lg:relative inset-y-0 left-0 z-100 w-64 bg-brand-950 h-screen flex flex-col"
         initial={false}
-        animate={{ x: menuOpen ? 0 : "-100%" }}
+        animate={{ x: isDesktop ? 0 : menuOpen ? 0 : "-100%" }}
         transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
       >
         <button
@@ -50,13 +67,13 @@ export default function SideNav({ setMenuOpen, menuOpen }: SideNavProps) {
         </div>
 
         <nav className="overflow-y-auto">
-          {Object.values(CATEGORIES).map((category, idx) => {
+          {Object.values(CATEGORIES).map((category) => {
             const filteredPaths = PATHS.filter(
               (path) => path.category === category,
             );
 
             return (
-              <div key={idx} className="flex flex-col gap-2.5 px-4">
+              <div key={category} className="flex flex-col gap-2.5 px-4">
                 <h2 className="text-surface-500 uppercase text-xs font-semibold tracking-wide">
                   {category}
                 </h2>

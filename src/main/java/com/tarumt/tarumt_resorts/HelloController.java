@@ -15,5 +15,5 @@ public class HelloController {
     public List<String> getResorts() {
         // 回傳一個簡單的度假村清單 JSON 陣列
         return List.of("Genting Highlands Resort", "Langkawi Beach Resort", "Cameron Highlands Resort");
-    }
+    }    
 }
