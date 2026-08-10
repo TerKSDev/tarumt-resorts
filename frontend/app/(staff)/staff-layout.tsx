@@ -4,6 +4,7 @@ import TopBar from "../../components/TopBar";
 import { useLocation } from "react-router";
 import { useState } from "react";
 import { PATHS } from "../../lib/config/routes";
+import { motion } from "motion/react";
 
 export default function AdminLayout() {
     const [menuOpen, setMenuOpen] = useState(false);
