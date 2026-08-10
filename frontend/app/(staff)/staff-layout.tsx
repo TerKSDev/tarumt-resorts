@@ -7,9 +7,9 @@ import { PATHS } from "../../lib/config/routes";
 import { motion } from "motion/react";
 
 export default function AdminLayout() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = useLocation().pathname;
-  const path = PATHS.find((path) => path.to === pathname);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const pathname = useLocation().pathname;
+    const path = PATHS.find((path) => path.to === pathname);
 
   return (
     <main className="flex h-screen w-full overflow-hidden">
