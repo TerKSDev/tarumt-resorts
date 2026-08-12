@@ -1,7 +1,7 @@
 //By Tek Shao Xian
 
 import { useEffect, useMemo, useState, type ReactNode, type SVGProps } from "react";
-import { type LinksFunction, type MetaFunction } from "react-router";
+import { type LinksFunction, type MetaFunction, useNavigate } from "react-router";
 
 export const meta: MetaFunction = () => [
     { title: "Loyalty & Members | TARUMT Resorts" },
@@ -221,14 +221,6 @@ function nextTierInfo(lifetimePoints: number): { next: TierName | null; remainin
     };
 }
 
-function pad(str: string | number, len: number): string {
-    return String(str).padEnd(len, " ").slice(0, Math.max(len, String(str).length));
-}
-
-function padL(str: string | number, len: number): string {
-    return String(str).padStart(len, " ");
-}
-
 function formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -258,20 +250,6 @@ function mergeSort<T>(items: T[], compare: (a: T, b: T) => number): T[] {
     while (i < left.length) merged.push(left[i++]);
     while (j < right.length) merged.push(right[j++]);
     return merged;
-}
-
-function binarySearchById<T extends { id: string }>(sortedById: T[], id: string): T | null {
-    let lo = 0;
-    let hi = sortedById.length - 1;
-    const target = id.trim().toUpperCase();
-    while (lo <= hi) {
-        const mid = Math.floor((lo + hi) / 2);
-        const midId = sortedById[mid].id.toUpperCase();
-        if (midId === target) return sortedById[mid];
-        if (midId < target) lo = mid + 1;
-        else hi = mid - 1;
-    }
-    return null;
 }
 
 function filterItems<T>(items: T[], predicates: Array<(item: T) => boolean>): T[] {
@@ -1247,6 +1225,7 @@ function NotificationsTab({
    ========================================================================= */
 
 function ReportsTab({ members, requests }: { members: Member[]; requests: RedemptionRequest[] }) {
+    const navigate = useNavigate();
     const [reportKind, setReportKind] = useState<"members" | "redemption">("members");
 
     // --- Member Performance Report filters/sort ---
@@ -1260,131 +1239,33 @@ function ReportsTab({ members, requests }: { members: Member[]; requests: Redemp
     const [rCategory, setRCategory] = useState<string>("All");
     const [rSortBy, setRSortBy] = useState<"date" | "points">("date");
 
-    const [output, setOutput] = useState<string[]>([
-        "TARUMT RESORTS — LOYALTY & REWARDS REPORTING CONSOLE",
-        "Select a report, set filters, then click Generate.",
-    ]);
-
-    function generateMemberReport() {
-        const lines: string[] = [];
-        const bySearch = mSearch.trim();
-        let directHit: Member | null = null;
-        if (bySearch && /^M?\d+$/i.test(bySearch)) {
-            const normalizedId = bySearch.toUpperCase().startsWith("M") ? bySearch.toUpperCase() : `M${bySearch}`;
-            const sortedById = mergeSort(members, (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-            directHit = binarySearchById(sortedById, normalizedId);
-        }
-
-        const filtered = filterItems(members, [
-            (m) => (mTier === "All" ? true : m.tier === mTier),
-            (m) => m.points >= mMinPoints,
-            (m) => (bySearch ? m.name.toLowerCase().includes(bySearch.toLowerCase()) || m.id.toLowerCase().includes(bySearch.toLowerCase()) : true),
-        ]);
-
-        const compareFns: Record<typeof mSortBy, (a: Member, b: Member) => number> = {
-            points: (a, b) => b.points - a.points,
-            name: (a, b) => a.name.localeCompare(b.name),
-            joinDate: (a, b) => (a.joinDate < b.joinDate ? -1 : a.joinDate > b.joinDate ? 1 : 0),
-        };
-        const sorted = mergeSort(filtered, compareFns[mSortBy]);
-
-        lines.push("=".repeat(78));
-        lines.push("MEMBER PERFORMANCE REPORT".padEnd(50) + `Generated: ${isoDate(new Date())}`);
-        lines.push("=".repeat(78));
-        lines.push(`Filters -> Tier: ${mTier} | Min points: ${mMinPoints} | Search: "${bySearch || "none"}" | Sort: ${mSortBy}`);
-        lines.push("-".repeat(78));
-
-        if (directHit) {
-            lines.push(`DIRECT LOOKUP (binary search on ID "${directHit.id}"): FOUND`);
-            lines.push(`  ${directHit.name} | ${directHit.tier} | ${directHit.points.toLocaleString()} pts | joined ${formatDate(directHit.joinDate)}`);
-            lines.push("-".repeat(78));
-        } else if (bySearch && /^M?\d+$/i.test(bySearch)) {
-            lines.push(`DIRECT LOOKUP (binary search on ID "${bySearch}"): NOT FOUND`);
-            lines.push("-".repeat(78));
-        }
-
-        lines.push(pad("NAME", 22) + pad("TIER", 10) + padL("POINTS", 10) + "   " + pad("JOINED", 12));
-        lines.push("-".repeat(78));
-        for (const m of sorted) {
-            lines.push(pad(m.name, 22) + pad(m.tier, 10) + padL(m.points.toLocaleString(), 10) + "   " + pad(formatDate(m.joinDate), 12));
-        }
-        lines.push("-".repeat(78));
-
-        const totalPoints = sorted.reduce((s, m) => s + m.points, 0);
-        const avgPoints = sorted.length ? Math.round(totalPoints / sorted.length) : 0;
-        const byTier: Record<string, number> = {};
-        for (const m of sorted) byTier[m.tier] = (byTier[m.tier] ?? 0) + 1;
-
-        lines.push(`Matched records: ${sorted.length}`);
-        lines.push(`Total points: ${totalPoints.toLocaleString()}   Average per member: ${avgPoints.toLocaleString()}`);
-        lines.push(`Tier breakdown: ${Object.entries(byTier).map(([t, c]) => `${t}=${c}`).join("  ") || "none"}`);
-        lines.push("=".repeat(78));
-
-        setOutput(lines);
+    function openMemberReport() {
+        const params = new URLSearchParams({
+            tier: mTier,
+            minPoints: String(mMinPoints),
+            search: mSearch,
+            sortBy: mSortBy,
+        });
+        navigate(`/report/members?${params.toString()}`);
     }
 
-    function generateRedemptionReport() {
-        const lines: string[] = [];
-        const filtered = filterItems(requests, [
-            (r) => (rStatus === "All" ? true : r.status === rStatus),
-            (r) => {
-                if (rCategory === "All") return true;
-                const reward = REWARDS.find((rw) => rw.id === r.rewardId);
-                return reward?.category === rCategory;
-            },
-        ]);
-
-        const compareFns: Record<typeof rSortBy, (a: RedemptionRequest, b: RedemptionRequest) => number> = {
-            date: (a, b) => (a.requestDate < b.requestDate ? 1 : a.requestDate > b.requestDate ? -1 : 0),
-            points: (a, b) => b.pointsCost - a.pointsCost,
-        };
-        const sorted = mergeSort(filtered, compareFns[rSortBy]);
-
-        lines.push("=".repeat(84));
-        lines.push("REDEMPTION ACTIVITY REPORT".padEnd(55) + `Generated: ${isoDate(new Date())}`);
-        lines.push("=".repeat(84));
-        lines.push(`Filters -> Status: ${rStatus} | Category: ${rCategory} | Sort: ${rSortBy}`);
-        lines.push("-".repeat(84));
-        lines.push(
-            pad("REQ ID", 9) + pad("MEMBER", 18) + pad("REWARD", 22) + padL("POINTS", 8) + "   " + pad("STATUS", 10) + pad("DATE", 12)
-        );
-        lines.push("-".repeat(84));
-
-        for (const r of sorted) {
-            const member = members.find((m) => m.id === r.memberId);
-            const reward = REWARDS.find((rw) => rw.id === r.rewardId);
-            lines.push(
-                pad(r.id, 9) +
-                pad(member?.name ?? r.memberId, 18) +
-                pad(reward?.name ?? r.rewardId, 22) +
-                padL(r.pointsCost.toLocaleString(), 8) +
-                "   " +
-                pad(r.status, 10) +
-                pad(r.requestDate ? formatDate(r.requestDate) : "", 12)
-            );
-        }
-        lines.push("-".repeat(84));
-
-        const totalPointsRedeemed = sorted.filter((r) => r.status === "Approved").reduce((s, r) => s + r.pointsCost, 0);
-        const byStatus: Record<string, number> = {};
-        for (const r of sorted) byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
-
-        lines.push(`Matched records: ${sorted.length}`);
-        lines.push(`Points redeemed (approved only): ${totalPointsRedeemed.toLocaleString()}`);
-        lines.push(`Status breakdown: ${Object.entries(byStatus).map(([s, c]) => `${s}=${c}`).join("  ") || "none"}`);
-        lines.push("=".repeat(84));
-
-        setOutput(lines);
+    function openRedemptionReport() {
+        const params = new URLSearchParams({
+            status: rStatus,
+            category: rCategory,
+            sortBy: rSortBy,
+        });
+        navigate(`/report/redemption?${params.toString()}`);
     }
 
     const rewardCategories = ["All", ...Array.from(new Set(REWARDS.map((r) => r.category)))];
 
     return (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="mx-auto max-w-xl">
             <Card>
                 <CardHeader
                     title="Report builder"
-                    subtitle="Combines filtering, searching, and sorting before printing to the console"
+                    subtitle="Set filters, then open the printed report on its own page"
                     action={
                         <select value={reportKind} onChange={(e) => setReportKind(e.target.value as "members" | "redemption")} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs">
                             <option value="members">Member Performance</option>
@@ -1421,8 +1302,8 @@ function ReportsTab({ members, requests }: { members: Member[]; requests: Redemp
                                 <option value="joinDate">Join date (oldest first)</option>
                             </select>
                         </div>
-                        <button onClick={generateMemberReport} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                            Generate report
+                        <button onClick={openMemberReport} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                            Open report &rarr;
                         </button>
                     </div>
                 ) : (
@@ -1452,18 +1333,11 @@ function ReportsTab({ members, requests }: { members: Member[]; requests: Redemp
                                 <option value="points">Points cost (high to low)</option>
                             </select>
                         </div>
-                        <button onClick={generateRedemptionReport} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                            Generate report
+                        <button onClick={openRedemptionReport} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+                            Open report &rarr;
                         </button>
                     </div>
                 )}
-            </Card>
-
-            <Card className="overflow-hidden">
-                <CardHeader title="Console output" subtitle="Formatted for management review" />
-                <pre className="max-h-[560px] overflow-auto whitespace-pre bg-[#081226] p-5 font-mono text-[11px] leading-relaxed text-blue-100">
-                    {output.join("\n")}
-                </pre>
             </Card>
         </div>
     );
