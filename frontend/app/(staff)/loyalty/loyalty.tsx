@@ -602,6 +602,11 @@ function TopNav({ tab, setTab, notificationCount, redemptionCount, memberCount }
    MAIN COMPONENT
    ========================================================================= */
 
+// Tells the parent layout (staff-layout.tsx) not to apply its ambient
+// padding around this page — this page manages its own spacing (its own
+// header + padded content area) via its internal layout instead.
+export const handle = { noPadding: true };
+
 export default function LoyaltyAndMember() {
     const [tab, setTab] = useState<TabKey>("dashboard");
     const [rawMembers, setRawMembers] = useState<Member[]>([]);
