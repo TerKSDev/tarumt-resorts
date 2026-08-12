@@ -8,23 +8,28 @@ import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.tarumt.tarumt_resorts.utility.ArrayQueue;
+import com.tarumt.tarumt_resorts.interfaces.SimpleQueue;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.UUID;
 
 @Service
 public class RegistrationControl {
 
+    private static final int DEFAULT_CAPACITY = 16;
+
     private final CustomerDAO customerRepository;
     private final BookingDAO bookingRepository;
 
-    // Linear Queue ADT stored in memory (FIFO)
-    private final Queue<QueueItem> queue = new LinkedList<>();
+    // In-memory FIFO queue ADT (moved to utility)
+    private final SimpleQueue<QueueItem> queue;
 
     public RegistrationControl(CustomerDAO customerRepository, BookingDAO bookingRepository) {
         this.customerRepository = customerRepository;
         this.bookingRepository = bookingRepository;
+        this.queue = new ArrayQueue<>(DEFAULT_CAPACITY);
     }
 
     // Inner Class representing temporary queue memory item
@@ -75,10 +80,7 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Identity number is required.");
         }
 
-        boolean duplicateInQueue = queue.stream()
-            .anyMatch(existing -> normalizedIdentityNo.equalsIgnoreCase(existing.getIdentityNo()));
-
-        if (duplicateInQueue) {
+        if (queue.findIndex(q -> normalizedIdentityNo.equalsIgnoreCase(q.getIdentityNo())) != -1) {
             throw new IllegalArgumentException("This identity number is already in the queue.");
         }
 
@@ -91,13 +93,19 @@ public class RegistrationControl {
         item.setIdentityNo(normalizedIdentityNo);
         item.setName(item.getName() == null ? "" : item.getName().trim());
         item.setCheckIn(LocalDateTime.now());
-        queue.add(item);
+
+        queue.enqueue(item);
         return item;
     }
 
     // View current queue snapshot
-    public List<QueueItem> getQueue() {
-        return new ArrayList<>(queue);
+    public QueueItem[] getQueue() {
+        Object[] raw = queue.snapshot();
+        QueueItem[] list = new QueueItem[raw.length];
+        for (int i = 0; i < raw.length; i++) {
+            list[i] = (QueueItem) raw[i];
+        }
+        return list;
     }
 
     // Dequeue selected guest by row ID and persist Customer and Booking entities to DB
@@ -107,16 +115,13 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Queue item id is required.");
         }
 
-        QueueItem selectedItem = queue.stream()
-            .filter(item -> queueId.equals(item.getId()))
-            .findFirst()
-            .orElse(null);
-
-        if (selectedItem == null) {
-            throw new NoSuchElementException("Selected guest was not found in the queue.");
+        int selectedIndex = queue.findIndex(q -> queueId.equals(q.getId()));
+        if (selectedIndex < 0) {
+            throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
 
-        queue.remove(selectedItem);
+        QueueItem selectedItem = queue.get(selectedIndex);
+        queue.removeAt(selectedIndex);
 
         LocalDateTime now = LocalDateTime.now();
         String normalizedIdentityNo = selectedItem.getIdentityNo() == null
@@ -153,6 +158,11 @@ public class RegistrationControl {
 
         return bookingRepository.save(booking);
     }
+
+    private void growQueue() {
+        // moved to utility implementation
+    }
+    // queue helper methods moved to utility
 
     private String generateConfirmationNumber() {
         return UUID.randomUUID().toString().substring(0, 8).toUpperCase();

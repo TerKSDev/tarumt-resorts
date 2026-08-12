@@ -6,8 +6,6 @@ import com.tarumt.tarumt_resorts.entity.Booking;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/registration/queue")
 @CrossOrigin(
@@ -24,7 +22,7 @@ public class RegistrationBoundary {
     }
 
     @GetMapping
-    public ResponseEntity<List<QueueItem>> getQueue() {
+    public ResponseEntity<QueueItem[]> getQueue() {
         return ResponseEntity.ok(registrationControl.getQueue());
     }
 
