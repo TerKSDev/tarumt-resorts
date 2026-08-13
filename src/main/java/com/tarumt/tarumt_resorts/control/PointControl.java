@@ -1,26 +1,26 @@
 //By Tek Shao Xian
 
-package com.tarumt.tarumt_resorts.service;
+package com.tarumt.tarumt_resorts.control;
 
 import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.entity.Point;
-import com.tarumt.tarumt_resorts.repository.PointRepository;
+import com.tarumt.tarumt_resorts.dao.PointDAO;
 
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
 @Service
-public class PointService {
+public class PointControl {
 
-    private final PointRepository pointRepository;
+    private final PointDAO PointDAO;
 
-    public PointService(PointRepository pointRepository) {
-        this.pointRepository = pointRepository;
+    public PointControl(PointDAO PointDAO) {
+        this.PointDAO = PointDAO;
     }
 
     public MyList<Point> getAllPoints() {
-        var rows = pointRepository.findAll();
+        var rows = PointDAO.findAll();
         MyList<Point> ledger = new MyList<>();
         for (Point p : rows) {
             ledger.add(p);
@@ -66,6 +66,6 @@ public class PointService {
         p.setPoint(amount);
         p.setDescription(description);
         p.setExpireDate(LocalDateTime.now().plusDays(180));
-        return pointRepository.save(p);
+        return PointDAO.save(p);
     }
 }

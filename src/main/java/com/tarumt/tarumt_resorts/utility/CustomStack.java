@@ -1,5 +1,5 @@
 package com.tarumt.tarumt_resorts.utility;
-import com.tarumt.tarumt_resorts.interfaces.Stack;
+import com.tarumt.tarumt_resorts.adt.Stack;
 /**
  * Linked-list based implementation of the Stack ADT.
  * Used by HousekeepingControl to track the most recent status-change

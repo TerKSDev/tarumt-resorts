@@ -2,11 +2,9 @@ package com.tarumt.tarumt_resorts.dao;
 
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface HousekeepingTaskDAO extends JpaRepository<HousekeepingTask, Long> {
 
     // latest task first - used to determine a room's current housekeeping stage

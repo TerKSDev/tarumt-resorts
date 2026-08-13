@@ -1,4 +1,4 @@
-package com.tarumt.tarumt_resorts.entity.dto;
+package com.tarumt.tarumt_resorts.dto;
 
 import com.tarumt.tarumt_resorts.entity.enums.HousekeepingStatus;
 

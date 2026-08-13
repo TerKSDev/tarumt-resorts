@@ -1,4 +1,4 @@
-package com.tarumt.tarumt_resorts.interfaces;
+package com.tarumt.tarumt_resorts.adt;
  
 /**
  * Self-implemented Stack ADT specification (LIFO).

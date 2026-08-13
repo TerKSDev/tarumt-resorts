@@ -3,16 +3,16 @@ package com.tarumt.tarumt_resorts.control;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dao.RoomDAO;
 import com.tarumt.tarumt_resorts.dao.StaffDAO;
+import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
+import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.entity.Staff;
-import com.tarumt.tarumt_resorts.entity.dto.RoomStatusSummaryDTO;
-import com.tarumt.tarumt_resorts.entity.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.enums.HousekeepingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.RoomStatus;
 import com.tarumt.tarumt_resorts.utility.CustomStack;
 import com.tarumt.tarumt_resorts.utility.RoomStackRegistry;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -22,14 +22,15 @@ import java.util.List;
 @Service
 public class HousekeepingControl {
 
-    @Autowired
-    private RoomDAO roomDAO;
+    private final RoomDAO roomDAO;
+    private final HousekeepingTaskDAO taskDAO;
+    private final StaffDAO staffDAO;
 
-    @Autowired
-    private HousekeepingTaskDAO taskDAO;
-
-    @Autowired
-    private StaffDAO staffDAO;
+    public HousekeepingControl(RoomDAO roomDAO, HousekeepingTaskDAO taskDAO, StaffDAO staffDAO) {
+        this.roomDAO = roomDAO;
+        this.taskDAO = taskDAO;
+        this.staffDAO = staffDAO;
+    }
 
     // The Linear ADT required by the assignment: ONE Stack per room, so a
     // rollback for Room A can never accidentally undo Room B's last action.

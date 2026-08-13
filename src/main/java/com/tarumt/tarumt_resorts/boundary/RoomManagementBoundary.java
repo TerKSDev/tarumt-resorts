@@ -3,7 +3,7 @@ package com.tarumt.tarumt_resorts.boundary;
 import com.tarumt.tarumt_resorts.control.RoomManagementControl;
 import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.dto.RoomDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/room")
 @CrossOrigin(origins = "http://localhost:5173")
 public class RoomManagementBoundary {
-    @Autowired
-    private RoomManagementControl roomManagementControl;
+    private final RoomManagementControl roomManagementControl;
+
+    public RoomManagementBoundary(RoomManagementControl roomManagementControl) {
+        this.roomManagementControl = roomManagementControl;
+    }
 
     @GetMapping
     public ResponseEntity<RoomDTO[]> getAllRoom() {

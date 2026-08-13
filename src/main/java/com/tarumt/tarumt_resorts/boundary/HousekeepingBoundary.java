@@ -1,10 +1,10 @@
 package com.tarumt.tarumt_resorts.boundary;
 
 import com.tarumt.tarumt_resorts.control.HousekeepingControl;
+import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
+import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.Room;
-import com.tarumt.tarumt_resorts.entity.dto.RoomStatusSummaryDTO;
-import com.tarumt.tarumt_resorts.entity.dto.StaffTurnaroundDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,12 +16,14 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class HousekeepingBoundary {
 
-    @Autowired
-    private HousekeepingControl control;
+    private final HousekeepingControl housekeepingControl;
+    public HousekeepingBoundary(HousekeepingControl housekeepingControl) {
+        this.housekeepingControl = housekeepingControl;
+    }
 
     @GetMapping("/rooms")
     public List<Room> getRooms() {
-        return control.getAllRooms();
+        return housekeepingControl.getAllRooms();
     }
 
     // staffId is optional (pass "" if not assigning a specific staff member).
@@ -30,14 +32,14 @@ public class HousekeepingBoundary {
             @RequestParam String roomId,
             @RequestParam(defaultValue = "") String staffId,
             @RequestParam(defaultValue = "") String remarks) {
-        return control.advanceRoomStatus(roomId, staffId, remarks);
+        return housekeepingControl.advanceRoomStatus(roomId, staffId, remarks);
     }
 
     // Now scoped to a single room - rolling back Room A can never
     // accidentally undo Room B's last action.
     @PostMapping("/rollback")
     public String rollback(@RequestParam String roomId) {
-        return control.rollbackLastAction(roomId);
+        return housekeepingControl.rollbackLastAction(roomId);
     }
 
     // Multi-criteria: status AND minimum minutes waiting, both optional
@@ -45,7 +47,7 @@ public class HousekeepingBoundary {
     public RoomStatusSummaryDTO[] roomStatusReport(
             @RequestParam(defaultValue = "") String filterStatus,
             @RequestParam(required = false) Long minMinutesWaiting) {
-        return control.generateRoomStatusReport(filterStatus, minMinutesWaiting);
+        return housekeepingControl.generateRoomStatusReport(filterStatus, minMinutesWaiting);
     }
 
     // Multi-criteria: staff AND completion date range, both optional
@@ -54,6 +56,6 @@ public class HousekeepingBoundary {
             @RequestParam(defaultValue = "") String filterStaffId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime rangeStart,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime rangeEnd) {
-        return control.generateStaffTurnaroundReport(filterStaffId, rangeStart, rangeEnd);
+        return housekeepingControl.generateStaffTurnaroundReport(filterStaffId, rangeStart, rangeEnd);
     }
 }

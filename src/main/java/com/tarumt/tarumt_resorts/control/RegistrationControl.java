@@ -8,8 +8,8 @@ import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.tarumt.tarumt_resorts.utility.ArrayQueue;
-import com.tarumt.tarumt_resorts.interfaces.SimpleQueue;
+import com.tarumt.tarumt_resorts.adt.ArrayQueue;
+import com.tarumt.tarumt_resorts.adt.SimpleQueue;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -158,11 +158,6 @@ public class RegistrationControl {
 
         return bookingRepository.save(booking);
     }
-
-    private void growQueue() {
-        // moved to utility implementation
-    }
-    // queue helper methods moved to utility
 
     private String generateConfirmationNumber() {
         return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
