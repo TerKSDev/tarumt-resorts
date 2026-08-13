@@ -1,8 +1,8 @@
-package com.tarumt.tarumt_resorts.control;
+package com.tarumt.tarumt_resorts.boundary;
 
 import com.tarumt.tarumt_resorts.entity.Customer;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
-import com.tarumt.tarumt_resorts.repository.CustomerRepository;
+import com.tarumt.tarumt_resorts.dao.CustomerDAO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,21 +16,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*") // same as HelloController — open for React dev
-public class CustomerController {
+public class CustomerBoundary {
 
-    private final CustomerRepository customerRepository;
+    private final CustomerDAO CustomerDAO;
 
-    public CustomerController(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
+    public CustomerBoundary(CustomerDAO CustomerDAO) {
+        this.CustomerDAO = CustomerDAO;
     }
 
     // GET http://localhost:8081/api/customers
-    // customerRepository.findAll() returns a List internally (Spring Data
+    // CustomerDAO.findAll() returns a List internally (Spring Data
     // JPA's own signature, unavoidable) — `var` means we never write the
     // word "List" ourselves, and .toArray() hands it back as a plain array.
     @GetMapping("/customers")
     public Object[] getCustomers() {
-        var rows = customerRepository.findAll();
+        var rows = CustomerDAO.findAll();
         return rows.toArray();
     }
 
@@ -39,10 +39,10 @@ public class CustomerController {
     // Persists the new tier onto the customers.loyalty_tier column.
     @PutMapping("/customers/{customerId}/tier")
     public ResponseEntity<Customer> updateTier(@PathVariable String customerId, @RequestBody UpdateTierRequest request) {
-        return customerRepository.findById(customerId)
+        return CustomerDAO.findById(customerId)
                 .map(customer -> {
                     customer.setLoyaltyTier(LoyaltyTier.valueOf(request.getLoyaltyTier().toUpperCase()));
-                    Customer saved = customerRepository.save(customer);
+                    Customer saved = CustomerDAO.save(customer);
                     return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());

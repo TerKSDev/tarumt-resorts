@@ -1,9 +1,9 @@
 //By Tek Shao Xian
 
-package com.tarumt.tarumt_resorts.control;
+package com.tarumt.tarumt_resorts.boundary;
 
 import com.tarumt.tarumt_resorts.entity.Redeem;
-import com.tarumt.tarumt_resorts.repository.RedeemRepository;
+import com.tarumt.tarumt_resorts.dao.RedeemDAO;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,18 +18,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
-public class RedeemController {
+public class RedeemBoundary {
 
-    private final RedeemRepository redeemRepository;
+    private final RedeemDAO RedeemDAO;
 
-    public RedeemController(RedeemRepository redeemRepository) {
-        this.redeemRepository = redeemRepository;
+    public RedeemBoundary(RedeemDAO RedeemDAO) {
+        this.RedeemDAO = RedeemDAO;
     }
 
     // GET http://localhost:8081/api/redeem
     @GetMapping("/redeem")
     public Object[] getRedeemRequests() {
-        var rows = redeemRepository.findAll();
+        var rows = RedeemDAO.findAll();
         return rows.toArray();
     }
 
@@ -37,16 +37,16 @@ public class RedeemController {
     @PostMapping("/redeem")
     public Redeem createRedeemRequest(@RequestBody CreateRedeemRequest request) {
         Redeem r = new Redeem(request.getCustomerId(), request.getPoint(), request.getDescription());
-        return redeemRepository.save(r);
+        return RedeemDAO.save(r);
     }
 
     // PUT http://localhost:8081/api/redeem/{id}
     @PutMapping("/redeem/{id}")
     public ResponseEntity<Redeem> updateStatus(@PathVariable Long id, @RequestBody UpdateStatusRequest request) {
-        return redeemRepository.findById(id)
+        return RedeemDAO.findById(id)
                 .map(redeem -> {
                     redeem.setStatus(request.getStatus());
-                    Redeem saved = redeemRepository.save(redeem);
+                    Redeem saved = RedeemDAO.save(redeem);
                     return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());

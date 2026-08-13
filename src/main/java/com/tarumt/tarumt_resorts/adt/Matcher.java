@@ -1,4 +1,4 @@
-package com.tarumt.tarumt_resorts.interfaces;
+package com.tarumt.tarumt_resorts.adt;
 
 @FunctionalInterface
 public interface Matcher<T> {

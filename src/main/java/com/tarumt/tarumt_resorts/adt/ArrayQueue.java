@@ -1,7 +1,7 @@
-package com.tarumt.tarumt_resorts.utility;
+package com.tarumt.tarumt_resorts.adt;
 
-import com.tarumt.tarumt_resorts.interfaces.SimpleQueue;
-import com.tarumt.tarumt_resorts.interfaces.Matcher;
+
+
 
 public class ArrayQueue<T> implements SimpleQueue<T> {
     private Object[] elements;

@@ -1,9 +1,11 @@
 //By Tek Shao Xian
 
-package com.tarumt.tarumt_resorts.control;
+package com.tarumt.tarumt_resorts.boundary;
+
+import com.tarumt.tarumt_resorts.control.PointControl;
 
 import com.tarumt.tarumt_resorts.entity.Point;
-import com.tarumt.tarumt_resorts.service.PointService;
+
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,31 +18,31 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*") // same as HelloController — open for React dev
-public class PointController {
+public class PointBoundary {
 
-    private final PointService pointService;
+    private final PointControl PointControl;
 
-    public PointController(PointService pointService) {
-        this.pointService = pointService;
+    public PointBoundary(PointControl PointControl) {
+        this.PointControl = PointControl;
     }
 
     // GET http://localhost:8081/api/points
     // Returns every point row for every customer. Built entirely with the
-    // MyList ADT in PointService — Object[] (not List<Point>) is used only
+    // MyList ADT in PointControl — Object[] (not List<Point>) is used only
     // right here, at the very edge, so Spring/Jackson can turn it into a
     // JSON array. No java.util.List anywhere in this file.
     @GetMapping("/points")
     public Object[] getPoints() {
-        return pointService.getAllPoints().toArray();
+        return PointControl.getAllPoints().toArray();
     }
 
     // GET http://localhost:8081/api/points/{customerId}/balance
     // Returns { "customerId": ..., "activeBalance": ..., "lifetimeBalance": ... }
-    // computed entirely via the MyList ADT in PointService.
+    // computed entirely via the MyList ADT in PointControl.
     @GetMapping("/points/{customerId}/balance")
     public BalanceResponse getBalance(@PathVariable String customerId) {
-        int active = pointService.getActiveBalance(customerId);
-        int lifetime = pointService.getLifetimeBalance(customerId);
+        int active = PointControl.getActiveBalance(customerId);
+        int lifetime = PointControl.getLifetimeBalance(customerId);
         return new BalanceResponse(customerId, active, lifetime);
     }
 
@@ -48,7 +50,7 @@ public class PointController {
     // Body: { "customerId": "...", "point": 500, "description": "Stay: 2 nights" }
     @PostMapping("/points")
     public Point awardPoint(@RequestBody AwardPointRequest request) {
-        return pointService.awardPoints(request.getCustomerId(), request.getPoint(), request.getDescription());
+        return PointControl.awardPoints(request.getCustomerId(), request.getPoint(), request.getDescription());
     }
 
     // Request body shape for POST /api/points
