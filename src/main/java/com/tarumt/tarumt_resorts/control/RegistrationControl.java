@@ -8,8 +8,8 @@ import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.tarumt.tarumt_resorts.adt.ArrayQueue;
-import com.tarumt.tarumt_resorts.adt.SimpleQueue;
+import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
+import com.tarumt.tarumt_resorts.adt.MyQueue;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,12 +24,12 @@ public class RegistrationControl {
     private final BookingDAO bookingRepository;
 
     // In-memory FIFO queue ADT (moved to utility)
-    private final SimpleQueue<QueueItem> queue;
+    private final MyQueue<QueueItem> queue;
 
     public RegistrationControl(CustomerDAO customerRepository, BookingDAO bookingRepository) {
         this.customerRepository = customerRepository;
         this.bookingRepository = bookingRepository;
-        this.queue = new ArrayQueue<>(DEFAULT_CAPACITY);
+        this.queue = new MyArrayQueue<>(DEFAULT_CAPACITY);
     }
 
     // Inner Class representing temporary queue memory item

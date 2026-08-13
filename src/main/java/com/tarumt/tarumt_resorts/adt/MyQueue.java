@@ -1,9 +1,9 @@
 package com.tarumt.tarumt_resorts.adt;
 
-public interface SimpleQueue<T> {
+public interface MyQueue<T> {
     void enqueue(T item);
     Object[] snapshot();
-    int findIndex(Matcher<T> matcher);
+    int findIndex(MyMatcher<T> matcher);
     T removeAt(int index);
     int size();
     T get(int index);

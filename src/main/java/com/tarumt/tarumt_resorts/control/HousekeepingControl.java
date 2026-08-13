@@ -1,5 +1,6 @@
 package com.tarumt.tarumt_resorts.control;
 
+import com.tarumt.tarumt_resorts.adt.MyLinkedStack;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dao.RoomDAO;
 import com.tarumt.tarumt_resorts.dao.StaffDAO;
@@ -10,7 +11,6 @@ import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.entity.Staff;
 import com.tarumt.tarumt_resorts.entity.enums.HousekeepingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.RoomStatus;
-import com.tarumt.tarumt_resorts.utility.CustomStack;
 import com.tarumt.tarumt_resorts.utility.RoomStackRegistry;
 
 import org.springframework.stereotype.Service;
@@ -129,7 +129,7 @@ public class HousekeepingControl {
     // ---------------------------------------------------------------
 
     public String rollbackLastAction(String roomId) {
-        CustomStack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
+        MyLinkedStack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
 
         if (stack.isEmpty()) {
             return "No recent actions to rollback for room " + roomId + ".";
