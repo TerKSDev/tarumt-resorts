@@ -30,7 +30,7 @@ public class PointBoundary {
     // Returns every point row for every customer. Built entirely with the
     // MyList ADT in PointControl — Object[] (not List<Point>) is used only
     // right here, at the very edge, so Spring/Jackson can turn it into a
-    // JSON array. No java.util.List anywhere in this file.
+    // JSON array.
     @GetMapping("/points")
     public Object[] getPoints() {
         return PointControl.getAllPoints().toArray();
