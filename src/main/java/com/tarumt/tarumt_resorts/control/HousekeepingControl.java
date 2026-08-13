@@ -2,14 +2,21 @@ package com.tarumt.tarumt_resorts.control;
 
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dao.RoomDAO;
+import com.tarumt.tarumt_resorts.dao.StaffDAO;
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 import com.tarumt.tarumt_resorts.entity.Room;
+import com.tarumt.tarumt_resorts.entity.Staff;
+import com.tarumt.tarumt_resorts.entity.dto.RoomStatusSummaryDTO;
+import com.tarumt.tarumt_resorts.entity.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.enums.HousekeepingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.RoomStatus;
 import com.tarumt.tarumt_resorts.utility.CustomStack;
+import com.tarumt.tarumt_resorts.utility.RoomStackRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -21,78 +28,121 @@ public class HousekeepingControl {
     @Autowired
     private HousekeepingTaskDAO taskDAO;
 
-    // 【重要】你的撤销栈，放在内存中
-    private CustomStack actionStack = new CustomStack();
+    @Autowired
+    private StaffDAO staffDAO;
 
-    // --- 1. 获取所有房间 ---
+    // The Linear ADT required by the assignment: ONE Stack per room, so a
+    // rollback for Room A can never accidentally undo Room B's last action.
+    private final RoomStackRegistry stackRegistry = new RoomStackRegistry();
+
+    // Fixed sequential workflow, as described in the assignment.
+    private static final HousekeepingStatus[] STATUS_FLOW = {
+        HousekeepingStatus.DIRTY,
+        HousekeepingStatus.CLEANING_INPROGRESS,
+        HousekeepingStatus.INSPECTING,
+        HousekeepingStatus.READY_FOR_CHECKIN
+    };
+
+    // ---------------------------------------------------------------
+    // Basic reads
+    // ---------------------------------------------------------------
+
     public List<Room> getAllRooms() {
         return roomDAO.findAll();
     }
 
-    // --- 2. 更新客房状态并压入 Stack ---
-    public String updateRoomStatus(String roomId, HousekeepingStatus newStatus, String remarks) {
+    // ---------------------------------------------------------------
+    // Status mapping: HousekeepingStatus (fine-grained workflow)
+    // -> RoomStatus (coarse, used by booking/other modules)
+    // ---------------------------------------------------------------
+
+    private RoomStatus toRoomStatus(HousekeepingStatus hk) {
+        switch (hk) {
+            case DIRTY:
+            case CLEANING_INPROGRESS:
+            case INSPECTING:
+                return RoomStatus.CLEANING;      // not bookable during any of these stages
+            case READY_FOR_CHECKIN:
+                return RoomStatus.AVAILABLE;      // guest-ready
+            default:
+                return RoomStatus.CLEANING;
+        }
+    }
+
+    private HousekeepingStatus nextStatus(HousekeepingStatus current) {
+        for (int i = 0; i < STATUS_FLOW.length - 1; i++) {
+            if (STATUS_FLOW[i] == current) {
+                return STATUS_FLOW[i + 1];
+            }
+        }
+        return null; // already at final stage - nothing further to advance to
+    }
+
+    private HousekeepingStatus getCurrentStage(String roomId) {
+        List<HousekeepingTask> existing = taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(roomId);
+        return existing.isEmpty() ? HousekeepingStatus.DIRTY : existing.get(0).getCurrentStatus();
+    }
+
+    // ---------------------------------------------------------------
+    // Core operation 1: advance a room to the next sequential status
+    // ---------------------------------------------------------------
+
+    public String advanceRoomStatus(String roomId, String staffId, String remarks) {
         Room room = roomDAO.findById(roomId).orElse(null);
         if (room == null) return "Room not found!";
 
-        // 修复报错 1：获取房间当前的 RoomStatus，并转换为 HousekeepingStatus 记录在日志里
-        RoomStatus currentRoomStatus = room.getStatus(); 
-        HousekeepingStatus oldStatus;
-        try {
-            oldStatus = HousekeepingStatus.valueOf(currentRoomStatus.name());
-        } catch (IllegalArgumentException e) {
-            // 如果 RoomStatus 里有 HousekeepingStatus 里没有的状态，给个默认值
-            oldStatus = HousekeepingStatus.DIRTY; 
+        HousekeepingStatus currentStage = getCurrentStage(roomId);
+        HousekeepingStatus newStage = nextStatus(currentStage);
+
+        if (newStage == null) {
+            return "Room " + roomId + " is already Ready for Check-In.";
         }
 
-        // A. 创建 Task 并存入数据库
+        Staff staff = null;
+        if (staffId != null && !staffId.isBlank()) {
+            staff = staffDAO.findById(staffId).orElse(null);
+        }
+
         HousekeepingTask task = new HousekeepingTask();
         task.setRoom(room);
-        task.setOldStatus(oldStatus);
-        task.setCurrentStatus(newStatus);
+        task.setStaff(staff);
+        task.setOldStatus(currentStage);
+        task.setCurrentStatus(newStage);
         task.setRemarks(remarks);
         HousekeepingTask savedTask = taskDAO.save(task);
 
-        // B. 【拿高分的重点】压入你自己写的栈里
-        actionStack.push(savedTask);
+        // push onto THIS room's Stack ADT so it can be rolled back independently
+        stackRegistry.getStackFor(roomId).push(savedTask);
 
-        // C. 更新房间表的最新状态
-        // 修复报错 2：尝试把 HousekeepingStatus 转换回 RoomStatus 存进 Room 里
-        try {
-            RoomStatus newRoomStatus = RoomStatus.valueOf(newStatus.name());
-            room.setStatus(newRoomStatus);
-        } catch (IllegalArgumentException e) {
-            // 如果无法转换，比如 newStatus 是 CLEANING_IN_PROGRESS，但 RoomStatus 没有这个
-            // 这里我们保持房间状态为 CLEANING 作为妥协
-            room.setStatus(RoomStatus.CLEANING); 
-        }
+        room.setStatus(toRoomStatus(newStage));
         roomDAO.save(room);
 
-        return "Successfully updated room " + roomId + " to " + newStatus;
+        return "Room " + roomId + " advanced from " + currentStage + " to " + newStage;
     }
 
-    // --- 3. 瞬间撤销功能 (Rollback) ---
-    public String rollbackLastAction() {
-        if (actionStack.isEmpty()) {
-            return "No recent actions to rollback.";
+    // ---------------------------------------------------------------
+    // Core operation 2: instantly roll back the most recent action
+    // FOR A SPECIFIC ROOM (not a global "undo the very last click
+    // anywhere in the hotel", which could undo a different room's
+    // action by mistake).
+    // ---------------------------------------------------------------
+
+    public String rollbackLastAction(String roomId) {
+        CustomStack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
+
+        if (stack.isEmpty()) {
+            return "No recent actions to rollback for room " + roomId + ".";
         }
 
-        // A. 从 Stack 中弹出最后一条操作
-        HousekeepingTask lastTask = actionStack.pop();
+        HousekeepingTask lastTask = stack.pop();
         Room room = lastTask.getRoom();
         HousekeepingStatus statusToRestore = lastTask.getOldStatus();
 
-        // B. 恢复房间的状态
-        // 修复报错 3：把 HousekeepingStatus 转换回 RoomStatus 存进 Room 里
-        try {
-            RoomStatus restoredRoomStatus = RoomStatus.valueOf(statusToRestore.name());
-            room.setStatus(restoredRoomStatus);
-        } catch (IllegalArgumentException e) {
-            // 妥协处理，如果找不到精确匹配
-            room.setStatus(RoomStatus.AVAILABLE); 
-        }
+        room.setStatus(toRoomStatus(statusToRestore));
         roomDAO.save(room);
 
-        // C. 在数据库里也记录一下这次“撤销”行为
+        // audit trail: log the rollback itself (not pushed back onto the stack,
+        // so a rollback cannot itself be "un-rolled-back")
         HousekeepingTask rollbackTask = new HousekeepingTask();
         rollbackTask.setRoom(room);
         rollbackTask.setOldStatus(lastTask.getCurrentStatus());
@@ -101,5 +151,152 @@ public class HousekeepingControl {
         taskDAO.save(rollbackTask);
 
         return "Rolled back room " + room.getRoomId() + " to " + statusToRestore;
+    }
+
+    // whether a given room currently has an action that can be rolled back
+    public boolean canRollback(String roomId) {
+        return !stackRegistry.getStackFor(roomId).isEmpty();
+    }
+
+    // ---------------------------------------------------------------
+    // Report 1: Room Housekeeping Status Report
+    // - SEARCH: locate each room's latest task (its current stage)
+    // - FILTER (multi-criteria): status AND a minimum "minutes waiting"
+    //           threshold, applied together
+    // - SORT: bubble sort by time spent in current stage, descending,
+    //         to surface rooms that have been stuck longest
+    // ---------------------------------------------------------------
+
+    public RoomStatusSummaryDTO[] generateRoomStatusReport(String filterStatus, Long minMinutesWaiting) {
+        List<Room> allRooms = roomDAO.findAll();
+
+        RoomStatusSummaryDTO[] temp = new RoomStatusSummaryDTO[allRooms.size()];
+        int count = 0;
+
+        for (Room room : allRooms) {
+            List<HousekeepingTask> tasks = taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(room.getRoomId());
+
+            HousekeepingStatus stage = tasks.isEmpty()
+                    ? HousekeepingStatus.DIRTY
+                    : tasks.get(0).getCurrentStatus();
+
+            LocalDateTime since = tasks.isEmpty() ? room.getCreatedAt() : tasks.get(0).getCreatedAt();
+            long minutes = Duration.between(since, LocalDateTime.now()).toMinutes();
+
+            // filter criterion 1: status (optional)
+            if (filterStatus != null && !filterStatus.isBlank()
+                    && !stage.name().equalsIgnoreCase(filterStatus)) {
+                continue;
+            }
+
+            // filter criterion 2: minimum time waiting (optional) - combined with criterion 1
+            if (minMinutesWaiting != null && minutes < minMinutesWaiting) {
+                continue;
+            }
+
+            temp[count] = new RoomStatusSummaryDTO(
+                    room.getRoomId(),
+                    stage,
+                    nextStatus(stage),
+                    minutes,
+                    canRollback(room.getRoomId())
+            );
+            count++;
+        }
+
+        RoomStatusSummaryDTO[] result = new RoomStatusSummaryDTO[count];
+        for (int i = 0; i < count; i++) {
+            result[i] = temp[i];
+        }
+
+        bubbleSortByMinutesDesc(result);
+        return result;
+    }
+
+    private void bubbleSortByMinutesDesc(RoomStatusSummaryDTO[] arr) {
+        for (int i = 0; i < arr.length - 1; i++) {
+            for (int j = 0; j < arr.length - 1 - i; j++) {
+                if (arr[j].getMinutesInCurrentStage() < arr[j + 1].getMinutesInCurrentStage()) {
+                    RoomStatusSummaryDTO t = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = t;
+                }
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Report 2: Staff Cleaning Turnaround Report
+    // - SEARCH: walk each room's chronological task history to find
+    //           completed cycles (DIRTY -> ... -> READY_FOR_CHECKIN)
+    // - FILTER (multi-criteria): staffId AND a completion date range,
+    //           applied together
+    // - SORT: bubble sort by cycle duration, ascending, to rank
+    //         fastest-to-slowest turnaround
+    // ---------------------------------------------------------------
+
+    public StaffTurnaroundDTO[] generateStaffTurnaroundReport(String filterStaffId,
+                                                                LocalDateTime rangeStart,
+                                                                LocalDateTime rangeEnd) {
+        List<Room> allRooms = roomDAO.findAll();
+
+        StaffTurnaroundDTO[] temp = new StaffTurnaroundDTO[500];
+        int count = 0;
+
+        for (Room room : allRooms) {
+            List<HousekeepingTask> history = taskDAO.findByRoom_RoomIdOrderByCreatedAtAsc(room.getRoomId());
+
+            LocalDateTime cycleStart = null;
+
+            for (HousekeepingTask task : history) {
+                if (task.getCurrentStatus() == HousekeepingStatus.DIRTY && cycleStart == null) {
+                    cycleStart = task.getCreatedAt();
+                } else if (task.getCurrentStatus() == HousekeepingStatus.READY_FOR_CHECKIN && cycleStart != null) {
+                    Staff staff = task.getStaff();
+                    String staffId = staff != null ? staff.getStaffId() : "UNASSIGNED";
+                    String staffName = staff != null ? staff.getName() : "Unassigned";
+                    LocalDateTime cycleEnd = task.getCreatedAt();
+
+                    // filter criterion 1: staff (optional)
+                    boolean staffMatches = filterStaffId == null || filterStaffId.isBlank()
+                            || filterStaffId.equals(staffId);
+
+                    // filter criterion 2: completion date range (optional) - combined with criterion 1
+                    boolean withinRange = (rangeStart == null || !cycleEnd.isBefore(rangeStart))
+                            && (rangeEnd == null || !cycleEnd.isAfter(rangeEnd));
+
+                    if (staffMatches && withinRange) {
+                        long minutes = Duration.between(cycleStart, cycleEnd).toMinutes();
+
+                        if (count < temp.length) {
+                            temp[count] = new StaffTurnaroundDTO(
+                                    room.getRoomId(), staffId, staffName, cycleStart, cycleEnd, minutes);
+                            count++;
+                        }
+                    }
+                    cycleStart = null;
+                }
+            }
+        }
+
+        StaffTurnaroundDTO[] result = new StaffTurnaroundDTO[count];
+        for (int i = 0; i < count; i++) {
+            result[i] = temp[i];
+        }
+
+        bubbleSortByDurationAsc(result);
+        return result;
+    }
+
+    private void bubbleSortByDurationAsc(StaffTurnaroundDTO[] arr) {
+        for (int i = 0; i < arr.length - 1; i++) {
+            for (int j = 0; j < arr.length - 1 - i; j++) {
+                if (arr[j].getDurationMinutes() > arr[j + 1].getDurationMinutes()) {
+                    StaffTurnaroundDTO t = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = t;
+                }
+            }
+        }
     }
 }
