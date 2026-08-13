@@ -1,6 +1,6 @@
 package com.tarumt.tarumt_resorts.control;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import com.tarumt.tarumt_resorts.dao.BookingDAO;
@@ -13,10 +13,13 @@ import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 
 @Service
 public class RoomManagementControl {
-    @Autowired
-    private RoomDAO roomDao;
-    @Autowired
-    private BookingDAO bookingDao;
+    private final RoomDAO roomDao;
+    private final BookingDAO bookingDao;
+
+    public RoomManagementControl(RoomDAO roomDao, BookingDAO bookingDao) {
+        this.roomDao = roomDao;
+        this.bookingDao = bookingDao;
+    }
 
     public RoomDTO[] getAllRoom() {
         try {   

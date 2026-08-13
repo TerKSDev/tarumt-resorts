@@ -1,8 +1,5 @@
 package com.tarumt.tarumt_resorts.adt;
 
-
-
-
 public class ArrayQueue<T> implements SimpleQueue<T> {
     private Object[] elements;
     private int front;

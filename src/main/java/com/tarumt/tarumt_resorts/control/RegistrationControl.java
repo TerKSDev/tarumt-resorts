@@ -159,11 +159,6 @@ public class RegistrationControl {
         return bookingRepository.save(booking);
     }
 
-    private void growQueue() {
-        // moved to utility implementation
-    }
-    // queue helper methods moved to utility
-
     private String generateConfirmationNumber() {
         return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
