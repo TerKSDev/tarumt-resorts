@@ -5,8 +5,6 @@ package com.tarumt.tarumt_resorts.adt;
 import java.util.Iterator; // ✅
 import java.util.NoSuchElementException; // ✅
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class MyList<T> implements Iterable<T> {
 
     private static final int DEFAULT_CAPACITY = 10;
@@ -92,10 +90,5 @@ public class MyList<T> implements Iterable<T> {
                 return (T) elements[cursor++];
             }
         };
-    }
-    // For JSON serialization
-    @JsonProperty("items")
-    public Object[] getItems() {
-        return toArray();
     }
 }

@@ -94,7 +94,7 @@ export default function Login() {
             <label htmlFor="email" className="text-surface-700 font-medium">
               Staff Email
             </label>
-            <div className="flex gap-3 group focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-50 shadow-xs w-full">
+            <div className="flex gap-3 group focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-500 p-2.5 items-center rounded-lg bg-surface-50 shadow-xs w-full">
               <Mail
                 className="text-surface-600 group-focus-within:text-brand-600 transition-all duration-300 group-focus-within:-rotate-8 group-focus-within:scale-115"
                 size={20}
@@ -126,7 +126,7 @@ export default function Login() {
                 Forgot Password?
               </Link>
             </div>
-            <div className="flex gap-3 group focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-white shadow-xs w-full">
+            <div className="flex gap-3 group focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-500 p-2.5 items-center rounded-lg bg-white shadow-xs w-full">
               <Lock
                 className="text-surface-600 group-focus-within:text-brand-600 transition-all duration-300 group-focus-within:-rotate-8 group-focus-within:scale-115"
                 size={20}

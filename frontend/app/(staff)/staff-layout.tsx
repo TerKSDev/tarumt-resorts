@@ -12,16 +12,16 @@ export default function AdminLayout() {
   const path = PATHS.find((path) => path.to === pathname);
 
   return (
-    <main className="flex h-screen w-full overflow-hidden">
+    <main className="flex h-screen flex-1 overflow-hidden">
       <SideNav menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-      <section className="flex-1 flex flex-col w-full overflow-hidden">
+      <section className="flex-1 flex flex-col w-full min-h-0 overflow-hidden">
         <TopBar
           title={path?.label || "Unavailable"}
           desc={path?.desc || "Unavailable"}
           setMenuOpen={setMenuOpen}
         />
         <motion.div
-          className="overflow-y-auto flex-1 flex flex-col p-2 py-4 md:py-8 md:p-8 border border-surface-300"
+          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8 border-r border-surface-400"
           initial="hidden"
           animate="visible"
           transition={{ staggerChildren: 0.1 }}
