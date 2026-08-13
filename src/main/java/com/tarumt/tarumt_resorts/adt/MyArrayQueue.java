@@ -1,15 +1,15 @@
 package com.tarumt.tarumt_resorts.adt;
 
-public class ArrayQueue<T> implements SimpleQueue<T> {
+public class MyArrayQueue<T> implements MyQueue<T> {
     private Object[] elements;
     private int front;
     private int size;
 
-    public ArrayQueue() {
+    public MyArrayQueue() {
         this(16);
     }
 
-    public ArrayQueue(int initialCapacity) {
+    public MyArrayQueue(int initialCapacity) {
         if (initialCapacity <= 0) {
             initialCapacity = 16;
         }
@@ -41,7 +41,7 @@ public class ArrayQueue<T> implements SimpleQueue<T> {
     }
 
     @Override
-    public int findIndex(Matcher<T> matcher) {
+    public int findIndex(MyMatcher<T> matcher) {
         for (int i = 0; i < size; i++) {
             @SuppressWarnings("unchecked")
             T current = (T) elements[(front + i) % elements.length];

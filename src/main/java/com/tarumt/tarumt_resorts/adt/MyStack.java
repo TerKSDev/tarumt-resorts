@@ -5,7 +5,7 @@ package com.tarumt.tarumt_resorts.adt;
  * Team Collection ADT — see report for full specification/discussion.
  * Author: See Wei Jian
  */
-public interface Stack<T> {
+public interface MyStack<T> {
     void push(T item);
     T pop();
     T peek();

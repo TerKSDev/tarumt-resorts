@@ -1,12 +1,12 @@
-package com.tarumt.tarumt_resorts.utility;
-import com.tarumt.tarumt_resorts.adt.Stack;
+package com.tarumt.tarumt_resorts.adt;
+
 /**
  * Linked-list based implementation of the Stack ADT.
  * Used by HousekeepingControl to track the most recent status-change
  * action(s), enabling instant rollback.
  * Author: See Wei Jian
  */
-public class CustomStack<T> implements Stack<T> {
+public class MyLinkedStack<T> implements MyStack<T> {
 
     private Node<T> top;
     private int size;
@@ -17,7 +17,7 @@ public class CustomStack<T> implements Stack<T> {
         Node(T data) { this.data = data; }
     }
 
-    public CustomStack() {
+    public MyLinkedStack() {
         this.top = null;
         this.size = 0;
     }
