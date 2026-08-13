@@ -22,6 +22,18 @@ const colorMap = {
     icon: "bg-purple-50 text-purple-600",
     text: "text-purple-950",
   },
+  rose: {
+    icon: "bg-rose-50 text-rose-600",
+    text: "text-rose-950",
+  },
+  amber: {
+    icon: "bg-amber-50 text-amber-600",
+    text: "text-amber-950",
+  },
+  yellow: {
+    icon: "bg-yellow-50 text-yellow-600",
+    text: "text-yellow-950",
+  },
 };
 
 type StatCardProps = {
