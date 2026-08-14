@@ -9,7 +9,9 @@ import { motion } from "motion/react";
 export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = useLocation().pathname;
-  const path = PATHS.find((p) => pathname === p.to || pathname.startsWith(p.to + "/"));
+  const path = PATHS.find(
+    (p) => pathname === p.to || pathname.startsWith(p.to + "/"),
+  );
 
   return (
     <main className="flex h-screen flex-1 overflow-hidden">
@@ -22,7 +24,7 @@ export default function AdminLayout() {
           setMenuOpen={setMenuOpen}
         />
         <motion.div
-          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8 border-r border-surface-300"
+          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8 print:px-0! border-r border-surface-300"
           initial="hidden"
           animate="visible"
           transition={{ staggerChildren: 0.1 }}

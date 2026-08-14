@@ -41,7 +41,7 @@ export default function SideNav({ setMenuOpen, menuOpen }: SideNavProps) {
       </AnimatePresence>
 
       <motion.aside
-        className="fixed lg:relative inset-y-0 left-0 z-100 w-64 bg-brand-950 h-screen flex flex-col"
+        className="fixed lg:relative inset-y-0 left-0 z-100 w-64 bg-brand-950 h-screen flex flex-col print:hidden"
         initial={false}
         animate={{ x: isDesktop ? 0 : menuOpen ? 0 : "-100%" }}
         transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}

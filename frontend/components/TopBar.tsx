@@ -16,7 +16,7 @@ export default function TopBar({
 }: TopBarProps) {
   return (
     <motion.header
-      className="sticky top-0 right-0 h-16 bg-white left-0 gap-4 justify-between items-center flex pl-4 lg:pl-6 pr-4 py-3 border border-surface-300"
+      className="sticky top-0 right-0 h-16 bg-white left-0 gap-4 justify-between items-center flex pl-4 lg:pl-6 pr-4 py-3 border border-surface-300 print:hidden"
       initial={{ opacity: 0, y: -50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}

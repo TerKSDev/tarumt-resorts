@@ -9,7 +9,7 @@ import RegistrationCancellation from "./components/RegistrationCancellation";
 import CleaningTurnaround from "./components/CleaningTurnaround";
 import WalkInSummary from "./components/WalkInSummary";
 import { PATHS } from "../../../lib/config/routes";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Printer } from "lucide-react";
 
 export const meta: MetaFunction = () => [
   { title: "Report Centre | TARUMT Resorts" },
@@ -60,26 +60,29 @@ export default function Report() {
 
   return (
     <main className="flex-1 flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <Link
-          className="flex items-center gap-2 group bg-surface-50 border-surface-300 rounded-xl border transition-all px-4 py-2 text-sm tracking-wide font-medium text-surface-700 hover:text-surface-950"
-          to={PATHS.filter((path) => path.label === "Report Centre")[0].to}
-        >
-          <ArrowLeft
-            size={16}
-            className="group-hover:-translate-x-0.5 transition-all duration-300"
-          />
-          Report Centre
-        </Link>
-        <div className="text-md tracking-tight text-surface-600 flex items-center gap-1.5">
-          <ChevronRight size={16} className="mt-0.5" />
-          {currentReport.from}
-          <ChevronRight size={16} className="mt-0.5" />
-          <span className="text-brand-600 font-medium">
-            {currentReport.name}
-          </span>
+      <div className="flex items-center justify-between print:hidden">
+        <div className="flex items-center gap-3">
+          <Link
+            className="flex items-center gap-2 group bg-surface-50 border-surface-300 rounded-xl border transition-all px-4 py-2 text-sm tracking-wide font-medium text-surface-700 hover:text-surface-950"
+            to={PATHS.filter((path) => path.label === "Report Centre")[0].to}
+          >
+            <ArrowLeft
+              size={16}
+              className="group-hover:-translate-x-0.5 transition-all duration-300"
+            />
+            Report Centre
+          </Link>
+          <div className="text-md tracking-tight text-surface-600 flex items-center gap-1.5">
+            <ChevronRight size={16} className="mt-0.5" />
+            {currentReport.from}
+            <ChevronRight size={16} className="mt-0.5" />
+            <span className="text-brand-600 font-medium">
+              {currentReport.name}
+            </span>
+          </div>
         </div>
       </div>
+
       {currentReport.id === "guest-directory" && <GuestDirectory />}
       {currentReport.id === "arrival-departure" && <ArrivalDeparture />}
       {currentReport.id === "housekeeping-status" && <HousekeepingStatus />}
@@ -90,7 +93,7 @@ export default function Report() {
       )}
       {currentReport.id === "cleaning-turnaround" && <CleaningTurnaround />}
       {currentReport.id === "walk-in-summary" && <WalkInSummary />}
-      <div className="flex items-center justify-center gap-4 w-fit">
+      <div className="flex items-center justify-center gap-4 w-fit print:hidden">
         <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider">
           More from {currentReport.from}:
         </h3>
