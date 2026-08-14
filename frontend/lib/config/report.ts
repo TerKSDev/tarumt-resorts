@@ -13,7 +13,7 @@ import {
 export type Report = {
   id: string;
   name: string;
-  desc?: string;
+  desc: string;
   icon: LucideIcon;
   from: string;
   path: string;
@@ -39,6 +39,7 @@ export const REPORT: Report[] = [
   {
     id: "member-points",
     name: "Member Points",
+    desc: "Track and analyze loyalty points accumulated and utilized by members across the resort.",
     icon: CircleDollarSign,
     from: "Loyalty and Rewards",
     path: "/report/member-points",
@@ -46,6 +47,7 @@ export const REPORT: Report[] = [
   {
     id: "redemption-record",
     name: "Redemption Record",
+    desc: "Review the history of reward redemptions, including items claimed and points spent by loyalty members.",
     icon: TicketCheck,
     from: "Loyalty and Rewards",
     path: "/report/redemption-record",
@@ -53,6 +55,7 @@ export const REPORT: Report[] = [
   {
     id: "cleaning-turnaround",
     name: "Staff Cleaning Turnaround",
+    desc: "Monitor staff performance by analyzing the average time taken to clean and prepare rooms.",
     icon: BrushCleaning,
     from: "Housekeeping and Task Log",
     path: "/report/cleaning-turnaround",
@@ -60,6 +63,7 @@ export const REPORT: Report[] = [
   {
     id: "housekeeping-status",
     name: "Room Housekeeping Status",
+    desc: "Overview of the current housekeeping status for all rooms, identifying areas requiring immediate attention.",
     icon: Info,
     from: "Housekeeping and Task Log",
     path: "/report/housekeeping-status",
@@ -67,6 +71,7 @@ export const REPORT: Report[] = [
   {
     id: "walkin-summary",
     name: "Daily Walk-In Registration Summary",
+    desc: "Daily summary of all walk-in registrations, tracking spontaneous guest arrivals and revenue.",
     icon: Footprints,
     from: "Walk-In Registration",
     path: "/report/walkin-summary",
@@ -74,6 +79,7 @@ export const REPORT: Report[] = [
   {
     id: "registration-cancellation",
     name: "Registration Cancellation Analysis",
+    desc: "Analyze trends and reasons for registration cancellations to optimize booking policies and revenue.",
     icon: ChartNoAxesCombined,
     from: "Walk-In Registration",
     path: "/report/registration-cancellation",
