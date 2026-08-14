@@ -32,7 +32,7 @@ export default function RoomCard({
     <button
       onClick={() => setIsModalOpen("edit")}
       disabled={!!room.booking}
-      className={`group flex flex-col relative p-4 bg-surface-50 border border-surface-400 rounded-lg shadow-xs transition-all duration-300 ${status.card} ${
+      className={`group flex flex-col relative p-4 bg-surface-50 border border-surface-300 rounded-lg shadow-xs transition-all duration-300 ${status.card} ${
         room.booking
           ? "opacity-75 cursor-not-allowed"
           : "hover:-translate-y-0.5 cursor-pointer"

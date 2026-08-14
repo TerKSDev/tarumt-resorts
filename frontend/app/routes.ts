@@ -12,7 +12,7 @@ export default [
     route("log", "(staff)/log/log.tsx"),
     route("loyalty", "(staff)/loyalty/loyalty.tsx"),
     route("registration", "(staff)/registration/registration.tsx"),
-    route("report/:report_name", "(staff)/report/report.tsx"),
+    route("report/:report_name?", "(staff)/report/report.tsx"),
     route("room", "(staff)/room/room.tsx"),
     route("search", "(staff)/search/search.tsx"),
     route("user", "(staff)/user/user.tsx"),

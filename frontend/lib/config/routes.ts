@@ -57,7 +57,7 @@ export const PATHS = [
     role: [ROLES.MANAGER, ROLES.FRONT_DESK],
   },
   {
-    label: "Analytical Report",
+    label: "Report Centre",
     desc: "View operational performance metrics and summaries",
     to: "/report",
     icon: ClipboardPen,
