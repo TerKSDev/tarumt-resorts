@@ -90,6 +90,36 @@ export default function Report() {
       )}
       {currentReport.id === "cleaning-turnaround" && <CleaningTurnaround />}
       {currentReport.id === "walk-in-summary" && <WalkInSummary />}
+      <div className="flex items-center justify-center gap-4 w-fit">
+        <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider">
+          More from {currentReport.from}:
+        </h3>
+        <div className="flex flex-nowrap gap-4">
+          {REPORT.filter((r) => r.from === currentReport.from).map(
+            (related) => (
+              <Link
+                key={related.id}
+                to={related.path}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all duration-300 shadow-xs ${
+                  currentReport.id === related.id
+                    ? "bg-brand-600 text-white border-brand-600 cursor-default"
+                    : "bg-surface-50 hover:bg-brand-50 hover:shadow-sm hover:text-brand-700 text-surface-700 border border-surface-300 hover:border-brand-300"
+                }`}
+              >
+                <related.icon size={16} />
+                {related.name}
+              </Link>
+            ),
+          )}
+          {REPORT.filter(
+            (r) => r.from === currentReport.from && r.id !== currentReport.id,
+          ).length === 0 && (
+            <span className="text-sm text-surface-500 italic">
+              No other reports in this category.
+            </span>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
