@@ -4,13 +4,19 @@ import { motion } from "motion/react";
 type TopBarProps = {
   title: string;
   desc: string;
+  path: string;
   setMenuOpen: (menuOpen: boolean) => void;
 };
 
-export default function TopBar({ title, desc, setMenuOpen }: TopBarProps) {
+export default function TopBar({
+  title,
+  desc,
+  path,
+  setMenuOpen,
+}: TopBarProps) {
   return (
     <motion.header
-      className="sticky top-0 right-0 h-16 bg-white left-0 gap-4 justify-between items-center flex pl-4 lg:pl-6 pr-4 py-3 border border-surface-400"
+      className="sticky top-0 right-0 h-16 bg-white left-0 gap-4 justify-between items-center flex pl-4 lg:pl-6 pr-4 py-3 border border-surface-300"
       initial={{ opacity: 0, y: -50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -22,7 +28,7 @@ export default function TopBar({ title, desc, setMenuOpen }: TopBarProps) {
         >
           <Menu size={20} />
         </button>
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-0.5">
           <h1 className="text-lg font-semibold leading-tight tracking-tight">
             {title}
           </h1>
@@ -32,7 +38,7 @@ export default function TopBar({ title, desc, setMenuOpen }: TopBarProps) {
         </div>
       </div>
       <div className="md:flex items-center gap-4 hidden">
-        <div className="flex h-10 gap-3 group focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:shadow-md focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-105 transition-all duration-300 border px-4 border-surface-400 p-2 items-center rounded-xl bg-surface-100 hover:border-surface-500 focus-within:bg-surface-50 shadow-xs w-72">
+        <div className="flex h-10 gap-3 group focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:shadow-md focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-105 transition-all duration-300 border px-4 border-surface-300 p-2 items-center rounded-xl bg-surface-100 hover:border-surface-400 focus-within:bg-surface-50 shadow-xs w-72">
           <label htmlFor="search">
             <Search
               size={16}

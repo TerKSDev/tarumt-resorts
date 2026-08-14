@@ -57,7 +57,7 @@ export const PATHS = [
     role: [ROLES.MANAGER, ROLES.FRONT_DESK],
   },
   {
-    label: "Analytical Report",
+    label: "Report Centre",
     desc: "View operational performance metrics and summaries",
     to: "/report",
     icon: ClipboardPen,
@@ -89,7 +89,7 @@ export const PATHS = [
     role: [ROLES.FRONT_DESK, ROLES.MANAGER],
   },
   {
-    label: "Task Logs",
+    label: "Housekeeping Task Logs",
     desc: "Track and log room cleaning tasks and rollback history",
     to: "/log",
     icon: ClipboardClock,
