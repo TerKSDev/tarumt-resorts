@@ -17,7 +17,8 @@ public class ReportControl {
     }
 
     public Booking[] generateArrivalDepartureReport() {
-        return bookingDAO.findTodayArrivalAndDeparture();
+        String today = java.time.LocalDate.now().toString();
+        return bookingDAO.findTodayArrivalAndDeparture(today);
     }
 
     public Booking[] generateGuestDirectoryReport() {
