@@ -4,7 +4,6 @@ import {
   CircleDollarSign,
   type LucideIcon,
   TicketCheck,
-  Bath,
   BrushCleaning,
   Info,
   Footprints,
@@ -41,7 +40,7 @@ export const REPORT: Report[] = [
     name: "Member Points",
     desc: "Track and analyze loyalty points accumulated and utilized by members across the resort.",
     icon: CircleDollarSign,
-    from: "Loyalty and Rewards",
+    from: "Loyalty & Members",
     path: "/report/member-points",
   },
   {
@@ -49,7 +48,7 @@ export const REPORT: Report[] = [
     name: "Redemption Record",
     desc: "Review the history of reward redemptions, including items claimed and points spent by loyalty members.",
     icon: TicketCheck,
-    from: "Loyalty and Rewards",
+    from: "Loyalty & Members",
     path: "/report/redemption-record",
   },
   {
@@ -57,7 +56,7 @@ export const REPORT: Report[] = [
     name: "Staff Cleaning Turnaround",
     desc: "Monitor staff performance by analyzing the average time taken to clean and prepare rooms.",
     icon: BrushCleaning,
-    from: "Housekeeping and Task Log",
+    from: "Housekeeping Task Logs",
     path: "/report/cleaning-turnaround",
   },
   {
@@ -65,7 +64,7 @@ export const REPORT: Report[] = [
     name: "Room Housekeeping Status",
     desc: "Overview of the current housekeeping status for all rooms, identifying areas requiring immediate attention.",
     icon: Info,
-    from: "Housekeeping and Task Log",
+    from: "Housekeeping Task Logs",
     path: "/report/housekeeping-status",
   },
   {
