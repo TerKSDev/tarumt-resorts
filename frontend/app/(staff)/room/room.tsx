@@ -94,7 +94,7 @@ export default function Room() {
           <Tab label="Cleaning" count={cleaningRoom.length} value="cleaning" />
         </div>
         <div className="flex items-center gap-2 sm:gap-4 w-full xl:w-auto">
-          <div className="flex min-w-48 md:min-w-72 h-10 gap-3 scrollbar-hidden flex-1 group focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:shadow-md focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-105 transition-all duration-300 border px-4 border-surface-400 p-2 items-center rounded-lg bg-surface-50 hover:border-surface-500 shadow-xs">
+          <div className="flex min-w-48 md:min-w-72 h-10 gap-3 scrollbar-hidden flex-1 group focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:shadow-md focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-105 transition-all duration-300 border px-4 border-surface-300 p-2 items-center rounded-lg bg-surface-50 hover:border-surface-400 shadow-xs">
             <label htmlFor="search">
               <Search
                 size={16}

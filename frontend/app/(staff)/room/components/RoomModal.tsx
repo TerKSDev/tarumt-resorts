@@ -92,7 +92,7 @@ export function AddRoomModal({
                 max={99}
                 defaultValue={1}
                 required
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
               />
             </div>
 
@@ -111,7 +111,7 @@ export function AddRoomModal({
                 max={99}
                 defaultValue={10}
                 required
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
               />
             </div>
           </div>
@@ -127,7 +127,7 @@ export function AddRoomModal({
               id="type"
               name="type"
               required
-              className="outline-none text-surface-800 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
+              className="outline-none text-surface-800 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                 backgroundRepeat: "no-repeat",
@@ -158,7 +158,7 @@ export function AddRoomModal({
                 max={10}
                 defaultValue={2}
                 required
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
               />
             </div>
 
@@ -181,7 +181,7 @@ export function AddRoomModal({
                   min={0}
                   placeholder="0.00"
                   required
-                  className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border pl-[2.8rem] pr-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                  className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border pl-[2.8rem] pr-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
                 />
               </div>
             </div>
@@ -293,7 +293,7 @@ export function EditRoomModal({
                 max={99}
                 defaultValue={room?.roomId?.slice(0, -2) || 1}
                 disabled
-                className="outline-none text-surface-800 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="outline-none text-surface-800 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
               />
             </div>
 
@@ -312,7 +312,7 @@ export function EditRoomModal({
                 max={99}
                 defaultValue={room?.roomId?.slice(-2) || 1}
                 disabled
-                className="outline-none text-surface-800 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="outline-none text-surface-800 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
               />
             </div>
           </div>
@@ -330,7 +330,7 @@ export function EditRoomModal({
                 id="edit_type"
                 name="type"
                 defaultValue={room?.type || "STANDARD"}
-                className="outline-none text-surface-800 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
+                className="outline-none text-surface-800 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                   backgroundRepeat: "no-repeat",
@@ -356,7 +356,7 @@ export function EditRoomModal({
                 id="edit_status"
                 name="status"
                 defaultValue={room?.status || "AVAILABLE"}
-                className="outline-none text-surface-800 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
+                className="outline-none text-surface-800 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                   backgroundRepeat: "no-repeat",
@@ -389,7 +389,7 @@ export function EditRoomModal({
                 min={1}
                 max={10}
                 defaultValue={room?.capacity || 2}
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
               />
             </div>
 
@@ -411,7 +411,7 @@ export function EditRoomModal({
                   step="0.01"
                   min={0}
                   defaultValue={room?.pricePerNight}
-                  className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-500 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border pl-[2.8rem] pr-4 border-surface-400 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                  className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border pl-[2.8rem] pr-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
                 />
               </div>
             </div>
