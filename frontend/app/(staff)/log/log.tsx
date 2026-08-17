@@ -3,7 +3,7 @@ import { type MetaFunction } from "react-router";
 import StatCard from "../../../components/StatCard";
 import {
   Brush, Sparkles, ClipboardCheck, Trash2, Undo2, Clock,
-  BarChart3, Users, CheckCircle2, AlertCircle
+  CheckCircle2, AlertCircle
 } from "lucide-react";
 
 export const meta: MetaFunction = () => [
@@ -26,17 +26,6 @@ interface RoomStatusSummary {
   canRollback: boolean;
 }
 
-interface StaffTurnaround {
-  roomId: string;
-  staffId: string;
-  staffName: string;
-  cycleStart: string;
-  cycleEnd: string;
-  durationMinutes: number;
-}
-
-type ReportTab = "status" | "turnaround";
-
 const stageLabel: Record<string, string> = {
   DIRTY: "Dirty",
   CLEANING_INPROGRESS: "Cleaning In Progress",
@@ -47,22 +36,11 @@ const stageLabel: Record<string, string> = {
 export default function Housekeeping() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [statusReport, setStatusReport] = useState<RoomStatusSummary[]>([]);
-  const [turnaroundReport, setTurnaroundReport] = useState<StaffTurnaround[]>([]);
-  const [activeTab, setActiveTab] = useState<ReportTab>("status");
 
   // Frontend-only display log - NOT persisted, resets on page refresh.
   // (The actual rollback capability is tracked server-side per room via
   // canRollback in statusReport, independent of this list.)
   const [historyStack, setHistoryStack] = useState<any[]>([]);
-
-  // Report 1 filter criteria (multi-criteria: status + minimum wait time)
-  const [statusFilter, setStatusFilter] = useState("");
-  const [minMinutesFilter, setMinMinutesFilter] = useState("");
-
-  // Report 2 filter criteria (multi-criteria: staff + date range)
-  const [staffFilter, setStaffFilter] = useState("");
-  const [rangeStart, setRangeStart] = useState("");
-  const [rangeEnd, setRangeEnd] = useState("");
 
   async function safeFetchArray<T>(url: string, setter: (v: T[]) => void, label: string) {
     try {
@@ -82,29 +60,12 @@ export default function Housekeeping() {
 
   const fetchRooms = () => safeFetchArray<Room>(`${API_BASE}/rooms`, setRooms, "/rooms");
 
-  const fetchStatusReport = () => {
-    const params = new URLSearchParams();
-    if (statusFilter) params.set("filterStatus", statusFilter);
-    if (minMinutesFilter) params.set("minMinutesWaiting", minMinutesFilter);
-    safeFetchArray<RoomStatusSummary>(
-      `${API_BASE}/reports/room-status?${params}`, setStatusReport, "/reports/room-status"
-    );
-  };
-
-  const fetchTurnaroundReport = () => {
-    const params = new URLSearchParams();
-    if (staffFilter) params.set("filterStaffId", staffFilter);
-    if (rangeStart) params.set("rangeStart", rangeStart);
-    if (rangeEnd) params.set("rangeEnd", rangeEnd);
-    safeFetchArray<StaffTurnaround>(
-      `${API_BASE}/reports/staff-turnaround?${params}`, setTurnaroundReport, "/reports/staff-turnaround"
-    );
-  };
+  const fetchStatusReport = () =>
+    safeFetchArray<RoomStatusSummary>(`${API_BASE}/reports/room-status`, setStatusReport, "/reports/room-status");
 
   const refreshAll = () => {
     fetchRooms();
     fetchStatusReport();
-    fetchTurnaroundReport();
   };
 
   useEffect(() => {
@@ -244,164 +205,6 @@ export default function Housekeeping() {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Reports section */}
-      <div className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
-        <div className="flex items-center gap-2 border-b border-surface-200 dark:border-surface-800 pb-4">
-          <BarChart3 size={20} className="text-brand-600" />
-          <h2 className="text-lg font-semibold">Reports</h2>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveTab("status")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === "status" ? "bg-brand-500 text-white" : "bg-surface-100 dark:bg-surface-800 text-surface-600"}`}
-          >
-            Room Status Report
-          </button>
-          <button
-            onClick={() => setActiveTab("turnaround")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === "turnaround" ? "bg-brand-500 text-white" : "bg-surface-100 dark:bg-surface-800 text-surface-600"}`}
-          >
-            Staff Turnaround Report
-          </button>
-        </div>
-
-        {activeTab === "status" && (
-          <div className="flex flex-col gap-4">
-            {/* Multi-criteria filter: status AND minimum minutes waiting */}
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-surface-500">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="DIRTY">Dirty</option>
-                  <option value="CLEANING_INPROGRESS">Cleaning In Progress</option>
-                  <option value="INSPECTING">Inspecting</option>
-                  <option value="READY_FOR_CHECKIN">Ready For Check-In</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-surface-500">Min. minutes waiting</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={minMinutesFilter}
-                  onChange={(e) => setMinMinutesFilter(e.target.value)}
-                  placeholder="e.g. 30"
-                  className="px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-sm w-32"
-                />
-              </div>
-              <button
-                onClick={fetchStatusReport}
-                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-medium"
-              >
-                Apply Filters
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-surface-500 border-b border-surface-200 dark:border-surface-800">
-                    <th className="py-2 pr-4">Room</th>
-                    <th className="py-2 pr-4">Current Stage</th>
-                    <th className="py-2 pr-4">Minutes in Stage</th>
-                    <th className="py-2 pr-4">Can Undo?</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {statusReport.length === 0 ? (
-                    <tr><td colSpan={4} className="py-4 text-surface-400">No data.</td></tr>
-                  ) : statusReport.map((r) => (
-                    <tr key={r.roomId} className="border-b border-surface-100 dark:border-surface-800/50">
-                      <td className="py-2 pr-4 font-medium">{r.roomId}</td>
-                      <td className="py-2 pr-4">{stageLabel[r.currentStage] ?? r.currentStage}</td>
-                      <td className="py-2 pr-4">{r.minutesInCurrentStage}</td>
-                      <td className="py-2 pr-4">{r.canRollback ? "Yes" : "No"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-xs text-surface-400 mt-2">Sorted by longest time waiting first.</p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "turnaround" && (
-          <div className="flex flex-col gap-4">
-            {/* Multi-criteria filter: staff AND completion date range */}
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-surface-500">Staff ID</label>
-                <input
-                  type="text"
-                  value={staffFilter}
-                  onChange={(e) => setStaffFilter(e.target.value)}
-                  placeholder="e.g. STF001"
-                  className="px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-sm w-36"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-surface-500">From</label>
-                <input
-                  type="datetime-local"
-                  value={rangeStart}
-                  onChange={(e) => setRangeStart(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-sm"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-surface-500">To</label>
-                <input
-                  type="datetime-local"
-                  value={rangeEnd}
-                  onChange={(e) => setRangeEnd(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-sm"
-                />
-              </div>
-              <button
-                onClick={fetchTurnaroundReport}
-                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-medium"
-              >
-                Apply Filters
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-surface-500 border-b border-surface-200 dark:border-surface-800">
-                    <th className="py-2 pr-4"><Users size={14} className="inline mr-1" />Staff</th>
-                    <th className="py-2 pr-4">Room</th>
-                    <th className="py-2 pr-4">Cycle Start</th>
-                    <th className="py-2 pr-4">Cycle End</th>
-                    <th className="py-2 pr-4">Duration (min)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {turnaroundReport.length === 0 ? (
-                    <tr><td colSpan={5} className="py-4 text-surface-400">No completed cycles yet.</td></tr>
-                  ) : turnaroundReport.map((r, i) => (
-                    <tr key={i} className="border-b border-surface-100 dark:border-surface-800/50">
-                      <td className="py-2 pr-4 font-medium">{r.staffName}</td>
-                      <td className="py-2 pr-4">{r.roomId}</td>
-                      <td className="py-2 pr-4">{new Date(r.cycleStart).toLocaleString()}</td>
-                      <td className="py-2 pr-4">{new Date(r.cycleEnd).toLocaleString()}</td>
-                      <td className="py-2 pr-4">{r.durationMinutes}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-xs text-surface-400 mt-2">Sorted by fastest turnaround first.</p>
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );
