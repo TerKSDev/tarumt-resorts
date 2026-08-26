@@ -50,18 +50,11 @@ public class RegistrationControl {
         this.queue = new MyArrayQueue<>(DEFAULT_CAPACITY);
     }
 
-    /**
-     * QueueItem - Temporary data holder for guest in registration queue
-     * 
-     * Fields:
-     * - id: Auto-generated UUID for queue position tracking
-     * - name: Guest full name (trimmed, non-null)
-     * - identityNo: National ID / Passport (normalized, unique check)
-     * - guests: Number of people in group
-     * - checkIn: Timestamp when guest joined queue
-     * 
-     * Purpose: Bridge between HTTP request and database entities
-     */
+    // Inner Class representing temporary queue memory item.
+    // NOTE: identityNo is only ever held here, in the in-memory queue — the
+    // customers table no longer has an identity_no column, so it's never
+    // persisted onto a Customer entity. It's still useful for stopping the
+    // same person being queued twice (see enqueueGuest below).
     public static class QueueItem {
         private String id;
         private String name;
@@ -129,18 +122,19 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Identity number is required.");
         }
 
-        // Check if identity number already exists in queue
-        Object[] queueItems = queue.snapshot();
-        for (int i = 0; i < queueItems.length; i++) {
-            QueueItem q = (QueueItem) queueItems[i];
-            if (normalizedIdentityNo.equalsIgnoreCase(q.getIdentityNo())) {
-                throw new IllegalArgumentException("This identity number is already in the queue.");
+        // Only checked against the current in-memory queue — the customers
+        // table has no identity_no column anymore, so there's no way to
+        // check this against past/existing customers, only against people
+        // currently waiting in line.
+        boolean foundIdentity = false;
+        for (int i = 0; i < queue.size(); i++) {
+            if (normalizedIdentityNo.equalsIgnoreCase(queue.get(i).getIdentityNo())) {
+                foundIdentity = true;
+                break;
             }
         }
-
-        Customer existingCustomer = customerRepository.findByIdentityNo(normalizedIdentityNo);
-        if (existingCustomer != null) {
-            throw new IllegalArgumentException("This identity number already exists in the system.");
+        if (foundIdentity) {
+            throw new IllegalArgumentException("This identity number is already in the queue.");
         }
 
         item.setId(UUID.randomUUID().toString());
@@ -203,16 +197,14 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Queue item id is required.");
         }
 
-        // Find guest by queue ID
-        Object[] queueItems = queue.snapshot();
         int selectedIndex = -1;
-        for (int i = 0; i < queueItems.length; i++) {
-            QueueItem q = (QueueItem) queueItems[i];
-            if (queueId.equals(q.getId())) {
+        for (int i = 0; i < queue.size(); i++) {
+            if (queueId.equals(queue.get(i).getId())) {
                 selectedIndex = i;
                 break;
             }
         }
+        
         if (selectedIndex < 0) {
             throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
@@ -221,25 +213,18 @@ public class RegistrationControl {
         queue.removeAt(selectedIndex);
 
         LocalDateTime now = LocalDateTime.now();
-        String normalizedIdentityNo = selectedItem.getIdentityNo() == null
-            ? ""
-            : selectedItem.getIdentityNo().trim();
 
-        // Look up existing Customer entity OR create new one
-        Customer customer = customerRepository.findByIdentityNo(normalizedIdentityNo);
-        if (customer == null) {
-            Customer newCustomer = new Customer();
-            newCustomer.setIdentityNo(normalizedIdentityNo);
-            newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
-            newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
-            newCustomer.setCreatedAt(now);
-            newCustomer.setUpdatedAt(now);
-            newCustomer.setIsActive(true);
-            customer = customerRepository.save(newCustomer);
-        } else {
-            customer.setUpdatedAt(now);
-            customerRepository.save(customer);
-        }
+        // The customers table has no identity_no column to look up an
+        // existing customer by, so every processed guest becomes a new
+        // Customer record — there's no reliable way left to detect a
+        // returning guest.
+        Customer newCustomer = new Customer();
+        newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
+        newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
+        newCustomer.setCreatedAt(now);
+        newCustomer.setUpdatedAt(now);
+        newCustomer.setIsActive(true);
+        Customer customer = customerRepository.save(newCustomer);
 
         // Create and persist Booking entity
         Booking booking = new Booking();
@@ -300,16 +285,14 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Cancellation reason is required.");
         }
 
-        // Find guest by queue ID
-        Object[] queueItems = queue.snapshot();
         int selectedIndex = -1;
-        for (int i = 0; i < queueItems.length; i++) {
-            QueueItem q = (QueueItem) queueItems[i];
-            if (queueId.equals(q.getId())) {
+        for (int i = 0; i < queue.size(); i++) {
+            if (queueId.equals(queue.get(i).getId())) {
                 selectedIndex = i;
                 break;
             }
         }
+
         if (selectedIndex < 0) {
             throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
@@ -318,24 +301,14 @@ public class RegistrationControl {
         queue.removeAt(selectedIndex);
 
         LocalDateTime now = LocalDateTime.now();
-        String normalizedIdentityNo = selectedItem.getIdentityNo() == null
-            ? ""
-            : selectedItem.getIdentityNo().trim();
 
-        Customer customer = customerRepository.findByIdentityNo(normalizedIdentityNo);
-        if (customer == null) {
-            Customer newCustomer = new Customer();
-            newCustomer.setIdentityNo(normalizedIdentityNo);
-            newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
-            newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
-            newCustomer.setCreatedAt(now);
-            newCustomer.setUpdatedAt(now);
-            newCustomer.setIsActive(true);
-            customer = customerRepository.save(newCustomer);
-        } else {
-            customer.setUpdatedAt(now);
-            customerRepository.save(customer);
-        }
+        Customer newCustomer = new Customer();
+        newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
+        newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
+        newCustomer.setCreatedAt(now);
+        newCustomer.setUpdatedAt(now);
+        newCustomer.setIsActive(true);
+        Customer customer = customerRepository.save(newCustomer);
 
         // Record the abandoned registration as a cancelled booking for reporting
         Booking booking = new Booking();

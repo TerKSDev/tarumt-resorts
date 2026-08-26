@@ -32,66 +32,66 @@ export default function RoomCard({
     <button
       onClick={() => setIsModalOpen("edit")}
       disabled={!!room.booking}
-      className={`group flex flex-col relative p-4 bg-surface-50 border border-surface-300 rounded-lg shadow-xs transition-all duration-300 ${status.card} ${
+      className={`group flex flex-col relative p-5 bg-white border border-surface-200 rounded-3xl shadow-xs transition-all duration-300 ${status.card} ${
         room.booking
-          ? "opacity-75 cursor-not-allowed"
-          : "hover:-translate-y-0.5 cursor-pointer"
+          ? "opacity-80 cursor-not-allowed"
+          : "hover:-translate-y-1 hover:shadow-md cursor-pointer"
       }`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex gap-3 items-center">
+      <div className="flex items-start justify-between w-full">
+        <div className="flex gap-4 items-center">
           <div
-            className={`rounded-lg w-10 h-10 flex items-center justify-center ${status.badge}`}
+            className={`rounded-full w-12 h-12 flex items-center justify-center ${status.badge} border border-surface-100 shadow-sm`}
           >
-            <Bed size={20} />
+            <Bed size={20} strokeWidth={1.5} />
           </div>
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col items-start gap-0.5">
             <h1
-              className={`transition-all duration-300 font-medium text-lg leading-none ${status.text}`}
+              className={`transition-all duration-300 font-serif text-2xl leading-none tracking-wide ${status.text}`}
             >
               {room.roomId}
             </h1>
-            <h2 className="text-surface-600 text-xs leading-tight">
+            <h2 className="text-surface-400 text-[10px] uppercase tracking-widest font-medium leading-tight">
               Floor {room.roomId.slice(0, -2)}
             </h2>
           </div>
         </div>
         <div
-          className={`text-[10px] flex items-center gap-1.5 rounded-full px-2.5 py-1 leading-none border ${status.badge} font-semibold`}
+          className={`text-[9px] uppercase tracking-widest flex items-center gap-1.5 rounded-full px-3 py-1.5 leading-none border ${status.badge} font-semibold shadow-xs`}
         >
-          <div className={`w-1 h-1 rounded-full ${status.dot}`} />
+          <div className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
           {status.name}
         </div>
       </div>
 
-      <div className="w-full h-px bg-surface-300 my-4 mb-3" />
+      <div className="w-full h-px bg-surface-100 my-5" />
 
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between text-xs gap-4">
-          <span className="leading-none font-medium capitalize">
-            {room.type.toLowerCase()}
+      <div className="flex flex-col gap-5 w-full">
+        <div className="flex items-center justify-between text-xs gap-4 px-1">
+          <span className="leading-none font-medium uppercase tracking-widest text-surface-600">
+            {room.type}
           </span>
-          <span className="text-surface-600 leading-none font-semibold flex items-center gap-1.5">
-            <Users size={12} />
+          <span className="text-surface-500 leading-none font-semibold flex items-center gap-1.5">
+            <Users size={14} strokeWidth={1.5} />
             {room.capacity}
           </span>
         </div>
 
         {room.booking ? (
-          <div className="flex text-sm px-3 bg-surface-100 border border-surface-300 rounded-lg py-2.5 items-center justify-between gap-4">
-            <span className="truncate max-w-1/2 font-medium leading-none">
+          <div className="flex text-sm px-4 bg-surface-50 border border-surface-100 rounded-2xl py-3 items-center justify-between gap-4">
+            <span className="truncate max-w-1/2 font-medium leading-none text-surface-800">
               {room.booking.customerName}
             </span>
-            <span className="text-surface-600 text-xs tracking-tight">
+            <span className="text-surface-400 text-[10px] tracking-wider uppercase">
               Check Out: {formatMonthDate(room.booking.checkOutDate)}
             </span>
           </div>
         ) : (
-          <div className="flex text-sm px-3 bg-surface-100 border border-surface-300 rounded-lg py-2.5 items-center justify-between gap-4">
-            <span className="text-surface-600 text-xs tracking-tight">
+          <div className="flex text-sm px-4 bg-surface-50 border border-surface-100 rounded-2xl py-3 items-center justify-between gap-4">
+            <span className="text-surface-400 text-[10px] tracking-wider uppercase">
               Price Per Night
             </span>
-            <span className="font-semibold leading-none">
+            <span className="font-semibold leading-none text-surface-800">
               RM {room.pricePerNight.toFixed(2)}
             </span>
           </div>

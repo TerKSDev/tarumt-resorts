@@ -115,7 +115,7 @@ export default function ArrivalDeparture() {
           </div>
         ))}
       </div>
-      <table className="flex-1 relative">
+      <table className="relative">
         <thead>
           <tr className="text-surface-600 text-xs md:text-sm leading-none border-b border-surface-300">
             <th className="py-4 text-start px-6 font-normal tracking-wide">
@@ -176,9 +176,9 @@ export default function ArrivalDeparture() {
               return (
                 <tr
                   key={index}
-                  className="border-b border-surface-200 last:border-0 hover:bg-surface-100 transition-colors"
+                  className="border-b border-surface-200 last:border-0 hover:bg-brand-50/50 transition-colors h-fit"
                 >
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 max-h-fit">
                     <span
                       className={`px-2 py-1 rounded-xl text-[10px] font-medium border uppercase tracking-wider ${
                         isArrival
@@ -189,7 +189,7 @@ export default function ArrivalDeparture() {
                       {type}
                     </span>
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 max-h-fit">
                     <div className="flex items-center gap-3">
                       <div className="bg-surface-100 p-2 rounded-full text-surface-500">
                         <UserCircle size={18} />
@@ -212,7 +212,7 @@ export default function ArrivalDeparture() {
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 max-h-fit">
                     <div className="flex items-center gap-2">
                       <BedDouble size={16} className="text-surface-400" />
                       <span className="text-sm font-medium text-surface-800">
@@ -220,7 +220,7 @@ export default function ArrivalDeparture() {
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 max-h-fit">
                     <div className="flex items-center gap-2 text-surface-600">
                       <Clock size={14} className="opacity-70" />
                       <span className="text-sm">
@@ -231,7 +231,7 @@ export default function ArrivalDeparture() {
                       </span>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 max-h-fit">
                     <div className="flex items-center gap-2">
                       <Hash size={14} className="text-surface-400" />
                       <span className="text-sm text-surface-700 font-mono bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
