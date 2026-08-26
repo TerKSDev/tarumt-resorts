@@ -82,34 +82,34 @@ export default function GuestSearchBar({
   };
 
   return (
-    <div className="flex flex-col rounded-xl gap-5 border p-4 md:p-6 border-surface-300 bg-surface-50">
-      <div className="flex items-center gap-3 md:gap-4">
-        <div className="flex items-center justify-center min-w-10.5 min-h-10.5 bg-brand-50 text-brand-600 rounded-xl">
-          <Ticket size={20} />
+    <div className="flex flex-col rounded-3xl gap-6 border p-6 md:p-8 border-surface-200 bg-white shadow-xs">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center w-12 h-12 border border-surface-100 bg-surface-50 text-surface-600 rounded-full shadow-sm">
+          <Ticket size={20} strokeWidth={1.5} />
         </div>
-        <div className="flex flex-col gap-1.5 justify-between">
-          <h2 className="text-base md:text-lg font-semibold leading-none">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-serif text-surface-900 tracking-wide leading-none">
             Confirmation Number Search
           </h2>
-          <p className="text-xs md:text-sm text-surface-600 leading-tight">
-            Enter the 8-digit confirmation number to check customer bookings and
-            bills.
+          <p className="text-xs text-surface-500 font-light leading-tight">
+            Enter the 8-digit confirmation number to check customer bookings and bills.
           </p>
         </div>
       </div>
 
       <form
         action={handleSearchGuest}
-        className="flex items-center gap-2 sm:gap-4 sm:flex-row flex-col"
+        className="flex items-center gap-3 sm:gap-4 sm:flex-row flex-col"
       >
-        <div className="min-w-0 group flex items-center flex-1 focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:shadow-sm transition-all duration-300 focus-within:scale-101 focus-within:bg-surface-50 shadow-xs bg-surface-100 border border-surface-300 hover:border-surface-400 rounded-xl px-4 h-12.5 w-full gap-2.5">
+        <div className="min-w-0 group flex items-center flex-1 focus-within:border-surface-400 focus-within:ring-1 focus-within:ring-surface-400/20 focus-within:shadow-md transition-all duration-300 focus-within:bg-white shadow-xs bg-surface-50 border border-surface-200 hover:border-surface-300 rounded-full px-5 h-14 w-full gap-3">
           <label
             htmlFor="confirmation-no"
-            className="text-surface-500 bg-transparent"
+            className="text-surface-400 bg-transparent flex items-center"
           >
             <Hash
-              size={16}
-              className="mx-1 text-surface-600 group-focus-within:text-brand-600 transition-all duration-300 group-focus-within:-rotate-8 group-focus-within:scale-115"
+              size={18}
+              strokeWidth={1.5}
+              className="text-surface-400 group-focus-within:text-surface-700 transition-colors"
             />
           </label>
           <input
@@ -119,7 +119,7 @@ export default function GuestSearchBar({
             name="confirmation_no"
             type="text"
             placeholder="E.g. XXXXXXXX"
-            className="flex h-14 mb-px placeholder:tracking-[.25rem] tracking-[.4rem] delay-[9999s] [transition-property:background-color,color] tabular-nums slashed-zero outline-none flex-1 text-lg placeholder:text-surface-500 text-surface-800 bg-transparent"
+            className="flex h-full mb-px placeholder:tracking-[.25rem] tracking-[.4rem] delay-[9999s] [transition-property:background-color,color] tabular-nums slashed-zero outline-none flex-1 text-lg placeholder:text-surface-400 text-surface-800 bg-transparent font-medium"
             required
             pattern="^[a-zA-Z0-9]{8}$"
             title="Confirmation Number must be 8 alphanumeric characters."
@@ -130,21 +130,21 @@ export default function GuestSearchBar({
         <button
           type="submit"
           disabled={isLoading}
-          className={`max-sm:w-full flex items-center justify-center gap-2.5 px-6 h-12.5 bg-brand-500 hover:bg-brand-700 transition-all duration-300 cursor-pointer text-surface-50 rounded-xl font-medium uppercase tracking-wide mx-0 ${isLoading ? "opacity-75 cursor-wait" : ""}`}
+          className={`max-sm:w-full flex items-center justify-center gap-2.5 px-8 h-14 bg-surface-900 hover:bg-surface-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer text-white rounded-full font-medium uppercase tracking-widest mx-0 ${isLoading ? "opacity-75 cursor-wait" : ""}`}
         >
-          <Search size={18} className={isLoading ? "animate-spin" : ""} />
-          <p className="leading-none text-sm">
+          <Search size={16} strokeWidth={1.5} className={isLoading ? "animate-spin" : ""} />
+          <p className="leading-none text-xs">
             {isLoading ? "Searching" : "Search"}
           </p>
         </button>
       </form>
 
       {history.length > 0 && (
-        <div className="flex items-center gap-3 px-px -mt-1.5">
-          <span className="text-xs text-surface-600 leading-none">
-            Historical Searches:
+        <div className="flex items-center gap-3 px-2 -mt-2">
+          <span className="text-[10px] text-surface-400 uppercase tracking-widest font-semibold leading-none">
+            Recent:
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {history.map((no, index) => (
               <button
                 type="button"
@@ -153,7 +153,7 @@ export default function GuestSearchBar({
                   performSearch(no);
                 }}
                 key={index}
-                className="text-xs leading-none font-medium shadow-xs text-surface-800 hover:border-brand-300 cursor-pointer hover:text-brand-600 hover:bg-brand-50 transition-all duration-300 bg-surface-100 rounded-md border border-surface-300 px-2.5 py-1.5"
+                className="text-[10px] leading-none font-medium shadow-xs text-surface-600 hover:border-surface-400 cursor-pointer hover:text-surface-900 hover:bg-white transition-all duration-300 bg-surface-50 rounded-full border border-surface-200 px-3 py-1.5 uppercase tracking-widest"
               >
                 {no}
               </button>
