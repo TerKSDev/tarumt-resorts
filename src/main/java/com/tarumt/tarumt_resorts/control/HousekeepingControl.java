@@ -148,6 +148,19 @@ public class HousekeepingControl {
         Room room = roomDAO.findById(roomId).orElse(null);
         if (room == null) return "Room not found!";
 
+        // Housekeeping only owns the room while it's between guests
+        // (CHECKED_OUT/being cleaned) or already marked AVAILABLE.
+        // RESERVED/CHECKED_IN means a guest currently has the room -
+        // Housekeeping must never overwrite that. MAINTENANCE means
+        // Room Management has taken the room out of the cleaning
+        // cycle entirely.
+        if (room.getStatus() == RoomStatus.RESERVED || room.getStatus() == RoomStatus.CHECKED_IN) {
+            return "Room " + roomId + " is currently occupied by a guest - housekeeping cannot advance it.";
+        }
+        if (room.getStatus() == RoomStatus.MAINTENANCE) {
+            return "Room " + roomId + " is under maintenance - not part of the cleaning cycle.";
+        }
+
         HousekeepingStatus currentStage = syncAndGetCurrentStage(room);
         HousekeepingStatus newStage = nextStatus(currentStage);
 
@@ -191,8 +204,20 @@ public class HousekeepingControl {
             return "No recent actions to rollback for room " + roomId + ".";
         }
 
+        // Re-fetch the room fresh (not lastTask.getRoom(), which reflects
+        // whatever the Room looked like back when that task was saved -
+        // Room Management may have changed its status since then).
+        Room room = roomDAO.findById(roomId).orElse(null);
+        if (room == null) return "Room not found!";
+
+        if (room.getStatus() == RoomStatus.RESERVED || room.getStatus() == RoomStatus.CHECKED_IN) {
+            return "Room " + roomId + " is currently occupied by a guest - cannot rollback.";
+        }
+        if (room.getStatus() == RoomStatus.MAINTENANCE) {
+            return "Room " + roomId + " is under maintenance - not part of the cleaning cycle.";
+        }
+
         HousekeepingTask lastTask = stack.pop();
-        Room room = lastTask.getRoom();
         HousekeepingStatus statusToRestore = lastTask.getOldStatus();
 
         // If the popped action was the auto-generated DIRTY task from a
