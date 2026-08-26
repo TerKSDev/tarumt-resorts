@@ -13,6 +13,8 @@ import com.tarumt.tarumt_resorts.dto.RegistrationCancellationReportDTO;
 import com.tarumt.tarumt_resorts.dto.WalkInSummaryDTO;
 import com.tarumt.tarumt_resorts.entity.Booking;
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
+import com.tarumt.tarumt_resorts.adt.MyQueue;
+import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
 
 @Service
 public class ReportControl {
@@ -26,7 +28,35 @@ public class ReportControl {
 
     public Booking[] generateArrivalDepartureReport() {
         String today = java.time.LocalDate.now().toString();
-        return bookingDAO.findTodayArrivalAndDeparture(today);
+        Booking[] bookings = bookingDAO.findTodayArrivalAndDeparture(today);
+
+        // --- Custom ADT Application: MyQueue (FIFO) ---
+        // Using the custom MyArrayQueue ADT implemented for the project
+        MyQueue<Booking> arrivalQueue = new MyArrayQueue<>();
+        MyQueue<Booking> departureQueue = new MyArrayQueue<>();
+
+        // Categorize into the respective Queues
+        for (Booking b : bookings) {
+            if (b.getCheckInDate() != null && b.getCheckInDate().equals(today)) {
+                arrivalQueue.enqueue(b); // Enqueue arriving guests
+            } else if (b.getCheckOutDate() != null && b.getCheckOutDate().equals(today)) {
+                departureQueue.enqueue(b); // Enqueue departing guests
+            }
+        }
+
+        // Process Queues and combine them back into an ordered Report array 
+        // Priority is given to Arrival guests first, then Departure guests
+        Booking[] sortedReport = new Booking[bookings.length];
+        int index = 0;
+        
+        while (arrivalQueue.size() > 0) {
+            sortedReport[index++] = arrivalQueue.removeAt(0); // Dequeue (FIFO)
+        }
+        while (departureQueue.size() > 0) {
+            sortedReport[index++] = departureQueue.removeAt(0); // Dequeue (FIFO)
+        }
+
+        return sortedReport;
     }
 
     public Booking[] generateGuestDirectoryReport() {
