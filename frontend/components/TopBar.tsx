@@ -4,55 +4,50 @@ import { motion } from "motion/react";
 type TopBarProps = {
   title: string;
   desc: string;
-  path: string;
   setMenuOpen: (menuOpen: boolean) => void;
 };
 
-export default function TopBar({
-  title,
-  desc,
-  path,
-  setMenuOpen,
-}: TopBarProps) {
+export default function TopBar({ title, desc, setMenuOpen }: TopBarProps) {
   return (
     <motion.header
-      className="sticky top-0 right-0 h-16 bg-white left-0 gap-4 justify-between items-center flex pl-4 lg:pl-6 pr-4 py-3 border border-surface-300 print:hidden"
-      initial={{ opacity: 0, y: -50 }}
+      className="sticky top-0 right-0 z-40 h-20 bg-surface-100/70 backdrop-blur-md left-0 gap-4 justify-between items-center flex px-6 lg:px-10 lg:pl-8 border-b border-surface-200/50 print:hidden"
+      initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="flex items-center gap-4">
         <button
-          className="lg:hidden cursor-pointer flex items-center justify-center w-10 h-10 hover:bg-surface-100 hover:shadow-inner rounded-xl hover:border-surface-200 border border-transparent transition-all duration-300 text-surface-600"
+          className="lg:hidden cursor-pointer flex items-center justify-center w-10 h-10 hover:bg-surface-200/50 rounded-full border border-transparent transition-all duration-300 text-surface-600"
           onClick={() => setMenuOpen(true)}
         >
-          <Menu size={20} />
+          <Menu size={20} strokeWidth={1.5} />
         </button>
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-lg font-semibold leading-tight tracking-tight">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-serif text-surface-900 tracking-wide leading-tight">
             {title}
           </h1>
-          <p className="text-xs text-surface-600 leading-snug tracking-wide">
+          <p className="text-[10px] text-surface-500 tracking-wider uppercase mt-0.5 font-medium">
             {desc}
           </p>
         </div>
       </div>
-      <div className="md:flex items-center gap-4 hidden">
-        <div className="flex h-10 gap-3 group focus-within:border-brand-600 focus-within:hover:border-brand-600 focus-within:shadow-md focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-105 transition-all duration-300 border px-4 border-surface-300 p-2 items-center rounded-xl bg-surface-100 hover:border-surface-400 focus-within:bg-surface-50 shadow-xs w-72">
+      <div className="md:flex items-center gap-6 hidden">
+        <div className="flex items-center h-10 gap-3 px-5 rounded-full bg-white border border-surface-200 shadow-xs focus-within:border-surface-400 focus-within:shadow-md transition-all duration-300 w-80 group">
           <label htmlFor="search">
             <Search
               size={16}
-              className="text-surface-600 group-focus-within:text-brand-600 transition-all duration-300 group-focus-within:-rotate-8 group-focus-within:scale-115"
+              strokeWidth={1.5}
+              className="text-surface-400 group-focus-within:text-surface-700 transition-colors cursor-pointer"
             />
           </label>
           <input
             id="search"
-            className="h-full w-full outline-none text-sm text-surface-800 placeholder:text-surface-500 bg-transparent"
+            className="h-full w-full outline-none text-sm text-surface-800 placeholder:text-surface-400 bg-transparent"
             placeholder="Search customer, room, staff..."
           />
         </div>
-        <button className="flex h-10 items-center leading-tight justify-center gap-2 px-4 py-2 font-medium hover:bg-brand-700 text-sm rounded-xl transition-all duration-300 text-surface-50 bg-brand-500 text-nowrap cursor-pointer">
-          <Plus size={16} /> New Reservation
+        <button className="flex h-10 items-center gap-2 px-6 text-xs uppercase tracking-widest font-medium rounded-full bg-surface-900 hover:bg-surface-800 text-white transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md">
+          <Plus size={14} strokeWidth={2} /> New Reservation
         </button>
       </div>
     </motion.header>
