@@ -1,3 +1,5 @@
+//By Tek Shao Xian
+
 package com.tarumt.tarumt_resorts.adt;
 
 public interface MyList<T> extends Iterable<T> {

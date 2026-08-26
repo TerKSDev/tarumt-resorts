@@ -1,8 +1,16 @@
 package com.tarumt.tarumt_resorts.control;
 
+import java.math.BigDecimal;
+
 import org.springframework.stereotype.Service;
 
+import com.tarumt.tarumt_resorts.adt.MyArrayList;
+import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.dao.BookingDAO;
+import com.tarumt.tarumt_resorts.dto.CancellationReasonDTO;
+import com.tarumt.tarumt_resorts.dto.CancellationTrendDTO;
+import com.tarumt.tarumt_resorts.dto.RegistrationCancellationReportDTO;
+import com.tarumt.tarumt_resorts.dto.WalkInSummaryDTO;
 import com.tarumt.tarumt_resorts.entity.Booking;
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 import com.tarumt.tarumt_resorts.adt.MyQueue;
@@ -56,12 +64,89 @@ public class ReportControl {
     }
     
     // Lew Chun Hoe: Walk-In Registration Reports
-    public String generateWalkInSummaryReport(){
-        return new String();
+    // Uses the explicit isWalkIn flag set at check-in time, instead of inferring from dates
+    public WalkInSummaryDTO generateWalkInSummaryReport(){
+        String today = java.time.LocalDate.now().toString();
+        Booking[] todaysRegistrations = bookingDAO.findByCreatedDate(today);
+
+        MyList<Booking> walkIns = new MyArrayList<>();
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        for (Booking booking : todaysRegistrations) {
+            if (Boolean.TRUE.equals(booking.getIsWalkIn())) {
+                walkIns.add(booking);
+                totalRevenue = totalRevenue.add(booking.getTotalAmount());
+            }
+        }
+
+        Booking[] walkInBookings = new Booking[walkIns.size()];
+        for (int i = 0; i < walkIns.size(); i++) {
+            walkInBookings[i] = walkIns.get(i);
+        }
+
+        return new WalkInSummaryDTO(today, walkInBookings.length, totalRevenue, walkInBookings);
     }
 
-    public String generateRegistrationCancellationReport(){
-        return new String();
+    public RegistrationCancellationReportDTO generateRegistrationCancellationReport(){
+        Booking[] cancelledBookings = bookingDAO.findByStatus(BookingStatus.CANCELLED);
+        long totalBookings = bookingDAO.count();
+
+        BigDecimal totalLostRevenue = BigDecimal.ZERO;
+        MyList<CancellationTrendDTO> trends = new MyArrayList<>();
+        MyList<CancellationReasonDTO> reasonBreakdown = new MyArrayList<>();
+
+        for (Booking booking : cancelledBookings) {
+            totalLostRevenue = totalLostRevenue.add(booking.getTotalAmount());
+
+            // Group by the month the cancellation was recorded (updated_at)
+            String period = String.format("%04d-%02d", booking.getUpdatedAt().getYear(), booking.getUpdatedAt().getMonthValue());
+
+            CancellationTrendDTO matchingTrend = null;
+            for (int i = 0; i < trends.size(); i++) {
+                if (trends.get(i).getPeriod().equals(period)) {
+                    matchingTrend = trends.get(i);
+                    break;
+                }
+            }
+
+            if (matchingTrend != null) {
+                matchingTrend.addCancellation(booking.getTotalAmount());
+            } else {
+                trends.add(new CancellationTrendDTO(period, booking.getTotalAmount()));
+            }
+
+            // Group by cancellation reason for trend/root-cause analysis
+            var reason = booking.getCancellationReason();
+            if (reason != null) {
+                CancellationReasonDTO matchingReason = null;
+                for (int i = 0; i < reasonBreakdown.size(); i++) {
+                    if (reasonBreakdown.get(i).getReason() == reason) {
+                        matchingReason = reasonBreakdown.get(i);
+                        break;
+                    }
+                }
+
+                if (matchingReason != null) {
+                    matchingReason.addCancellation(booking.getTotalAmount());
+                } else {
+                    reasonBreakdown.add(new CancellationReasonDTO(reason, booking.getTotalAmount()));
+                }
+            }
+        }
+
+        CancellationTrendDTO[] trendArray = new CancellationTrendDTO[trends.size()];
+        for (int i = 0; i < trends.size(); i++) {
+            trendArray[i] = trends.get(i);
+        }
+
+        CancellationReasonDTO[] reasonArray = new CancellationReasonDTO[reasonBreakdown.size()];
+        for (int i = 0; i < reasonBreakdown.size(); i++) {
+            reasonArray[i] = reasonBreakdown.get(i);
+        }
+
+        double cancellationRate = totalBookings == 0 ? 0.0 : (double) cancelledBookings.length / totalBookings * 100;
+
+        return new RegistrationCancellationReportDTO(cancelledBookings.length, totalLostRevenue, cancellationRate,
+                trendArray, reasonArray, cancelledBookings);
     }
 
     // See Wei Jian: Housekeeping Task Logs Reports

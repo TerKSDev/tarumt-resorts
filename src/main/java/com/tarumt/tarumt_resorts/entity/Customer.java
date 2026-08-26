@@ -1,3 +1,5 @@
+//By Tek Shao Xian
+
 package com.tarumt.tarumt_resorts.entity;
 
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
@@ -20,9 +22,6 @@ public class Customer {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "identity_no", unique = true)
-    private String identityNo;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "loyalty_tier", nullable = false)
     private LoyaltyTier loyaltyTier = LoyaltyTier.BRONZE;
@@ -41,10 +40,9 @@ public class Customer {
     // Constructor
     public Customer() {}
 
-    public Customer(String customerId, String name, String identityNo, LoyaltyTier loyaltyTier, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean isActive) {
+    public Customer(String customerId, String name, LoyaltyTier loyaltyTier, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean isActive) {
         this.customerId = customerId;   
         this.name = name;   
-        this.identityNo = identityNo;
         this.loyaltyTier = loyaltyTier;   
         this.createdAt = createdAt;   
         this.updatedAt = updatedAt;   
@@ -58,10 +56,6 @@ public class Customer {
 
     public String getName() {
         return this.name;    
-    }
-
-    public String getIdentityNo() {
-        return this.identityNo;    
     }
 
     public LoyaltyTier getLoyaltyTier() {
@@ -87,10 +81,6 @@ public class Customer {
 
     public void setName(String name) {
         this.name = name;   
-    }
-
-    public void setIdentityNo(String identityNo) {
-        this.identityNo = identityNo;   
     }
 
     public void setLoyaltyTier(LoyaltyTier loyaltyTier) {
