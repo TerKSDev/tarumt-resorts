@@ -1,4 +1,4 @@
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import axios from "axios";
 
 export function AddRoomModal({
@@ -53,34 +53,31 @@ export function AddRoomModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-surface-950/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-surface-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <button
         onClick={() => setIsModalOpen("")}
-        className="absolute inset-0 z-50 cursor-pointer"
+        className="absolute inset-0 z-[50] cursor-pointer"
       ></button>
 
-      <div className="z-150 bg-surface-50 shadow-xl rounded-lg flex flex-col gap-6 p-6 w-full max-w-md border border-surface-200 transform animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between pb-4 border-b border-surface-300">
-          <h1 className="font-semibold text-surface-900 flex items-center gap-4 text-xl">
-            <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
-              <Plus size={20} />
-            </div>
-            Add New Room
+      <div className="z-[150] bg-white shadow-2xl rounded-3xl flex flex-col gap-8 p-8 w-full max-w-lg border border-surface-200 transform animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between">
+          <h1 className="font-serif text-3xl text-surface-900 tracking-tight">
+            New Room
           </h1>
           <button
             onClick={() => setIsModalOpen("")}
             className="cursor-pointer p-2 rounded-full text-surface-400 hover:text-surface-700 hover:bg-surface-100 transition-colors"
           >
-            <X size={20} />
+            <X size={24} strokeWidth={1.5} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="floor"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Floor
               </label>
@@ -92,14 +89,14 @@ export function AddRoomModal({
                 max={99}
                 defaultValue={1}
                 required
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="room_no"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Room No.
               </label>
@@ -111,15 +108,15 @@ export function AddRoomModal({
                 max={99}
                 defaultValue={10}
                 required
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900"
               />
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <label
               htmlFor="type"
-              className="text-sm text-surface-700 font-medium"
+              className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
             >
               Room Type
             </label>
@@ -127,7 +124,7 @@ export function AddRoomModal({
               id="type"
               name="type"
               required
-              className="outline-none text-surface-800 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
+              className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900 appearance-none cursor-pointer"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                 backgroundRepeat: "no-repeat",
@@ -142,11 +139,11 @@ export function AddRoomModal({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="capacity"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Capacity (Pax)
               </label>
@@ -158,19 +155,19 @@ export function AddRoomModal({
                 max={10}
                 defaultValue={2}
                 required
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="price"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Price Per Night
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 z-100 -translate-y-1/2 text-surface-600 text-sm font-medium">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 font-medium text-sm">
                   RM
                 </span>
                 <input
@@ -181,25 +178,18 @@ export function AddRoomModal({
                   min={0}
                   placeholder="0.00"
                   required
-                  className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border pl-[2.8rem] pr-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                  className="w-full pl-12 pr-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-surface-200">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen("")}
-              className="px-5 py-2.5 text-sm font-medium text-surface-700 hover:text-surface-900 hover:bg-surface-100 rounded-lg transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div className="pt-6 mt-2 border-t border-surface-100">
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 shadow-sm hover:shadow active:scale-95 rounded-lg transition-all cursor-pointer"
+              className="w-full py-4 bg-surface-900 text-white rounded-xl font-medium tracking-wide hover:bg-surface-800 hover:-translate-y-0.5 transition-all shadow-lg hover:shadow-xl"
             >
-              Add Room
+              Create Room
             </button>
           </div>
         </form>
@@ -253,35 +243,32 @@ export function EditRoomModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-surface-950/40 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-surface-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
       <button
         onClick={() => setIsModalOpen("")}
-        className="absolute inset-0 z-50 cursor-pointer"
+        className="absolute inset-0 z-[50] cursor-pointer"
       ></button>
 
-      <div className="z-150 bg-surface-50 shadow-xl rounded-lg flex flex-col gap-6 p-6 w-full max-w-md border border-surface-200 transform animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between pb-4 border-b border-surface-300">
-          <h1 className="font-semibold text-surface-900 flex items-center gap-4 text-xl">
-            <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
-              <Edit size={20} />
-            </div>
+      <div className="z-[150] bg-white shadow-2xl rounded-3xl flex flex-col gap-8 p-8 w-full max-w-lg border border-surface-200 transform animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between">
+          <h1 className="font-serif text-3xl text-surface-900 tracking-tight">
             Edit Room
           </h1>
           <button
             onClick={() => setIsModalOpen("")}
             className="cursor-pointer p-2 rounded-full text-surface-400 hover:text-surface-700 hover:bg-surface-100 transition-colors"
           >
-            <X size={20} />
+            <X size={24} strokeWidth={1.5} />
           </button>
         </div>
 
-        <form onSubmit={handleEdit} className="flex flex-col gap-5">
+        <form onSubmit={handleEdit} className="flex flex-col gap-6">
           {/* Row 1: Floor & Room No */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="edit_floor"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Floor
               </label>
@@ -293,14 +280,14 @@ export function EditRoomModal({
                 max={99}
                 defaultValue={room?.roomId?.slice(0, -2) || 1}
                 disabled
-                className="outline-none text-surface-800 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="edit_room_no"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Room No.
               </label>
@@ -312,17 +299,17 @@ export function EditRoomModal({
                 max={99}
                 defaultValue={room?.roomId?.slice(-2) || 1}
                 disabled
-                className="outline-none text-surface-800 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           {/* Row 2: Room Type & Status */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="edit_type"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Room Type
               </label>
@@ -330,7 +317,7 @@ export function EditRoomModal({
                 id="edit_type"
                 name="type"
                 defaultValue={room?.type || "STANDARD"}
-                className="outline-none text-surface-800 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900 appearance-none cursor-pointer"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                   backgroundRepeat: "no-repeat",
@@ -345,10 +332,10 @@ export function EditRoomModal({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="edit_status"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Status
               </label>
@@ -356,7 +343,7 @@ export function EditRoomModal({
                 id="edit_status"
                 name="status"
                 defaultValue={room?.status || "AVAILABLE"}
-                className="outline-none text-surface-800 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full cursor-pointer appearance-none"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900 appearance-none cursor-pointer"
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                   backgroundRepeat: "no-repeat",
@@ -374,11 +361,11 @@ export function EditRoomModal({
           </div>
 
           {/* Row 3: Capacity & Price */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="edit_capacity"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Capacity (Pax)
               </label>
@@ -389,19 +376,19 @@ export function EditRoomModal({
                 min={1}
                 max={10}
                 defaultValue={room?.capacity || 2}
-                className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border px-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                className="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900"
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="edit_price"
-                className="text-sm text-surface-700 font-medium"
+                className="text-xs font-semibold text-surface-500 uppercase tracking-widest pl-1"
               >
                 Price Per Night
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 z-100 -translate-y-1/2 text-surface-600 text-sm font-medium">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 text-sm font-medium">
                   RM
                 </span>
                 <input
@@ -411,24 +398,17 @@ export function EditRoomModal({
                   step="0.01"
                   min={0}
                   defaultValue={room?.pricePerNight}
-                  className="outline-none text-surface-800 placeholder:text-surface-500 hover:border-surface-400 focus-within:border-brand-600 focus-within:shadow-sm focus-within:ring-1 focus-within:ring-brand-600/20 focus-within:scale-102 transition-all duration-300 border pl-[2.8rem] pr-4 border-surface-300 p-2.5 items-center rounded-lg bg-surface-100 focus:bg-surface-50 focus-within:bg-surface-50 shadow-xs w-full"
+                  className="w-full pl-12 pr-4 py-3 bg-surface-50 border border-surface-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-surface-900 transition-all text-surface-900"
                 />
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-surface-300">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen("")}
-              className="px-5 py-2.5 text-sm font-medium text-surface-700 hover:text-surface-900 hover:bg-surface-100 rounded-lg transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div className="pt-6 mt-2 border-t border-surface-100">
             <button
               type="submit"
-              className="px-5 py-2.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 shadow-sm hover:shadow active:scale-95 rounded-lg transition-all cursor-pointer"
+              className="w-full py-4 bg-surface-900 text-white rounded-xl font-medium tracking-wide hover:bg-surface-800 hover:-translate-y-0.5 transition-all shadow-lg hover:shadow-xl"
             >
               Save Changes
             </button>

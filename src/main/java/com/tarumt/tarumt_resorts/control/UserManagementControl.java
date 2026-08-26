@@ -4,10 +4,11 @@ import org.springframework.stereotype.Service;
 
 import com.tarumt.tarumt_resorts.dao.StaffDAO;
 import com.tarumt.tarumt_resorts.entity.Staff;
+import com.tarumt.tarumt_resorts.adt.MyList;
+import com.tarumt.tarumt_resorts.adt.MyArrayList;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 
 @Service
 public class UserManagementControl {
@@ -18,9 +19,14 @@ public class UserManagementControl {
         this.staffDao = staffDao;
     }
 
-    // Get all staff members
-    public List<Staff> getAllStaff() {
-        return staffDao.findAll();
+    // Get all staff members using custom ADT
+    public MyList<Staff> getAllStaff() {
+        Iterable<Staff> staffIterable = staffDao.findAll();
+        MyList<Staff> myStaffList = new MyArrayList<>();
+        for (Staff staff : staffIterable) {
+            myStaffList.add(staff);
+        }
+        return myStaffList;
     }
 
     // Add a new staff member with SHA-256 hashed password

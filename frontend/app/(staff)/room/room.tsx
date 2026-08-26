@@ -122,7 +122,7 @@ export default function Room() {
       </div>
 
       {displayedRooms.length === 0 ? (
-        <div className="flex flex-col items-center justify-center w-full min-h-[50vh] bg-white border border-surface-200 rounded-3xl shadow-xs">
+        <div className="flex flex-1 flex-col items-center justify-center w-full min-h-[50vh] bg-white border border-surface-200 rounded-3xl shadow-xs">
           <Search
             size={48}
             strokeWidth={1.5}

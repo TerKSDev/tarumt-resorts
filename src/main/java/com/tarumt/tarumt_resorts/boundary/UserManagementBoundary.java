@@ -7,7 +7,7 @@ import com.tarumt.tarumt_resorts.entity.Staff;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import com.tarumt.tarumt_resorts.adt.MyList;
 
 @RestController
 @RequestMapping("api/user-management")
@@ -24,7 +24,7 @@ public class UserManagementBoundary {
     // Execute Frontend Request
 
     @GetMapping
-    public ResponseEntity<List<Staff>> getAllStaff() {
+    public ResponseEntity<MyList<Staff>> getAllStaff() {
         return ResponseEntity.ok(userManagementControl.getAllStaff());
     }
 
