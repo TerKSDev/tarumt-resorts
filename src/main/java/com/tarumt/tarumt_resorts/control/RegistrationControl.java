@@ -89,7 +89,14 @@ public class RegistrationControl {
         // table has no identity_no column anymore, so there's no way to
         // check this against past/existing customers, only against people
         // currently waiting in line.
-        if (queue.findIndex(q -> normalizedIdentityNo.equalsIgnoreCase(q.getIdentityNo())) != -1) {
+        boolean foundIdentity = false;
+        for (int i = 0; i < queue.size(); i++) {
+            if (normalizedIdentityNo.equalsIgnoreCase(queue.get(i).getIdentityNo())) {
+                foundIdentity = true;
+                break;
+            }
+        }
+        if (foundIdentity) {
             throw new IllegalArgumentException("This identity number is already in the queue.");
         }
 
@@ -119,7 +126,14 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Queue item id is required.");
         }
 
-        int selectedIndex = queue.findIndex(q -> queueId.equals(q.getId()));
+        int selectedIndex = -1;
+        for (int i = 0; i < queue.size(); i++) {
+            if (queueId.equals(queue.get(i).getId())) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        
         if (selectedIndex < 0) {
             throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
@@ -167,7 +181,14 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Cancellation reason is required.");
         }
 
-        int selectedIndex = queue.findIndex(q -> queueId.equals(q.getId()));
+        int selectedIndex = -1;
+        for (int i = 0; i < queue.size(); i++) {
+            if (queueId.equals(queue.get(i).getId())) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
         if (selectedIndex < 0) {
             throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
@@ -176,24 +197,14 @@ public class RegistrationControl {
         queue.removeAt(selectedIndex);
 
         LocalDateTime now = LocalDateTime.now();
-        String normalizedIdentityNo = selectedItem.getIdentityNo() == null
-            ? ""
-            : selectedItem.getIdentityNo().trim();
 
-        Customer customer = customerRepository.findByIdentityNo(normalizedIdentityNo);
-        if (customer == null) {
-            Customer newCustomer = new Customer();
-            newCustomer.setIdentityNo(normalizedIdentityNo);
-            newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
-            newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
-            newCustomer.setCreatedAt(now);
-            newCustomer.setUpdatedAt(now);
-            newCustomer.setIsActive(true);
-            customer = customerRepository.save(newCustomer);
-        } else {
-            customer.setUpdatedAt(now);
-            customerRepository.save(customer);
-        }
+        Customer newCustomer = new Customer();
+        newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
+        newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
+        newCustomer.setCreatedAt(now);
+        newCustomer.setUpdatedAt(now);
+        newCustomer.setIsActive(true);
+        Customer customer = customerRepository.save(newCustomer);
 
         // Record the abandoned registration as a cancelled booking for reporting
         Booking booking = new Booking();
