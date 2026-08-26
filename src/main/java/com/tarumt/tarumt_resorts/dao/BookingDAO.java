@@ -13,8 +13,14 @@ public interface BookingDAO extends JpaRepository<Booking, Long> {
     Booking[] findByStatus(BookingStatus status);
 
     // Ter Kean Sen: Get today's arrivals and departures
-    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM bookings WHERE date(check_in_date) = :today OR date(check_out_date) = :today", nativeQuery = true)
+    // check_in_date/check_out_date are stored as epoch-milliseconds, convert to seconds for date()
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM bookings WHERE date(check_in_date / 1000, 'unixepoch') = :today OR date(check_out_date / 1000, 'unixepoch') = :today", nativeQuery = true)
     Booking[] findTodayArrivalAndDeparture(@org.springframework.data.repository.query.Param("today") String today);
+
+    // Lew Chun Hoe: Get bookings registered on a given date, for walk-in summary
+    // created_at is stored as epoch-milliseconds, convert to seconds for date()
+    @org.springframework.data.jpa.repository.Query(value = "SELECT * FROM bookings WHERE date(created_at / 1000, 'unixepoch') = :date", nativeQuery = true)
+    Booking[] findByCreatedDate(@org.springframework.data.repository.query.Param("date") String date);
 
 
     // Custom Query Method (Java Persistence Query Language: JPQL)

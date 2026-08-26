@@ -92,7 +92,7 @@ export default function Report() {
         <RegistrationCancellation />
       )}
       {currentReport.id === "cleaning-turnaround" && <CleaningTurnaround />}
-      {currentReport.id === "walk-in-summary" && <WalkInSummary />}
+      {currentReport.id === "walkin-summary" && <WalkInSummary />}
       <div className="flex items-center justify-center gap-4 w-fit print:hidden">
         <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider">
           More from {currentReport.from}:

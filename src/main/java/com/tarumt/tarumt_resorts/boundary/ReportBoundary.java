@@ -35,14 +35,14 @@ public class ReportBoundary {
 
     // Lew Chun Hoe: Daily Walk-In Registration Summary
     @GetMapping("/walkin-summary")
-    public String getWalkInSummary(){
-        return new String();
+    public ResponseEntity<?> getWalkInSummary(){
+        return ResponseEntity.ok(reportControl.generateWalkInSummaryReport());
     }
 
     // Lew Chun Hoe: Registration Cancellation Analysis
     @GetMapping("/registration-cancellation")
-    public String getRegistrationCancellation(){
-        return new String();
+    public ResponseEntity<?> getRegistrationCancellation(){
+        return ResponseEntity.ok(reportControl.generateRegistrationCancellationReport());
     }
 
     // See Wei Jian: Staff Cleaning Turnaround
