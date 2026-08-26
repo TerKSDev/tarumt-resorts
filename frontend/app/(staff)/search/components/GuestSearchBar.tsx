@@ -33,8 +33,12 @@ export default function GuestSearchBar({
   };
 
   const performSearch = async (searchNo: string) => {
-    if (!searchNo || searchNo.length !== 8 || !searchNo.match(/^[0-9]{8}$/)) {
-      alert("Confirmation number must be 8 digits.");
+    if (
+      !searchNo ||
+      searchNo.length !== 8 ||
+      !searchNo.match(/^[0-9A-Z]{8}$/)
+    ) {
+      alert("Confirmation number must be 8 alphanumeric characters.");
       return;
     }
 
@@ -117,8 +121,8 @@ export default function GuestSearchBar({
             placeholder="E.g. XXXXXXXX"
             className="flex h-14 mb-px placeholder:tracking-[.25rem] tracking-[.4rem] delay-[9999s] [transition-property:background-color,color] tabular-nums slashed-zero outline-none flex-1 text-lg placeholder:text-surface-500 text-surface-800 bg-transparent"
             required
-            pattern="[0-9]{8}"
-            title="Confirmation number must be 8 digits"
+            pattern="^[a-zA-Z0-9]{8}$"
+            title="Confirmation Number must be 8 alphanumeric characters."
             maxLength={8}
             minLength={8}
           />
