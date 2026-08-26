@@ -1,5 +1,6 @@
 import { CircleCheckBig, IdCard, ListTodo, Search, UserRound, Users } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import ReportGeneration from "./components/ReportGeneration";
 
 type QueueItem = {
   id?: string;
@@ -8,6 +9,15 @@ type QueueItem = {
   guests: number;
   checkIn?: string;
 };
+
+const CANCELLATION_REASONS = [
+  { value: "GUEST_REQUEST", label: "Guest Request" },
+  { value: "DUPLICATE_ENTRY", label: "Duplicate Entry" },
+  { value: "NO_SHOW", label: "No Show" },
+  { value: "PAYMENT_ISSUE", label: "Payment Issue" },
+  { value: "OTHER", label: "Other" },
+];
+
 
 const formatIdentityNo = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 12);
@@ -37,6 +47,8 @@ export default function RegistrationPage() {
   const [guests, setGuests] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState(CANCELLATION_REASONS[0].value);
 
   const fetchQueue = async () => {
     try {
@@ -125,6 +137,38 @@ export default function RegistrationPage() {
     } catch (err) {
       console.error("Error processing queue item:", err);
       alert("Unable to process queue item right now.");
+    }
+  };
+
+  const cancelGuestById = async (queueId?: string) => {
+    if (!queueId) {
+      alert("Unable to cancel the selected guest because the queue id is missing.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:8081/api/registration/queue/cancel/${queueId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reason: cancelReason }),
+        },
+      );
+
+      if (res.ok) {
+        setCancellingId(null);
+        await fetchQueue();
+        alert("Guest registration cancelled.");
+      } else {
+        const errorText = await res.text();
+        alert(`Error: ${errorText}`);
+      }
+    } catch (err) {
+      console.error("Error cancelling queue item:", err);
+      alert("Unable to cancel queue item right now.");
     }
   };
 
@@ -351,13 +395,55 @@ export default function RegistrationPage() {
                         {formatCheckInTime(item.checkIn)}
                       </td>
                       <td className="px-4 py-3 border-b border-surface-300 text-surface-700">
-                        <button
-                          type="button"
-                          onClick={() => void processGuestById(item.id)}
-                          className="rounded-lg bg-brand-500 hover:bg-brand-700 transition-all duration-300 px-3 py-1.5 text-xs font-medium text-surface-50"
-                        >
-                          Check-in
-                        </button>
+                        {cancellingId === item.id ? (
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={cancelReason}
+                              onChange={(e) => setCancelReason(e.target.value)}
+                              className="rounded-lg border border-surface-300 bg-surface-100 px-2 py-1.5 text-xs outline-none"
+                            >
+                              {CANCELLATION_REASONS.map((reason) => (
+                                <option key={reason.value} value={reason.value}>
+                                  {reason.label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => void cancelGuestById(item.id)}
+                              className="rounded-lg bg-red-600 hover:bg-red-700 transition-all duration-300 px-3 py-1.5 text-xs font-medium text-surface-50"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCancellingId(null)}
+                              className="rounded-lg border border-surface-300 hover:bg-surface-100 transition-all duration-300 px-3 py-1.5 text-xs font-medium text-surface-700"
+                            >
+                              Back
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void processGuestById(item.id)}
+                              className="rounded-lg bg-brand-500 hover:bg-brand-700 transition-all duration-300 px-3 py-1.5 text-xs font-medium text-surface-50"
+                            >
+                              Check-in
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCancelReason(CANCELLATION_REASONS[0].value);
+                                setCancellingId(item.id ?? null);
+                              }}
+                              className="rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-all duration-300 px-3 py-1.5 text-xs font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -367,6 +453,8 @@ export default function RegistrationPage() {
           )}
         </div>
       </div>
+
+      <ReportGeneration />
     </section>
   );
 }

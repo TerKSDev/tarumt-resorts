@@ -41,11 +41,14 @@ public class MyArrayQueue<T> implements MyQueue<T> {
     }
 
     @Override
-    public int findIndex(MyMatcher<T> matcher) {
+    public int indexOf(T item) {
+        if (item == null) {
+            return -1;
+        }
         for (int i = 0; i < size; i++) {
             @SuppressWarnings("unchecked")
             T current = (T) elements[(front + i) % elements.length];
-            if (current != null && matcher.matches(current)) {
+            if (current.equals(item)) {
                 return i;
             }
         }
