@@ -5,6 +5,7 @@ import com.tarumt.tarumt_resorts.dao.CustomerDAO;
 import com.tarumt.tarumt_resorts.entity.Booking;
 import com.tarumt.tarumt_resorts.entity.Customer;
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
+import com.tarumt.tarumt_resorts.entity.enums.CancellationReason;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,11 @@ public class RegistrationControl {
         this.queue = new MyArrayQueue<>(DEFAULT_CAPACITY);
     }
 
-    // Inner Class representing temporary queue memory item
+    // Inner Class representing temporary queue memory item.
+    // NOTE: identityNo is only ever held here, in the in-memory queue — the
+    // customers table no longer has an identity_no column, so it's never
+    // persisted onto a Customer entity. It's still useful for stopping the
+    // same person being queued twice (see enqueueGuest below).
     public static class QueueItem {
         private String id;
         private String name;
@@ -80,13 +85,12 @@ public class RegistrationControl {
             throw new IllegalArgumentException("Identity number is required.");
         }
 
+        // Only checked against the current in-memory queue — the customers
+        // table has no identity_no column anymore, so there's no way to
+        // check this against past/existing customers, only against people
+        // currently waiting in line.
         if (queue.findIndex(q -> normalizedIdentityNo.equalsIgnoreCase(q.getIdentityNo())) != -1) {
             throw new IllegalArgumentException("This identity number is already in the queue.");
-        }
-
-        Customer existingCustomer = customerRepository.findByIdentityNo(normalizedIdentityNo);
-        if (existingCustomer != null) {
-            throw new IllegalArgumentException("This identity number already exists in the system.");
         }
 
         item.setId(UUID.randomUUID().toString());
@@ -124,11 +128,58 @@ public class RegistrationControl {
         queue.removeAt(selectedIndex);
 
         LocalDateTime now = LocalDateTime.now();
+
+        // The customers table has no identity_no column to look up an
+        // existing customer by, so every processed guest becomes a new
+        // Customer record — there's no reliable way left to detect a
+        // returning guest.
+        Customer newCustomer = new Customer();
+        newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
+        newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
+        newCustomer.setCreatedAt(now);
+        newCustomer.setUpdatedAt(now);
+        newCustomer.setIsActive(true);
+        Customer customer = customerRepository.save(newCustomer);
+
+        // Create and persist Booking entity
+        Booking booking = new Booking();
+        booking.setCustomer(customer);
+        booking.setConfirmationNo(generateConfirmationNumber());
+        booking.setCheckInDate(now);
+        booking.setCheckOutDate(null);
+        booking.setTotalAmount(BigDecimal.valueOf(150.00));
+        booking.setIsPaid(true);
+        booking.setStatus(BookingStatus.ACTIVE);
+        booking.setIsWalkIn(true);
+        booking.setCreatedAt(now);
+        booking.setUpdatedAt(now);
+
+        return bookingRepository.save(booking);
+    }
+
+    // Dequeue selected guest by row ID and record the registration as cancelled
+    @Transactional
+    public Booking cancelGuestById(String queueId, CancellationReason reason) {
+        if (queueId == null || queueId.isBlank()) {
+            throw new IllegalArgumentException("Queue item id is required.");
+        }
+        if (reason == null) {
+            throw new IllegalArgumentException("Cancellation reason is required.");
+        }
+
+        int selectedIndex = queue.findIndex(q -> queueId.equals(q.getId()));
+        if (selectedIndex < 0) {
+            throw new IllegalArgumentException("Selected guest was not found in the queue.");
+        }
+
+        QueueItem selectedItem = queue.get(selectedIndex);
+        queue.removeAt(selectedIndex);
+
+        LocalDateTime now = LocalDateTime.now();
         String normalizedIdentityNo = selectedItem.getIdentityNo() == null
             ? ""
             : selectedItem.getIdentityNo().trim();
 
-        // Look up existing Customer entity OR create new one
         Customer customer = customerRepository.findByIdentityNo(normalizedIdentityNo);
         if (customer == null) {
             Customer newCustomer = new Customer();
@@ -144,15 +195,17 @@ public class RegistrationControl {
             customerRepository.save(customer);
         }
 
-        // Create and persist Booking entity
+        // Record the abandoned registration as a cancelled booking for reporting
         Booking booking = new Booking();
         booking.setCustomer(customer);
         booking.setConfirmationNo(generateConfirmationNumber());
-        booking.setCheckInDate(now);
+        booking.setCheckInDate(selectedItem.getCheckIn());
         booking.setCheckOutDate(null);
         booking.setTotalAmount(BigDecimal.valueOf(150.00));
-        booking.setIsPaid(true);
-        booking.setStatus(BookingStatus.ACTIVE);
+        booking.setIsPaid(false);
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setIsWalkIn(true);
+        booking.setCancellationReason(reason);
         booking.setCreatedAt(now);
         booking.setUpdatedAt(now);
 

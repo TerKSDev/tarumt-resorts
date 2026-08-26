@@ -1,6 +1,7 @@
 package com.tarumt.tarumt_resorts.boundary;
 
 import com.tarumt.tarumt_resorts.control.HousekeepingControl;
+import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
 import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.Room;
@@ -9,7 +10,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/housekeeping")
@@ -22,8 +22,15 @@ public class HousekeepingBoundary {
     }
 
     @GetMapping("/rooms")
-    public List<Room> getRooms() {
-        return housekeepingControl.getAllRooms();
+    public Room[] getRooms() {
+        MyList<Room> roomsList = housekeepingControl.getAllRooms();
+        Room[] roomArray = new Room[roomsList.size()];
+        
+        for (int i = 0; i < roomsList.size(); i++) {
+            roomArray[i] = roomsList.get(i);
+        }
+        
+        return roomArray;
     }
 
     // staffId is optional (pass "" if not assigning a specific staff member).
