@@ -1,17 +1,54 @@
 import { Building2, Mail, ShieldCheck, Lock, EyeOff, Eye } from "lucide-react";
-import { Link, type MetaFunction } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { useState } from "react";
 
 export const meta: MetaFunction = () => [{ title: "Login | TARUMT Resorts" }];
 
+const API_BASE = "http://localhost:8081/api/auth";
+
+// Shared contract used across the app (e.g. Housekeeping's advance/rollback
+// calls read from this same key): whoever logs in writes their staffId here.
+const STAFF_ID_STORAGE_KEY = "staffId";
+
 export default function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleMockAccount = () => {
     setEmail("mock@gmail.com");
     setPassword("12345678");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+
+    try {
+      const params = new URLSearchParams({ email, password });
+      const response = await fetch(`${API_BASE}/login?${params}`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        setError(message || "Invalid email or password.");
+        setSubmitting(false);
+        return;
+      }
+
+      const staff = await response.json();
+      localStorage.setItem(STAFF_ID_STORAGE_KEY, staff.staffId);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login failed:", err);
+      setError("Could not reach the server. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -47,7 +84,7 @@ export default function Login() {
             Centralized management of room status, reservations, and customer
             data makes your resort operations more efficient and smoother.
           </p>
-          
+
           <div className="flex flex-col gap-4 mt-8 text-sm xl:text-base text-surface-400 font-light">
             <div className="flex gap-4 items-center group cursor-default">
               <div className="w-8 h-8 rounded-full border border-surface-800 flex items-center justify-center group-hover:border-surface-600 transition-colors">
@@ -95,7 +132,7 @@ export default function Login() {
           </p>
         </div>
 
-        <form action="/dashboard" className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label htmlFor="email" className="text-xs uppercase tracking-widest font-medium text-surface-500 ml-1">
               Staff Email
@@ -163,11 +200,16 @@ export default function Login() {
             </div>
           </div>
 
+          {error && (
+            <p className="text-xs text-rose-600 -mt-2 ml-1">{error}</p>
+          )}
+
           <button
             type="submit"
-            className="w-full mt-4 py-4 px-6 rounded-full bg-surface-900 hover:bg-surface-800 text-white text-xs font-medium tracking-widest uppercase transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer"
+            disabled={submitting}
+            className="w-full mt-4 py-4 px-6 rounded-full bg-surface-900 hover:bg-surface-800 text-white text-xs font-medium tracking-widest uppercase transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
+            {submitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
