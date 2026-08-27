@@ -107,6 +107,23 @@ public class HousekeepingControl {
     // roll it back like any other action if it fires incorrectly.
     // ---------------------------------------------------------------
 
+    // ---------------------------------------------------------------
+    // Single source of truth for "is this room currently housekeeping's
+    // territory". Used by advanceRoomStatus, rollbackLastAction, AND
+    // canRollback/report generation - so the guard can never drift out
+    // of sync between these call sites again.
+    // ---------------------------------------------------------------
+
+    private String occupancyBlockReason(Room room) {
+        if (room.getStatus() == RoomStatus.RESERVED || room.getStatus() == RoomStatus.CHECKED_IN) {
+            return "occupied by a guest";
+        }
+        if (room.getStatus() == RoomStatus.MAINTENANCE) {
+            return "under maintenance";
+        }
+        return null; // housekeeping's territory - no block
+    }
+
     private HousekeepingStatus syncAndGetCurrentStage(Room room) {
         MyList<HousekeepingTask> existing = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(room.getRoomId()));
         HousekeepingTask latest = existing.isEmpty() ? null : existing.get(0);
@@ -133,6 +150,12 @@ public class HousekeepingControl {
                 HousekeepingTask saved = taskDAO.save(autoTask);
 
                 stackRegistry.getStackFor(room.getRoomId()).push(saved);
+
+                // keep Room.status consistent with the task history immediately,
+                // instead of leaving it on CHECKED_OUT until the first manual advance
+                room.setStatus(toRoomStatus(HousekeepingStatus.DIRTY));
+                roomDAO.save(room);
+
                 return HousekeepingStatus.DIRTY;
             }
         }
@@ -150,15 +173,9 @@ public class HousekeepingControl {
 
         // Housekeeping only owns the room while it's between guests
         // (CHECKED_OUT/being cleaned) or already marked AVAILABLE.
-        // RESERVED/CHECKED_IN means a guest currently has the room -
-        // Housekeeping must never overwrite that. MAINTENANCE means
-        // Room Management has taken the room out of the cleaning
-        // cycle entirely.
-        if (room.getStatus() == RoomStatus.RESERVED || room.getStatus() == RoomStatus.CHECKED_IN) {
-            return "Room " + roomId + " is currently occupied by a guest - housekeeping cannot advance it.";
-        }
-        if (room.getStatus() == RoomStatus.MAINTENANCE) {
-            return "Room " + roomId + " is under maintenance - not part of the cleaning cycle.";
+        String blockReason = occupancyBlockReason(room);
+        if (blockReason != null) {
+            return "Room " + roomId + " is " + blockReason + " - housekeeping cannot advance it.";
         }
 
         HousekeepingStatus currentStage = syncAndGetCurrentStage(room);
@@ -210,11 +227,9 @@ public class HousekeepingControl {
         Room room = roomDAO.findById(roomId).orElse(null);
         if (room == null) return "Room not found!";
 
-        if (room.getStatus() == RoomStatus.RESERVED || room.getStatus() == RoomStatus.CHECKED_IN) {
-            return "Room " + roomId + " is currently occupied by a guest - cannot rollback.";
-        }
-        if (room.getStatus() == RoomStatus.MAINTENANCE) {
-            return "Room " + roomId + " is under maintenance - not part of the cleaning cycle.";
+        String blockReason = occupancyBlockReason(room);
+        if (blockReason != null) {
+            return "Room " + roomId + " is " + blockReason + " - cannot rollback.";
         }
 
         HousekeepingTask lastTask = stack.pop();
@@ -244,7 +259,16 @@ public class HousekeepingControl {
     }
 
     // whether a given room currently has an action that can be rolled back
+    // AND is currently housekeeping's territory (not occupied/maintenance).
+    // This is the single source of truth for "should the Undo button be
+    // enabled" - used both by the main page and by RoomStatusSummaryDTO,
+    // so reports never show a misleading "Yes" for a room that would
+    // actually be rejected if rollback were attempted.
     public boolean canRollback(String roomId) {
+        Room room = roomDAO.findById(roomId).orElse(null);
+        if (room == null || occupancyBlockReason(room) != null) {
+            return false;
+        }
         return !stackRegistry.getStackFor(roomId).isEmpty();
     }
 
