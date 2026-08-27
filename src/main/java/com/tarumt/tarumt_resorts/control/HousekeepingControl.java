@@ -90,9 +90,77 @@ public class HousekeepingControl {
         return null; // already at final stage - nothing further to advance to
     }
 
-    private HousekeepingStatus getCurrentStage(String roomId) {
-        MyList<HousekeepingTask> existing = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(roomId));
-        return existing.isEmpty() ? HousekeepingStatus.DIRTY : existing.get(0).getCurrentStatus();
+    // ---------------------------------------------------------------
+    // Cross-module sync: Room Management (booking/checkout) writes
+    // directly to Room.status and can set it to CHECKED_OUT without
+    // ever calling into Housekeeping. Since Housekeeping determines a
+    // room's cleaning stage from its OWN task history (not Room.status),
+    // the two could drift out of sync - e.g. a room checks out again
+    // after already being cleaned, but Housekeeping still thinks it's
+    // READY_FOR_CHECKIN from the previous guest.
+    //
+    // This detects that case lazily, whenever a room's stage is looked
+    // up: if the room is CHECKED_OUT and its last cleaning cycle already
+    // finished BEFORE this checkout happened, a new DIRTY task is
+    // auto-created to start a fresh cleaning cycle. The auto-created
+    // task is still pushed onto the room's Stack, so a supervisor can
+    // roll it back like any other action if it fires incorrectly.
+    // ---------------------------------------------------------------
+
+    // ---------------------------------------------------------------
+    // Single source of truth for "is this room currently housekeeping's
+    // territory". Used by advanceRoomStatus, rollbackLastAction, AND
+    // canRollback/report generation - so the guard can never drift out
+    // of sync between these call sites again.
+    // ---------------------------------------------------------------
+
+    private String occupancyBlockReason(Room room) {
+        if (room.getStatus() == RoomStatus.RESERVED || room.getStatus() == RoomStatus.CHECKED_IN) {
+            return "occupied by a guest";
+        }
+        if (room.getStatus() == RoomStatus.MAINTENANCE) {
+            return "under maintenance";
+        }
+        return null; // housekeeping's territory - no block
+    }
+
+    private HousekeepingStatus syncAndGetCurrentStage(Room room) {
+        MyList<HousekeepingTask> existing = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(room.getRoomId()));
+        HousekeepingTask latest = existing.isEmpty() ? null : existing.get(0);
+        HousekeepingStatus latestStage = latest != null ? latest.getCurrentStatus() : HousekeepingStatus.DIRTY;
+
+        if (room.getStatus() == RoomStatus.CHECKED_OUT) {
+            boolean alreadyFinishedPreviousCycle = latest != null
+                    && latestStage == HousekeepingStatus.READY_FOR_CHECKIN;
+
+            boolean checkoutHappenedAfterThatCycle = room.getUpdatedAt() != null
+                    && latest != null
+                    && latest.getCreatedAt() != null
+                    && room.getUpdatedAt().isAfter(latest.getCreatedAt());
+
+            boolean needsNewCycle = latest == null
+                    || (alreadyFinishedPreviousCycle && checkoutHappenedAfterThatCycle);
+
+            if (needsNewCycle) {
+                HousekeepingTask autoTask = new HousekeepingTask();
+                autoTask.setRoom(room);
+                autoTask.setOldStatus(latest != null ? latest.getCurrentStatus() : null);
+                autoTask.setCurrentStatus(HousekeepingStatus.DIRTY);
+                autoTask.setRemarks("Auto: room checked out, new cleaning cycle started");
+                HousekeepingTask saved = taskDAO.save(autoTask);
+
+                stackRegistry.getStackFor(room.getRoomId()).push(saved);
+
+                // keep Room.status consistent with the task history immediately,
+                // instead of leaving it on CHECKED_OUT until the first manual advance
+                room.setStatus(toRoomStatus(HousekeepingStatus.DIRTY));
+                roomDAO.save(room);
+
+                return HousekeepingStatus.DIRTY;
+            }
+        }
+
+        return latestStage;
     }
 
     // ---------------------------------------------------------------
@@ -103,7 +171,14 @@ public class HousekeepingControl {
         Room room = roomDAO.findById(roomId).orElse(null);
         if (room == null) return "Room not found!";
 
-        HousekeepingStatus currentStage = getCurrentStage(roomId);
+        // Housekeeping only owns the room while it's between guests
+        // (CHECKED_OUT/being cleaned) or already marked AVAILABLE.
+        String blockReason = occupancyBlockReason(room);
+        if (blockReason != null) {
+            return "Room " + roomId + " is " + blockReason + " - housekeeping cannot advance it.";
+        }
+
+        HousekeepingStatus currentStage = syncAndGetCurrentStage(room);
         HousekeepingStatus newStage = nextStatus(currentStage);
 
         if (newStage == null) {
@@ -146,11 +221,28 @@ public class HousekeepingControl {
             return "No recent actions to rollback for room " + roomId + ".";
         }
 
+        // Re-fetch the room fresh (not lastTask.getRoom(), which reflects
+        // whatever the Room looked like back when that task was saved -
+        // Room Management may have changed its status since then).
+        Room room = roomDAO.findById(roomId).orElse(null);
+        if (room == null) return "Room not found!";
+
+        String blockReason = occupancyBlockReason(room);
+        if (blockReason != null) {
+            return "Room " + roomId + " is " + blockReason + " - cannot rollback.";
+        }
+
         HousekeepingTask lastTask = stack.pop();
-        Room room = lastTask.getRoom();
         HousekeepingStatus statusToRestore = lastTask.getOldStatus();
 
-        room.setStatus(toRoomStatus(statusToRestore));
+        // If the popped action was the auto-generated DIRTY task from a
+        // checkout, oldStatus may be null (there was nothing before it
+        // in that fresh cycle) - fall back sensibly instead of crashing.
+        RoomStatus restoredRoomStatus = statusToRestore != null
+                ? toRoomStatus(statusToRestore)
+                : room.getStatus();
+
+        room.setStatus(restoredRoomStatus);
         roomDAO.save(room);
 
         // audit trail: log the rollback itself (not pushed back onto the stack,
@@ -162,17 +254,29 @@ public class HousekeepingControl {
         rollbackTask.setRemarks("System Rollback");
         taskDAO.save(rollbackTask);
 
-        return "Rolled back room " + room.getRoomId() + " to " + statusToRestore;
+        return "Rolled back room " + room.getRoomId() + " to "
+                + (statusToRestore != null ? statusToRestore : "its previous state");
     }
 
     // whether a given room currently has an action that can be rolled back
+    // AND is currently housekeeping's territory (not occupied/maintenance).
+    // This is the single source of truth for "should the Undo button be
+    // enabled" - used both by the main page and by RoomStatusSummaryDTO,
+    // so reports never show a misleading "Yes" for a room that would
+    // actually be rejected if rollback were attempted.
     public boolean canRollback(String roomId) {
+        Room room = roomDAO.findById(roomId).orElse(null);
+        if (room == null || occupancyBlockReason(room) != null) {
+            return false;
+        }
         return !stackRegistry.getStackFor(roomId).isEmpty();
     }
 
     // ---------------------------------------------------------------
     // Report 1: Room Housekeeping Status Report
-    // - SEARCH: locate each room's latest task (its current stage)
+    // - SEARCH: locate each room's latest task (its current stage),
+    //           auto-syncing a fresh DIRTY cycle if the room was
+    //           checked out again after its last cycle finished
     // - FILTER (multi-criteria): status AND a minimum "minutes waiting"
     //           threshold, applied together
     // - SORT: bubble sort by time spent in current stage, descending,
@@ -186,12 +290,10 @@ public class HousekeepingControl {
         int count = 0;
 
         for (Room room : allRooms) {
+            HousekeepingStatus stage = syncAndGetCurrentStage(room);
+
+            // re-fetch so "since" reflects any auto-created DIRTY task
             MyList<HousekeepingTask> tasks = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(room.getRoomId()));
-
-            HousekeepingStatus stage = tasks.isEmpty()
-                    ? HousekeepingStatus.DIRTY
-                    : tasks.get(0).getCurrentStatus();
-
             LocalDateTime since = tasks.isEmpty() ? room.getCreatedAt() : tasks.get(0).getCreatedAt();
             long minutes = Duration.between(since, LocalDateTime.now()).toMinutes();
 

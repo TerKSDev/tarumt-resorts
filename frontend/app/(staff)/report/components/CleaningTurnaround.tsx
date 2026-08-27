@@ -23,6 +23,16 @@ interface StaffTurnaround {
   durationMinutes: number;
 }
 
+// Converts raw minutes into a more readable "Xh Ym" / "Xm" format.
+// The underlying data (and sorting/filtering) still uses raw minutes -
+// this is purely a display concern.
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+}
+
 export default function CleaningTurnaround() {
   const [rows, setRows] = useState<StaffTurnaround[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,12 +91,12 @@ export default function CleaningTurnaround() {
     },
     {
       label: "Avg. Turnaround",
-      value: avgDurationMinutes,
+      value: formatMinutes(avgDurationMinutes),
       statement: "Minutes per cycle",
     },
     {
       label: "Fastest Turnaround",
-      value: fastestDurationMinutes,
+      value: formatMinutes(fastestDurationMinutes),
       statement: "Minutes, best cycle",
     },
   ];
@@ -261,7 +271,7 @@ export default function CleaningTurnaround() {
                     {index === 0 && <Zap size={14} className="text-amber-500" />}
                     <Timer size={14} className="text-surface-400" />
                     <span className="text-sm font-mono bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
-                      {r.durationMinutes} min
+                      {formatMinutes(r.durationMinutes)}
                     </span>
                   </div>
                 </td>
