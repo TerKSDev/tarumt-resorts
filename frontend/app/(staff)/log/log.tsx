@@ -33,6 +33,16 @@ const stageLabel: Record<string, string> = {
   READY_FOR_CHECKIN: "Ready For Check-In",
 };
 
+// Converts raw minutes into a more readable "Xh Ym" / "Xm" format.
+// The underlying data (and sorting/filtering) still uses raw minutes -
+// this is purely a display concern.
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+}
+
 // Rooms in these RoomStatus values are not housekeeping's territory:
 // a guest is currently staying (RESERVED/CHECKED_IN), or Room Management
 // has pulled the room out of the cleaning cycle entirely (MAINTENANCE).
@@ -181,7 +191,7 @@ export default function Housekeeping() {
                       ) : (
                         <span className="text-xs text-surface-500 font-medium">
                           Stage: {stageName}
-                          {stage ? ` · ${stage.minutesInCurrentStage}m` : ""}
+                          {stage ? ` · ${formatMinutes(stage.minutesInCurrentStage)}` : ""}
                         </span>
                       )}
                     </div>
