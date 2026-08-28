@@ -104,8 +104,9 @@ export default function Housekeeping() {
 
   const handleAdvance = async (roomId: string) => {
     try {
+      const staffId = localStorage.getItem("staffId") ?? "";
       const response = await fetch(
-        `${API_BASE}/advance?roomId=${roomId}&remarks=UpdatedViaWeb`,
+        `${API_BASE}/advance?roomId=${roomId}&staffId=${staffId}&remarks=UpdatedViaWeb`,
         { method: "POST" }
       );
       const resultText = await response.text();
