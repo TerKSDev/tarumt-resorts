@@ -51,7 +51,7 @@ export default function CleaningTurnaround() {
       if (rangeEnd) params.rangeEnd = rangeEnd;
 
       const response = await axios.get(
-        "http://localhost:8081/api/housekeeping/reports/staff-turnaround",
+        "http://localhost:8081/api/report/cleaning-turnaround",
         { params },
       );
       setRows(Array.isArray(response.data) ? response.data : []);

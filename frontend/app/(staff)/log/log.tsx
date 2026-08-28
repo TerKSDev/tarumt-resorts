@@ -1,3 +1,7 @@
+/**
+ * Author: See Wei Jian
+ */
+
 import { useState, useEffect } from "react";
 import { type MetaFunction } from "react-router";
 import StatCard from "../../../components/StatCard";
@@ -88,7 +92,7 @@ export default function Housekeeping() {
   const fetchRooms = () => safeFetchArray<Room>(`${API_BASE}/rooms`, setRooms, "/rooms");
 
   const fetchStatusReport = () =>
-    safeFetchArray<RoomStatusSummary>(`${API_BASE}/reports/room-status`, setStatusReport, "/reports/room-status");
+    safeFetchArray<RoomStatusSummary>(`http://localhost:8081/api/report/housekeeping-status`, setStatusReport, "/reports/room-status");
 
   const refreshAll = () => {
     fetchRooms();
