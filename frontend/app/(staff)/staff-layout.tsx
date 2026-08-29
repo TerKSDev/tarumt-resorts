@@ -20,11 +20,10 @@ export default function AdminLayout() {
         <TopBar
           title={path?.label || "Unavailable"}
           desc={path?.desc || "Unavailable"}
-          path={path?.to || ""}
           setMenuOpen={setMenuOpen}
         />
         <motion.div
-          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8 print:px-0! border-r border-surface-300"
+          className="overflow-y-auto flex-1 flex flex-col p-3 py-4 sm:p-6 lg:p-8! print:px-0! border-r border-surface-300"
           initial="hidden"
           animate="visible"
           transition={{ staggerChildren: 0.1 }}

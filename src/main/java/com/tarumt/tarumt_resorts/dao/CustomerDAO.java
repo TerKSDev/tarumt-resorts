@@ -6,5 +6,5 @@ import com.tarumt.tarumt_resorts.entity.Customer;
 
 
 public interface CustomerDAO extends JpaRepository<Customer, String> {
-   
+    
 }

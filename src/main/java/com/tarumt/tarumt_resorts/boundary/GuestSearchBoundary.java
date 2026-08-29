@@ -27,7 +27,7 @@ public class GuestSearchBoundary {
 
     // Verification and Enquiry
     public ResponseEntity<Booking> getBooking(@PathVariable String confirmationNo) {
-        if (confirmationNo.matches("[0-9]{8}")) {
+        if (confirmationNo.matches("[0-9A-Za-z]{8}")) {
             Booking booking = guestSearchControl.searchGuestBooking(confirmationNo);
             if (booking != null) {
                 return ResponseEntity.ok(booking);

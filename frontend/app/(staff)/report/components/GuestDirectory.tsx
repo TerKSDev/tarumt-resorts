@@ -120,7 +120,7 @@ export default function GuestDirectory() {
           </div>
         ))}
       </div>
-      <table className="flex-1 relative">
+      <table className="relative">
         <thead>
           <tr className="text-surface-600 text-xs md:text-sm leading-none border-b border-surface-300">
             <th className="py-4 text-start px-6 font-normal tracking-wide">
@@ -172,7 +172,7 @@ export default function GuestDirectory() {
               return (
                 <tr
                   key={index}
-                  className="border-b border-surface-200 last:border-0 hover:bg-surface-100 transition-colors"
+                  className="border-b border-surface-200 last:border-0 hover:bg-brand-50/50 transition-colors"
                 >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
