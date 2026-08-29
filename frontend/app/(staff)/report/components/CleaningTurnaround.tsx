@@ -189,6 +189,9 @@ export default function CleaningTurnaround() {
         <thead>
           <tr className="text-surface-600 text-xs md:text-sm leading-none border-b border-surface-300">
             <th className="py-4 text-start px-6 font-normal tracking-wide">
+              Staff ID
+            </th>
+            <th className="py-4 text-start px-6 font-normal tracking-wide">
               Staff
             </th>
             <th className="py-4 text-start px-6 font-normal tracking-wide">
@@ -208,7 +211,7 @@ export default function CleaningTurnaround() {
         {loading && (
           <tbody>
             <tr>
-              <td colSpan={5} className="h-80 text-center relative">
+              <td colSpan={6} className="h-80 text-center relative">
                 <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
                 </div>
@@ -219,7 +222,7 @@ export default function CleaningTurnaround() {
         {!loading && rows.length === 0 ? (
           <tbody>
             <tr>
-              <td colSpan={5} className="h-80 text-center relative">
+              <td colSpan={6} className="h-80 text-center relative">
                 <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
                   <span className="text-4xl text-surface-950 tracking-tighter">
                     {"ヽ(*。>Д<)o゜"}
@@ -238,6 +241,11 @@ export default function CleaningTurnaround() {
                 key={index}
                 className="border-b border-surface-200 last:border-0 hover:bg-surface-100 transition-colors"
               >
+                <td className="py-4 px-6">
+                  <span className="text-xs font-mono text-surface-600 bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
+                    {r.staffId}
+                  </span>
+                </td>
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
                     <div className="bg-surface-100 p-2 rounded-full text-surface-500">
