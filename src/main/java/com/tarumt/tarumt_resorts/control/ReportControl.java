@@ -101,7 +101,6 @@ public class ReportControl {
             Room room = allRooms.get(r);
             MyList<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
             
-            // Sort ASCENDING because we need to trace history chronologically
             HousekeepingTask[] history = SortingUtil.sortTasksByDate(unsortedTasks, false);
             LocalDateTime cycleStart = null;
 
@@ -111,15 +110,24 @@ public class ReportControl {
                 } else if (task.getCurrentStatus() == HousekeepingStatus.READY_FOR_CHECKIN && cycleStart != null) {
                     Staff staff = task.getStaff();
                     String staffId = staff != null ? staff.getStaffId() : "UNASSIGNED";
+                    String staffName = staff != null ? staff.getName() : "Unassigned";
                     
-                    boolean staffMatches = filterStaffId == null || filterStaffId.isBlank() || filterStaffId.equals(staffId);
+                    boolean staffMatches = false;
+                    if (filterStaffId == null || filterStaffId.isBlank()) {
+                        staffMatches = true;
+                    } else {
+                        String query = filterStaffId.toLowerCase().trim();
+                        staffMatches = staffId.toLowerCase().contains(query) 
+                                    || staffName.toLowerCase().contains(query);
+                    }
+
                     boolean withinRange = (rangeStart == null || !task.getCreatedAt().isBefore(rangeStart))
                                        && (rangeEnd == null || !task.getCreatedAt().isAfter(rangeEnd));
 
                     if (staffMatches && withinRange && count < temp.length) {
                         long minutes = Duration.between(cycleStart, task.getCreatedAt()).toMinutes();
                         temp[count++] = new StaffTurnaroundDTO(
-                                room.getRoomId(), staffId, staff != null ? staff.getName() : "Unassigned", 
+                                room.getRoomId(), staffId, staffName, 
                                 cycleStart, task.getCreatedAt(), minutes);
                     }
                     cycleStart = null;

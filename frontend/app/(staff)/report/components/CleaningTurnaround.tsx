@@ -150,13 +150,13 @@ export default function CleaningTurnaround() {
       {/* Multi-criteria filter: staff AND completion date range */}
       <div className="flex flex-wrap items-end gap-3 px-4 md:px-6 py-4 border-b border-surface-300 print:hidden">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-surface-600">Staff ID</label>
+          <label className="text-xs text-surface-600">Staff ID or Name</label>
           <input
             type="text"
             value={filterStaffId}
             onChange={(e) => setFilterStaffId(e.target.value)}
-            placeholder="e.g. STF001"
-            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm w-36"
+            placeholder="e.g. STF001 or Alice"
+            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm w-44"
           />
         </div>
         <div className="flex flex-col gap-1">
