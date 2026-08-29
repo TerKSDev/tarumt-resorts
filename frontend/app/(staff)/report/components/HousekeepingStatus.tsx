@@ -28,7 +28,17 @@ const stageLabel: Record<string, string> = {
   READY_FOR_CHECKIN: "Ready For Check-In",
 };
 
-export default function HousekeepingStatus() {
+// Converts raw minutes into a more readable "Xh Ym" / "Xm" format.
+// The underlying data (and sorting/filtering) still uses raw minutes -
+// this is purely a display concern.
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+}
+
+export default function HousekeepingStatusReport() {
   const [rows, setRows] = useState<RoomStatusSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +54,7 @@ export default function HousekeepingStatus() {
       if (minMinutesWaiting) params.minMinutesWaiting = minMinutesWaiting;
 
       const response = await axios.get(
-        "http://localhost:8081/api/housekeeping/reports/room-status",
+        "http://localhost:8081/api/report/housekeeping-status",
         { params },
       );
       setRows(Array.isArray(response.data) ? response.data : []);
@@ -77,18 +87,18 @@ export default function HousekeepingStatus() {
   const statCard = [
     {
       label: "Rooms Tracked",
-      value: totalRooms,
+      value: totalRooms.toString(),
       statement: "In this report",
     },
     {
       label: "Needing Attention",
-      value: roomsNeedingAttention,
+      value: roomsNeedingAttention.toString(),
       statement: "Not yet Ready For Check-In",
     },
     {
       label: "Avg. Wait Time",
-      value: avgMinutesWaiting,
-      statement: "Minutes in current stage",
+      value: formatMinutes(avgMinutesWaiting),
+      statement: "In current stage",
     },
   ];
 
@@ -184,7 +194,7 @@ export default function HousekeepingStatus() {
               Current Stage
             </th>
             <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Minutes Waiting
+              Time Waiting
             </th>
             <th className="py-4 text-start px-6 font-normal tracking-wide">
               Can Undo?
@@ -240,7 +250,7 @@ export default function HousekeepingStatus() {
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-2 text-surface-600">
                     <Timer size={14} className="opacity-70" />
-                    <span className="text-sm">{r.minutesInCurrentStage} min</span>
+                    <span className="text-sm">{formatMinutes(r.minutesInCurrentStage)}</span>
                   </div>
                 </td>
                 <td className="py-4 px-6">

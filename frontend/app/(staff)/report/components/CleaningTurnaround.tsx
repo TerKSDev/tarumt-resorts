@@ -23,6 +23,16 @@ interface StaffTurnaround {
   durationMinutes: number;
 }
 
+// Converts raw minutes into a more readable "Xh Ym" / "Xm" format.
+// The underlying data (and sorting/filtering) still uses raw minutes -
+// this is purely a display concern.
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+}
+
 export default function CleaningTurnaround() {
   const [rows, setRows] = useState<StaffTurnaround[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +51,7 @@ export default function CleaningTurnaround() {
       if (rangeEnd) params.rangeEnd = rangeEnd;
 
       const response = await axios.get(
-        "http://localhost:8081/api/housekeeping/reports/staff-turnaround",
+        "http://localhost:8081/api/report/cleaning-turnaround",
         { params },
       );
       setRows(Array.isArray(response.data) ? response.data : []);
@@ -81,12 +91,12 @@ export default function CleaningTurnaround() {
     },
     {
       label: "Avg. Turnaround",
-      value: avgDurationMinutes,
+      value: formatMinutes(avgDurationMinutes),
       statement: "Minutes per cycle",
     },
     {
       label: "Fastest Turnaround",
-      value: fastestDurationMinutes,
+      value: formatMinutes(fastestDurationMinutes),
       statement: "Minutes, best cycle",
     },
   ];
@@ -140,13 +150,13 @@ export default function CleaningTurnaround() {
       {/* Multi-criteria filter: staff AND completion date range */}
       <div className="flex flex-wrap items-end gap-3 px-4 md:px-6 py-4 border-b border-surface-300 print:hidden">
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-surface-600">Staff ID</label>
+          <label className="text-xs text-surface-600">Staff ID or Name</label>
           <input
             type="text"
             value={filterStaffId}
             onChange={(e) => setFilterStaffId(e.target.value)}
-            placeholder="e.g. STF001"
-            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm w-36"
+            placeholder="e.g. STF001 or Alice"
+            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm w-44"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -179,6 +189,9 @@ export default function CleaningTurnaround() {
         <thead>
           <tr className="text-surface-600 text-xs md:text-sm leading-none border-b border-surface-300">
             <th className="py-4 text-start px-6 font-normal tracking-wide">
+              Staff ID
+            </th>
+            <th className="py-4 text-start px-6 font-normal tracking-wide">
               Staff
             </th>
             <th className="py-4 text-start px-6 font-normal tracking-wide">
@@ -198,7 +211,7 @@ export default function CleaningTurnaround() {
         {loading && (
           <tbody>
             <tr>
-              <td colSpan={5} className="h-80 text-center relative">
+              <td colSpan={6} className="h-80 text-center relative">
                 <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
                 </div>
@@ -209,7 +222,7 @@ export default function CleaningTurnaround() {
         {!loading && rows.length === 0 ? (
           <tbody>
             <tr>
-              <td colSpan={5} className="h-80 text-center relative">
+              <td colSpan={6} className="h-80 text-center relative">
                 <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
                   <span className="text-4xl text-surface-950 tracking-tighter">
                     {"ヽ(*。>Д<)o゜"}
@@ -228,6 +241,11 @@ export default function CleaningTurnaround() {
                 key={index}
                 className="border-b border-surface-200 last:border-0 hover:bg-surface-100 transition-colors"
               >
+                <td className="py-4 px-6">
+                  <span className="text-xs font-mono text-surface-600 bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
+                    {r.staffId}
+                  </span>
+                </td>
                 <td className="py-4 px-6">
                   <div className="flex items-center gap-3">
                     <div className="bg-surface-100 p-2 rounded-full text-surface-500">
@@ -261,7 +279,7 @@ export default function CleaningTurnaround() {
                     {index === 0 && <Zap size={14} className="text-amber-500" />}
                     <Timer size={14} className="text-surface-400" />
                     <span className="text-sm font-mono bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
-                      {r.durationMinutes} min
+                      {formatMinutes(r.durationMinutes)}
                     </span>
                   </div>
                 </td>

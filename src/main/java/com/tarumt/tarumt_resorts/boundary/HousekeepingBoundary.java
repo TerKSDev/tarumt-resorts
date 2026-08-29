@@ -1,15 +1,13 @@
+/**
+ * Author: See Wei Jian
+ */
 package com.tarumt.tarumt_resorts.boundary;
 
 import com.tarumt.tarumt_resorts.control.HousekeepingControl;
 import com.tarumt.tarumt_resorts.adt.MyList;
-import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
-import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.Room;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/housekeeping")
@@ -25,15 +23,12 @@ public class HousekeepingBoundary {
     public Room[] getRooms() {
         MyList<Room> roomsList = housekeepingControl.getAllRooms();
         Room[] roomArray = new Room[roomsList.size()];
-        
         for (int i = 0; i < roomsList.size(); i++) {
             roomArray[i] = roomsList.get(i);
         }
-        
         return roomArray;
     }
 
-    // staffId is optional (pass "" if not assigning a specific staff member).
     @PostMapping("/advance")
     public String advanceStatus(
             @RequestParam String roomId,
@@ -42,27 +37,8 @@ public class HousekeepingBoundary {
         return housekeepingControl.advanceRoomStatus(roomId, staffId, remarks);
     }
 
-    // Now scoped to a single room - rolling back Room A can never
-    // accidentally undo Room B's last action.
     @PostMapping("/rollback")
     public String rollback(@RequestParam String roomId) {
         return housekeepingControl.rollbackLastAction(roomId);
-    }
-
-    // Multi-criteria: status AND minimum minutes waiting, both optional
-    @GetMapping("/reports/room-status")
-    public RoomStatusSummaryDTO[] roomStatusReport(
-            @RequestParam(defaultValue = "") String filterStatus,
-            @RequestParam(required = false) Long minMinutesWaiting) {
-        return housekeepingControl.generateRoomStatusReport(filterStatus, minMinutesWaiting);
-    }
-
-    // Multi-criteria: staff AND completion date range, both optional
-    @GetMapping("/reports/staff-turnaround")
-    public StaffTurnaroundDTO[] staffTurnaroundReport(
-            @RequestParam(defaultValue = "") String filterStaffId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime rangeStart,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime rangeEnd) {
-        return housekeepingControl.generateStaffTurnaroundReport(filterStaffId, rangeStart, rangeEnd);
     }
 }

@@ -1,9 +1,13 @@
+/**
+ * Author: See Wei Jian
+ */
+
 import { useState, useEffect } from "react";
 import { type MetaFunction } from "react-router";
 import StatCard from "../../../components/StatCard";
 import {
   Brush, Sparkles, ClipboardCheck, Trash2, Undo2, Clock,
-  CheckCircle2, AlertCircle
+  CheckCircle2, AlertCircle, DoorClosed, Wrench
 } from "lucide-react";
 
 export const meta: MetaFunction = () => [
@@ -15,7 +19,7 @@ const API_BASE = "http://localhost:8081/api/housekeeping";
 interface Room {
   roomId: string;
   type: string;
-  status: string;
+  status: string; // RoomStatus: AVAILABLE | RESERVED | CHECKED_IN | CHECKED_OUT | MAINTENANCE | CLEANING
 }
 
 interface RoomStatusSummary {
@@ -32,6 +36,33 @@ const stageLabel: Record<string, string> = {
   INSPECTING: "Inspecting",
   READY_FOR_CHECKIN: "Ready For Check-In",
 };
+
+// Converts raw minutes into a more readable "Xh Ym" / "Xm" format.
+// The underlying data (and sorting/filtering) still uses raw minutes -
+// this is purely a display concern.
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+}
+
+// Rooms in these RoomStatus values are not housekeeping's territory:
+// a guest is currently staying (RESERVED/CHECKED_IN), or Room Management
+// has pulled the room out of the cleaning cycle entirely (MAINTENANCE).
+// The backend rejects advance/rollback for these too - this just keeps
+// the UI from offering an action that will fail anyway.
+const NOT_HOUSEKEEPINGS_TERRITORY = ["RESERVED", "CHECKED_IN", "MAINTENANCE"];
+
+function occupancyReason(status: string): string | null {
+  if (status === "RESERVED" || status === "CHECKED_IN") {
+    return "Occupied by a guest";
+  }
+  if (status === "MAINTENANCE") {
+    return "Under maintenance";
+  }
+  return null;
+}
 
 export default function Housekeeping() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -61,7 +92,7 @@ export default function Housekeeping() {
   const fetchRooms = () => safeFetchArray<Room>(`${API_BASE}/rooms`, setRooms, "/rooms");
 
   const fetchStatusReport = () =>
-    safeFetchArray<RoomStatusSummary>(`${API_BASE}/reports/room-status`, setStatusReport, "/reports/room-status");
+    safeFetchArray<RoomStatusSummary>(`http://localhost:8081/api/report/housekeeping-status`, setStatusReport, "/reports/room-status");
 
   const refreshAll = () => {
     fetchRooms();
@@ -77,8 +108,9 @@ export default function Housekeeping() {
 
   const handleAdvance = async (roomId: string) => {
     try {
+      const staffId = localStorage.getItem("staffId") ?? "";
       const response = await fetch(
-        `${API_BASE}/advance?roomId=${roomId}&remarks=UpdatedViaWeb`,
+        `${API_BASE}/advance?roomId=${roomId}&staffId=${staffId}&remarks=UpdatedViaWeb`,
         { method: "POST" }
       );
       const resultText = await response.text();
@@ -142,7 +174,11 @@ export default function Housekeeping() {
               const stageName = stage ? stageLabel[stage.currentStage] : "Dirty";
               const nextLabel = stage?.nextStage ? stageLabel[stage.nextStage] : null;
               const isReady = stage?.currentStage === "READY_FOR_CHECKIN";
-              const canRollback = stage?.canRollback ?? false;
+
+              const outOfTerritory = NOT_HOUSEKEEPINGS_TERRITORY.includes(room.status);
+              const reason = occupancyReason(room.status);
+              const canRollback = !outOfTerritory && (stage?.canRollback ?? false);
+              const canAdvance = !outOfTerritory && !isReady;
 
               return (
                 <div key={room.roomId} className="flex items-center justify-between p-4 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
@@ -152,27 +188,41 @@ export default function Housekeeping() {
                     </div>
                     <div>
                       <h3 className="font-semibold">{room.type}</h3>
-                      <span className="text-xs text-surface-500 font-medium">
-                        Stage: {stageName}
-                        {stage ? ` · ${stage.minutesInCurrentStage}m` : ""}
-                      </span>
+                      {outOfTerritory ? (
+                        <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                          {room.status === "MAINTENANCE" ? <Wrench size={12} /> : <DoorClosed size={12} />}
+                          {reason}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-surface-500 font-medium">
+                          Stage: {stageName}
+                          {stage ? ` · ${formatMinutes(stage.minutesInCurrentStage)}` : ""}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleRollback(room.roomId)}
                       disabled={!canRollback}
-                      title={canRollback ? "Undo this room's last action" : "No action to undo for this room"}
+                      title={
+                        outOfTerritory
+                          ? `${reason} - not available to housekeeping`
+                          : canRollback
+                            ? "Undo this room's last action"
+                            : "No action to undo for this room"
+                      }
                       className="p-2 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <Undo2 size={16} />
                     </button>
                     <button
                       onClick={() => handleAdvance(room.roomId)}
-                      disabled={isReady}
+                      disabled={!canAdvance}
+                      title={outOfTerritory ? `${reason} - not available to housekeeping` : undefined}
                       className="px-4 py-2 bg-surface-200 hover:bg-surface-300 dark:bg-surface-700 text-sm font-medium rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {isReady ? "Ready For Check-In" : `Advance to ${nextLabel} →`}
+                      {outOfTerritory ? reason : isReady ? "Ready For Check-In" : `Advance to ${nextLabel} →`}
                     </button>
                   </div>
                 </div>
