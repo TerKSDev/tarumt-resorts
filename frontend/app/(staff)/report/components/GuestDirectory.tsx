@@ -8,8 +8,12 @@ import {
   CalendarDays,
   Hash,
   BedDouble,
+  Home,
+  LogOut,
+  Sparkles,
 } from "lucide-react";
 import { LOYALTY_TIER } from "../../../../lib/config/loyalty";
+import { motion } from "motion/react";
 
 export const meta: MetaFunction = () => [
   { title: "In-House Guest Directory | TARUMT Resorts" },
@@ -59,132 +63,149 @@ export default function GuestDirectory() {
 
   const statCard = [
     {
-      label: "Total In-House",
+      label: "Total In-House Parties",
       value: totalInHouse,
-      statement: "Group of Guest(s)",
+      statement: "Currently Registered Guests",
+      icon: Users,
+      iconColor: "text-brand-600 bg-brand-50 border-brand-200",
     },
     {
-      label: "Rooms Occupied",
+      label: "Suites Occupied",
       value: roomsOccupied,
-      statement: "Room(s)",
+      statement: "Active Room Keys Issued",
+      icon: Home,
+      iconColor: "text-brand-700 bg-brand-100/60 border-brand-300",
     },
     {
-      label: "Expected Departures",
+      label: "Departures Scheduled",
       value: departuresToday,
-      statement: "Checking out today",
+      statement: "Checking Out Today",
+      icon: LogOut,
+      iconColor: "text-surface-700 bg-surface-100 border-surface-300",
     },
   ];
 
   return (
-    <div className="flex flex-col flex-1 rounded-xl border border-surface-300 bg-surface-50">
-      <div className="flex items-start justify-between p-4 md:p-6">
-        <div className="flex items-start gap-3 md:gap-4">
-          <div className="flex items-center justify-center min-w-10.5 min-h-10.5 bg-brand-50 text-brand-600 rounded-xl">
-            <Users size={20} />
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="flex flex-col flex-1 rounded-3xl border border-surface-200 bg-white shadow-md overflow-hidden"
+    >
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between p-6 md:p-8 gap-4 bg-surface-50 border-b border-surface-200">
+        <div className="flex items-start gap-4">
+          <div className="flex items-center justify-center w-12 h-12 bg-brand-900 text-brand-300 rounded-2xl border border-brand-800 shadow-sm shrink-0">
+            <Users size={22} strokeWidth={1.75} />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <h2 className="text-base md:text-lg font-semibold leading-none">
-              In-House Guest Directory
+          <div className="flex flex-col gap-1">
+            <h2 className="text-xl md:text-2xl font-serif text-surface-950 font-semibold tracking-tight">
+              In-House Guest Directory Manifest
             </h2>
-            <p className="text-xs md:text-sm text-surface-600 leading-tight mb-1.5 max-w-3/4">
-              Generate a comprehensive directory of all guests currently staying
-              at the resort, including their room numbers and reservation
-              details.
+            <p className="text-xs md:text-sm text-surface-600 font-light leading-relaxed max-w-2xl">
+              Live census of all guests actively occupying suites within TARUMT
+              Resorts, including room assignments, arrival dates, and stay
+              duration.
             </p>
-            <span className="text-[10px] md:text-xs text-surface-600 leading-tight">
-              Generated On: {new Date().toLocaleDateString("en-GB")} at{" "}
-              {new Date().toLocaleTimeString()} • TARUMT Resorts
+            <span className="text-[11px] text-surface-500 font-mono mt-1">
+              Generated: {new Date().toLocaleDateString("en-GB")} • Front Desk
+              Audit
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm print:hidden px-3 py-2 bg-emerald-100 text-emerald-700 font-semibold border leading-none border-emerald-400 rounded-xl">
-          <CheckCircle size={14} />
-          Generated
+
+        <div className="flex items-center gap-2 text-xs px-3.5 py-1.5 print:hidden bg-brand-50 text-brand-700 font-semibold border border-brand-200 rounded-full w-fit self-start shrink-0 shadow-2xs">
+          <CheckCircle size={13} className="text-brand-600" />
+          <span>Active Registry</span>
         </div>
       </div>
-      <div className="grid grid-cols-3 border-t border-surface-300 border-b">
+
+      {/* Metric Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 border-b border-surface-200 divide-y sm:divide-y-0 sm:divide-x divide-surface-200 bg-white">
         {statCard.map((card, index) => (
-          <div
-            key={index}
-            className="flex flex-col gap-3 p-4 md:p-6 border-r last:border-0 border-surface-300"
-          >
-            <h4 className="text-sm md:text-base text-surface-600 leading-tight">
-              {card.label}
-            </h4>
-            <p className="text-xl md:text-3xl font-bold text-surface-950 leading-tight">
+          <div key={index} className="flex flex-col gap-2 p-5 md:p-6 justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-widest font-semibold text-surface-500">
+                {card.label}
+              </span>
+              <div
+                className={`w-7 h-7 rounded-lg border flex items-center justify-center ${card.iconColor}`}
+              >
+                <card.icon size={15} strokeWidth={1.75} />
+              </div>
+            </div>
+            <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
               {card.value}
             </p>
-            <span className="text-xs md:text-sm text-surface-600 leading-tight tracking-tighter">
+            <span className="text-xs text-surface-500 font-light">
               {card.statement}
             </span>
           </div>
         ))}
       </div>
-      <table className="relative">
-        <thead>
-          <tr className="text-surface-600 text-xs md:text-sm leading-none border-b border-surface-300">
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Guest Name
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Room
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Check-In Date
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Check-Out Date
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Confirmation No.
-            </th>
-          </tr>
-        </thead>
-        {loading && (
-          <tbody>
-            <tr>
-              <td colSpan={5} className="h-80 text-center relative">
-                <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
-                </div>
-              </td>
+
+      {/* Table Section */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="text-surface-600 text-xs font-semibold uppercase tracking-wider bg-surface-100/60 border-b border-surface-200">
+              <th className="py-3.5 px-6">Guest Identification</th>
+              <th className="py-3.5 px-6">Suite Number</th>
+              <th className="py-3.5 px-6">Check-In Date</th>
+              <th className="py-3.5 px-6">Scheduled Departure</th>
+              <th className="py-3.5 px-6">Folio / Confirmation</th>
             </tr>
-          </tbody>
-        )}
-        {!loading && inHouseGuests.length === 0 ? (
-          <tbody>
-            <tr>
-              <td colSpan={5} className="h-80 text-center relative">
-                <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
-                  <span className="text-4xl text-surface-950 tracking-tighter">
-                    {"ヽ(*。>Д<)o゜"}
-                  </span>
-                  <span className="text-base text-surface-600 tracking-wide">
-                    No in-house guests found currently.
-                  </span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        ) : (
-          <tbody>
-            {inHouseGuests.map((booking, index) => {
-              return (
+          </thead>
+
+          {loading && (
+            <tbody>
+              <tr>
+                <td colSpan={5} className="py-20 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+                    <span className="text-xs text-surface-500 font-medium">
+                      Loading guest directory...
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          )}
+
+          {!loading && inHouseGuests.length === 0 ? (
+            <tbody>
+              <tr>
+                <td colSpan={5} className="py-20 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                    <span className="text-sm font-semibold text-surface-700">
+                      No In-House Guests Recorded
+                    </span>
+                    <span className="text-xs text-surface-500 font-light">
+                      There are currently no active in-house reservations listed
+                      in the resort database.
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          ) : (
+            <tbody>
+              {inHouseGuests.map((booking, index) => (
                 <tr
                   key={index}
-                  className="border-b border-surface-200 last:border-0 hover:bg-brand-50/50 transition-colors"
+                  className="border-b border-surface-100 last:border-0 hover:bg-brand-50/30 transition-colors"
                 >
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
-                      <div className="bg-surface-100 p-2 rounded-full text-surface-500">
+                      <div className="w-8 h-8 rounded-full bg-brand-100 border border-brand-200 flex items-center justify-center text-brand-700 shrink-0">
                         <UserCircle size={18} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm text-surface-950 font-semibold">
+                        <span className="text-sm text-surface-950 font-semibold leading-tight">
                           {booking.customer?.name}
                         </span>
                         <span
-                          className={`text-[10px] font-medium tracking-wider uppercase ${
+                          className={`text-[10px] font-semibold tracking-wider uppercase mt-0.5 ${
                             booking.customer?.loyaltyTier
                               ? (LOYALTY_TIER as any)[
                                   booking.customer.loyaltyTier
@@ -200,15 +221,15 @@ export default function GuestDirectory() {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <BedDouble size={16} className="text-surface-400" />
-                      <span className="text-sm font-medium text-surface-800">
+                      <span className="text-sm font-semibold text-surface-900 font-mono">
                         {booking.room?.roomId || "Unassigned"}
                       </span>
                     </div>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2 text-surface-600">
-                      <CalendarDays size={14} className="opacity-70" />
-                      <span className="text-sm">
+                      <CalendarDays size={14} className="text-surface-400" />
+                      <span className="text-xs font-mono">
                         {booking.checkInDate
                           ? new Date(booking.checkInDate).toLocaleDateString(
                               "en-GB",
@@ -219,8 +240,8 @@ export default function GuestDirectory() {
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2 text-surface-600">
-                      <CalendarDays size={14} className="opacity-70" />
-                      <span className="text-sm">
+                      <CalendarDays size={14} className="text-surface-400" />
+                      <span className="text-xs font-mono">
                         {booking.checkOutDate
                           ? new Date(booking.checkOutDate).toLocaleDateString(
                               "en-GB",
@@ -232,17 +253,17 @@ export default function GuestDirectory() {
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <Hash size={14} className="text-surface-400" />
-                      <span className="text-sm text-surface-700 font-mono bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
+                      <span className="text-xs text-surface-800 font-mono bg-surface-100 px-2.5 py-1 rounded-md border border-surface-200 font-medium">
                         {booking.confirmationNo}
                       </span>
                     </div>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        )}
-      </table>
-    </div>
+              ))}
+            </tbody>
+          )}
+        </table>
+      </div>
+    </motion.div>
   );
 }

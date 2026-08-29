@@ -89,7 +89,7 @@ export const PATHS = [
     role: [ROLES.FRONT_DESK, ROLES.MANAGER],
   },
   {
-    label: "Housekeeping Logs",
+    label: "Housekeeping Task Logs",
     desc: "Track and log room cleaning tasks and rollback history",
     to: "/log",
     icon: ClipboardClock,

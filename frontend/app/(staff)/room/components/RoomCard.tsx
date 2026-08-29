@@ -25,73 +25,77 @@ export default function RoomCard({
   room: RoomProps;
   setIsModalOpen: (val: string) => void;
 }) {
-  const status =
-    ROOM_STATUS[room.status.toUpperCase() as keyof typeof ROOM_STATUS];
+  const statusKey = (room.status?.toUpperCase() || "AVAILABLE") as keyof typeof ROOM_STATUS;
+  const status = ROOM_STATUS[statusKey] || ROOM_STATUS.AVAILABLE;
 
   return (
     <button
+      type="button"
       onClick={() => setIsModalOpen("edit")}
       disabled={!!room.booking}
-      className={`group flex flex-col relative p-5 bg-white border border-surface-200 rounded-3xl shadow-xs transition-all duration-300 ${status.card} ${
+      className={`group flex flex-col relative p-5 bg-white border border-surface-200 rounded-3xl shadow-xs transition-all duration-300 text-left ${status.card} ${
         room.booking
-          ? "opacity-80 cursor-not-allowed"
-          : "hover:-translate-y-1 hover:shadow-md cursor-pointer"
+          ? "opacity-85 cursor-not-allowed"
+          : "hover:-translate-y-1 hover:shadow-md cursor-pointer hover:border-brand-400"
       }`}
     >
-      <div className="flex items-start justify-between w-full">
-        <div className="flex gap-4 items-center">
+      {/* Card Header: Icon, Room ID, Status Pill */}
+      <div className="flex items-start justify-between w-full gap-2">
+        <div className="flex gap-3.5 items-center">
           <div
-            className={`rounded-full w-12 h-12 flex items-center justify-center ${status.badge} border border-surface-100 shadow-sm`}
+            className={`rounded-2xl w-11 h-11 flex items-center justify-center ${status.badge} border shadow-2xs shrink-0`}
           >
-            <Bed size={20} strokeWidth={1.5} />
+            <Bed size={18} strokeWidth={1.75} />
           </div>
-          <div className="flex flex-col items-start gap-0.5">
-            <h1
-              className={`transition-all duration-300 font-serif text-2xl leading-none tracking-wide ${status.text}`}
+          <div className="flex flex-col items-start">
+            <h3
+              className={`transition-colors font-serif text-2xl font-bold leading-tight tracking-tight text-surface-950 ${status.text}`}
             >
-              {room.roomId}
-            </h1>
-            <h2 className="text-surface-400 text-[10px] uppercase tracking-widest font-medium leading-tight">
-              Floor {room.roomId.slice(0, -2)}
-            </h2>
+              Suite {room.roomId}
+            </h3>
+            <span className="text-surface-500 text-[10px] uppercase tracking-widest font-medium">
+              Floor {room.roomId.slice(0, -2) || "1"}
+            </span>
           </div>
         </div>
+
         <div
-          className={`text-[9px] uppercase tracking-widest flex items-center gap-1.5 rounded-full px-3 py-1.5 leading-none border ${status.badge} font-semibold shadow-xs`}
+          className={`text-[10px] uppercase tracking-wider flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${status.badge} font-semibold shrink-0`}
         >
-          <div className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
           {status.name}
         </div>
       </div>
 
-      <div className="w-full h-px bg-surface-100 my-5" />
+      <div className="w-full h-px bg-surface-100 my-4" />
 
-      <div className="flex flex-col gap-5 w-full">
-        <div className="flex items-center justify-between text-xs gap-4 px-1">
-          <span className="leading-none font-medium uppercase tracking-widest text-surface-600">
+      {/* Card Body: Type, Capacity, Pricing / Booking Info */}
+      <div className="flex flex-col gap-3.5 w-full">
+        <div className="flex items-center justify-between text-xs px-1">
+          <span className="font-semibold uppercase tracking-wider text-surface-700">
             {room.type}
           </span>
-          <span className="text-surface-500 leading-none font-semibold flex items-center gap-1.5">
-            <Users size={14} strokeWidth={1.5} />
-            {room.capacity}
+          <span className="text-surface-500 font-medium flex items-center gap-1.5">
+            <Users size={13} strokeWidth={1.75} className="text-surface-400" />
+            <span>{room.capacity} Pax</span>
           </span>
         </div>
 
         {room.booking ? (
-          <div className="flex text-sm px-4 bg-surface-50 border border-surface-100 rounded-2xl py-3 items-center justify-between gap-4">
-            <span className="truncate max-w-1/2 font-medium leading-none text-surface-800">
+          <div className="flex text-xs px-3.5 py-2.5 bg-surface-50 border border-surface-200 rounded-2xl items-center justify-between gap-3">
+            <span className="truncate font-semibold text-surface-900">
               {room.booking.customerName}
             </span>
-            <span className="text-surface-400 text-[10px] tracking-wider uppercase">
-              Check Out: {formatMonthDate(room.booking.checkOutDate)}
+            <span className="text-surface-500 text-[10px] tracking-wider uppercase shrink-0 font-mono">
+              Due {formatMonthDate(room.booking.checkOutDate)}
             </span>
           </div>
         ) : (
-          <div className="flex text-sm px-4 bg-surface-50 border border-surface-100 rounded-2xl py-3 items-center justify-between gap-4">
-            <span className="text-surface-400 text-[10px] tracking-wider uppercase">
-              Price Per Night
+          <div className="flex text-xs px-3.5 py-2.5 bg-surface-50 border border-surface-200 rounded-2xl items-center justify-between gap-3">
+            <span className="text-surface-500 text-[10px] tracking-wider uppercase font-medium">
+              Rate / Night
             </span>
-            <span className="font-semibold leading-none text-surface-800">
+            <span className="font-bold font-mono text-surface-950">
               RM {room.pricePerNight.toFixed(2)}
             </span>
           </div>
