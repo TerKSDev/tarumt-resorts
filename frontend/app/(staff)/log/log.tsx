@@ -1,3 +1,7 @@
+/**
+ * Author: See Wei Jian
+ */
+
 import { useState, useEffect } from "react";
 import { type MetaFunction } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
@@ -15,6 +19,8 @@ import {
   ArrowRight,
   Filter,
   RefreshCw,
+  DoorClosed,
+  Wrench,
 } from "lucide-react";
 import {
   type HousekeepingRoom,
@@ -60,30 +66,62 @@ const stageConfig: Record<
   },
 };
 
-export default function Housekeeping() {
+const NOT_HOUSEKEEPINGS_TERRITORY = [
+  "AVAILABLE",
+  "RESERVED",
+  "CHECKED_IN",
+  "MAINTENANCE",
+];
+
+function occupancyReason(status: string): string {
+  switch (status) {
+    case "CHECKED_IN":
+      return "Guest in Room";
+    case "RESERVED":
+      return "Reserved";
+    case "AVAILABLE":
+      return "Available";
+    case "MAINTENANCE":
+      return "Under Maintenance";
+    default:
+      return status;
+  }
+}
+
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+interface ActionLogItem {
+  id: number;
+  room: string;
+  message: string;
+  time: string;
+  success?: boolean;
+}
+
+export default function Log() {
   const [rooms, setRooms] = useState<HousekeepingRoom[]>([]);
   const [statusReport, setStatusReport] = useState<RoomStatusSummary[]>([]);
   const [turnaroundReport, setTurnaroundReport] = useState<StaffTurnaround[]>([]);
-  const [activeTab, setActiveTab] = useState<ReportTab>("status");
-  const [loading, setLoading] = useState(false);
+  const [historyStack, setHistoryStack] = useState<ActionLogItem[]>([]);
+  const [activeReportTab, setActiveReportTab] = useState<ReportTab>("status");
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
 
-  const [historyStack, setHistoryStack] = useState<
-    Array<{ id: number; room: string; message: string; time: string; success: boolean }>
-  >([]);
-
-  // Report 1 filters
+  // Filters for reports
   const [statusFilter, setStatusFilter] = useState("");
   const [minMinutesFilter, setMinMinutesFilter] = useState("");
-
-  // Report 2 filters
   const [staffFilter, setStaffFilter] = useState("");
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
 
   const flash = (msg: string) => {
     setToast(msg);
-    window.setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   const refreshAll = async () => {
@@ -296,7 +334,10 @@ export default function Housekeeping() {
                   ? stageConfig[stage.nextStage]?.label || stage.nextStage
                   : null;
                 const isReady = stage?.currentStage === "READY_FOR_CHECKIN";
-                const canRollback = stage?.canRollback ?? false;
+                const outOfTerritory = NOT_HOUSEKEEPINGS_TERRITORY.includes(room.status);
+                const reason = occupancyReason(room.status);
+                const canRollback = !outOfTerritory && (stage?.canRollback ?? false);
+                const canAdvance = !outOfTerritory && !isReady;
 
                 return (
                   <div
@@ -310,17 +351,24 @@ export default function Housekeeping() {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-surface-950 text-sm">{room.type}</span>
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold border ${currentCfg.badge}`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${currentCfg.dot}`} />
-                            <span>{currentCfg.label}</span>
-                          </span>
+                          {outOfTerritory ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-surface-500 font-medium px-2 py-0.5 rounded-full bg-surface-100 border border-surface-200">
+                              {room.status === "MAINTENANCE" ? <Wrench size={12} /> : <DoorClosed size={12} />}
+                              {reason}
+                            </span>
+                          ) : (
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold border ${currentCfg.badge}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${currentCfg.dot}`} />
+                              <span>{currentCfg.label}</span>
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-surface-500 font-mono">
                           Duration in current stage:{" "}
                           <span className="font-semibold text-surface-800">
-                            {stage ? `${stage.minutesInCurrentStage} min` : "0 min"}
+                            {stage ? `${formatMinutes(stage.minutesInCurrentStage)}` : "0m"}
                           </span>
                         </p>
                       </div>
@@ -331,7 +379,13 @@ export default function Housekeeping() {
                         type="button"
                         onClick={() => void handleRollback(room.roomId)}
                         disabled={!canRollback}
-                        title={canRollback ? "Undo this suite's last action" : "No undo action available"}
+                        title={
+                          outOfTerritory
+                            ? `${reason} - not available to housekeeping`
+                            : canRollback
+                            ? "Undo this suite's last action"
+                            : "No undo action available"
+                        }
                         className="p-2.5 rounded-xl border border-surface-200 text-surface-600 hover:text-surface-950 hover:bg-surface-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       >
                         <Undo2 size={15} />
@@ -340,15 +394,22 @@ export default function Housekeeping() {
                       <button
                         type="button"
                         onClick={() => void handleAdvance(room.roomId)}
-                        disabled={isReady}
+                        disabled={!canAdvance}
                         className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                          isReady
-                            ? "bg-surface-100 text-surface-400 cursor-not-allowed border border-surface-200"
+                          outOfTerritory
+                            ? "bg-surface-100 text-surface-400 border border-surface-200 cursor-not-allowed"
+                            : isReady
+                            ? "bg-brand-50 text-brand-700 border border-brand-200 cursor-default"
                             : "bg-surface-950 hover:bg-brand-950 text-white shadow-sm hover:shadow"
                         }`}
                       >
-                        <span>{isReady ? "Ready For Check-In" : `Advance to ${nextLabel}`}</span>
-                        {!isReady && <ArrowRight size={13} />}
+                        <span>
+                          {outOfTerritory
+                            ? reason
+                            : isReady
+                            ? "Suite Released"
+                            : `Advance to ${nextLabel ?? "Next"} →`}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -358,36 +419,35 @@ export default function Housekeeping() {
           </div>
         </Card>
 
-        {/* Right 1 Col: Live Action Timeline */}
-        <Card className="max-h-[660px]">
+        {/* Right Col: Live History Stack */}
+        <Card>
           <CardHeader
-            title="Live Audit Activity"
-            subtitle="Session dispatch event stream"
+            title="Dispatch Action Stack"
+            subtitle="Most recent undoable transitions."
             icon={Clock}
           />
 
-          <div className="p-5 flex-1 overflow-y-auto scrollbar-hidden flex flex-col gap-3">
+          <div className="p-4 flex flex-col gap-3 max-h-[580px] overflow-y-auto scrollbar-hidden">
             {historyStack.length === 0 ? (
-              <div className="py-16 text-center text-xs text-surface-400 font-light">
-                No recent actions recorded in this session.
+              <div className="py-12 text-center text-xs text-surface-400 font-light flex flex-col items-center gap-2">
+                <Clock size={24} strokeWidth={1.5} className="text-surface-300" />
+                <span>No actions executed in current session yet.</span>
               </div>
             ) : (
-              historyStack.map((item, idx) => (
+              historyStack.map((item) => (
                 <div
                   key={item.id}
-                  className={`p-3.5 rounded-2xl border transition-all ${
-                    idx === 0
-                      ? "bg-brand-50/60 border-brand-200 shadow-xs"
-                      : "bg-surface-50/60 border-surface-100 text-surface-600"
-                  }`}
+                  className="p-3.5 rounded-2xl bg-surface-50 border border-surface-200 flex flex-col gap-1 text-xs"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-surface-950 text-xs font-mono">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold font-mono text-surface-950">
                       Suite {item.room}
                     </span>
-                    <span className="text-[10px] text-surface-400 font-mono">{item.time}</span>
+                    <span className="text-[10px] font-mono text-surface-400">
+                      {item.time}
+                    </span>
                   </div>
-                  <p className="text-xs text-surface-700 leading-snug">{item.message}</p>
+                  <p className="text-surface-600 line-clamp-2">{item.message}</p>
                 </div>
               ))
             )}
@@ -395,103 +455,111 @@ export default function Housekeeping() {
         </Card>
       </div>
 
-      {/* Housekeeping Analytics & Report Generation */}
+      {/* Embedded Operational Reports Section */}
       <Card>
-        <CardHeader
-          title="Housekeeping Performance & Turnaround Audit"
-          subtitle="Query bottleneck metrics and staff turnaround speed logs."
-          icon={BarChart3}
-          action={
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab("status")}
-                className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === "status"
-                    ? "bg-surface-950 text-white shadow-xs"
-                    : "bg-surface-100 text-surface-600 hover:text-surface-950 border border-surface-200"
-                }`}
-              >
-                Room Status Report
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("turnaround")}
-                className={`px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                  activeTab === "turnaround"
-                    ? "bg-surface-950 text-white shadow-xs"
-                    : "bg-surface-100 text-surface-600 hover:text-surface-950 border border-surface-200"
-                }`}
-              >
-                Staff Turnaround Report
-              </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-surface-100 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-brand-50 border border-brand-200 text-brand-700 flex items-center justify-center shadow-2xs">
+              <BarChart3 size={18} strokeWidth={1.75} />
             </div>
-          }
-        />
+            <div>
+              <h2 className="text-base font-serif font-semibold text-surface-950">
+                Housekeeping Audit & Turnaround Intelligence
+              </h2>
+              <p className="text-xs text-surface-500">
+                Live metrics on stage bottlenecks and attendant performance velocities.
+              </p>
+            </div>
+          </div>
 
-        {activeTab === "status" ? (
-          <div className="p-6 flex flex-col gap-5">
-            {/* Filter Controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex items-center gap-2 bg-surface-100 p-1 rounded-2xl border border-surface-200">
+            <button
+              type="button"
+              onClick={() => setActiveReportTab("status")}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                activeReportTab === "status"
+                  ? "bg-white text-surface-950 shadow-xs"
+                  : "text-surface-500 hover:text-surface-900"
+              }`}
+            >
+              Room Stage Bottlenecks
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveReportTab("turnaround")}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                activeReportTab === "turnaround"
+                  ? "bg-white text-surface-950 shadow-xs"
+                  : "text-surface-500 hover:text-surface-900"
+              }`}
+            >
+              Staff Turnaround Speeds
+            </button>
+          </div>
+        </div>
+
+        {activeReportTab === "status" ? (
+          <div className="flex flex-col">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap items-end gap-4 p-6 border-b border-surface-100 bg-surface-50/50">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
-                  Hygiene Stage Filter
+                  Hygiene Stage
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 text-xs focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none bg-white cursor-pointer font-medium"
+                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 cursor-pointer font-medium"
                 >
                   <option value="">All Hygiene Stages</option>
                   <option value="DIRTY">Dirty</option>
                   <option value="CLEANING_INPROGRESS">Cleaning In Progress</option>
-                  <option value="INSPECTING">Quality Inspecting</option>
+                  <option value="INSPECTING">Inspecting</option>
                   <option value="READY_FOR_CHECKIN">Ready For Check-In</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
-                  Minimum Wait Time (Minutes)
+                  Min. Waiting Time (Mins)
                 </label>
                 <input
                   type="number"
                   min={0}
                   value={minMinutesFilter}
                   onChange={(e) => setMinMinutesFilter(e.target.value)}
-                  placeholder="e.g. 30"
-                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 text-xs focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none font-mono"
+                  placeholder="e.g. 15"
+                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs w-36 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 font-mono"
                 />
               </div>
 
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={() => void fetchRoomStatusReportApi(statusFilter, minMinutesFilter).then(setStatusReport)}
-                  className="w-full h-10 px-6 rounded-xl bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm hover:shadow cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Filter size={13} />
-                  <span>Filter Report</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => void refreshAll()}
+                className="h-10 px-6 bg-surface-950 hover:bg-brand-950 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-2"
+              >
+                <Filter size={13} />
+                <span>Apply Filters</span>
+              </button>
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-2xl border border-surface-200">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-surface-100/70 border-b border-surface-200 text-surface-600 uppercase tracking-wider font-semibold">
+                  <tr className="text-surface-600 uppercase tracking-wider font-semibold bg-surface-100/70 border-b border-surface-200">
                     <th className="py-3.5 px-6">Suite Number</th>
-                    <th className="py-3.5 px-6">Current Hygiene Stage</th>
-                    <th className="py-3.5 px-6">Elapsed Duration</th>
+                    <th className="py-3.5 px-6">Current Stage</th>
+                    <th className="py-3.5 px-6">Next Transition</th>
+                    <th className="py-3.5 px-6">Time in Stage</th>
                     <th className="py-3.5 px-6 text-right">Undo Available</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-100">
                   {statusReport.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-xs text-surface-400 font-light">
-                        No rooms match the specified filter constraints.
+                      <td colSpan={5} className="py-12 text-center text-surface-400">
+                        No rooms match the filter parameters.
                       </td>
                     </tr>
                   ) : (
@@ -510,15 +578,14 @@ export default function Housekeeping() {
                               <span>{cfg.label}</span>
                             </span>
                           </td>
+                          <td className="py-4 px-6 text-surface-600 font-medium">
+                            {r.nextStage ? stageConfig[r.nextStage]?.label || r.nextStage : "None (Complete)"}
+                          </td>
                           <td className="py-4 px-6 font-mono text-surface-700">
-                            {r.minutesInCurrentStage} min
+                            {formatMinutes(r.minutesInCurrentStage)}
                           </td>
                           <td className="py-4 px-6 text-right font-medium">
-                            <span
-                              className={`text-xs ${
-                                r.canRollback ? "text-brand-700 font-semibold" : "text-surface-400"
-                              }`}
-                            >
+                            <span className={r.canRollback ? "text-brand-700 font-semibold" : "text-surface-400"}>
                               {r.canRollback ? "Yes" : "No"}
                             </span>
                           </td>
@@ -531,100 +598,100 @@ export default function Housekeeping() {
             </div>
           </div>
         ) : (
-          <div className="p-6 flex flex-col gap-5">
-            {/* Turnaround Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="flex flex-col">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap items-end gap-4 p-6 border-b border-surface-100 bg-surface-50/50">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
-                  Staff Identifier
+                  Attendant ID or Name
                 </label>
                 <input
                   type="text"
                   value={staffFilter}
                   onChange={(e) => setStaffFilter(e.target.value)}
-                  placeholder="e.g. STF001"
-                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 text-xs focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none"
+                  placeholder="e.g. STF001 or Alice"
+                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs w-44 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
-                  From Timestamp
+                  Cycle Start
                 </label>
                 <input
                   type="datetime-local"
                   value={rangeStart}
                   onChange={(e) => setRangeStart(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 text-xs focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none font-mono"
+                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 font-mono"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
-                  To Timestamp
+                  Cycle End
                 </label>
                 <input
                   type="datetime-local"
                   value={rangeEnd}
                   onChange={(e) => setRangeEnd(e.target.value)}
-                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 text-xs focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none font-mono"
+                  className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 font-mono"
                 />
               </div>
 
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={() =>
-                    void fetchStaffTurnaroundReportApi(staffFilter, rangeStart, rangeEnd).then(
-                      setTurnaroundReport,
-                    )
-                  }
-                  className="w-full h-10 px-6 rounded-xl bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-sm hover:shadow cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Filter size={13} />
-                  <span>Filter Records</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => void refreshAll()}
+                className="h-10 px-6 bg-surface-950 hover:bg-brand-950 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-2"
+              >
+                <Filter size={13} />
+                <span>Apply Filters</span>
+              </button>
             </div>
 
-            {/* Turnaround Table */}
-            <div className="overflow-x-auto rounded-2xl border border-surface-200">
-              <table className="w-full text-left text-xs">
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-surface-100/70 border-b border-surface-200 text-surface-600 uppercase tracking-wider font-semibold">
+                  <tr className="text-surface-600 uppercase tracking-wider font-semibold bg-surface-100/70 border-b border-surface-200">
                     <th className="py-3.5 px-6">Attendant Staff</th>
                     <th className="py-3.5 px-6">Serviced Suite</th>
-                    <th className="py-3.5 px-6">Cycle Begun</th>
-                    <th className="py-3.5 px-6">Cycle Completed</th>
-                    <th className="py-3.5 px-6 text-right">Turnaround Speed</th>
+                    <th className="py-3.5 px-6">Cleaning Commenced</th>
+                    <th className="py-3.5 px-6">Quality Inspected</th>
+                    <th className="py-3.5 px-6 text-right">Cycle Duration</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-100">
                   {turnaroundReport.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-xs text-surface-400 font-light">
-                        No completed housekeeping turnaround cycles recorded for this period.
+                      <td colSpan={5} className="py-12 text-center text-surface-400">
+                        No completed turnaround cycles found.
                       </td>
                     </tr>
                   ) : (
-                    turnaroundReport.map((r, i) => (
-                      <tr key={i} className="hover:bg-surface-50 transition-colors">
-                        <td className="py-4 px-6 font-semibold text-surface-950 flex items-center gap-2">
-                          <Users size={14} className="text-brand-600" />
-                          <span>{r.staffName}</span>
-                          <span className="text-xs text-surface-400 font-mono">({r.staffId})</span>
+                    turnaroundReport.map((t, idx) => (
+                      <tr key={idx} className="hover:bg-surface-50 transition-colors">
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-brand-50 border border-brand-200 text-brand-700 font-bold flex items-center justify-center">
+                              {t.staffName.charAt(0)}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-surface-950">{t.staffName}</span>
+                              <span className="text-[10px] text-surface-400 font-mono">({t.staffId})</span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-4 px-6 font-bold font-mono text-surface-800">
-                          Suite {r.roomId}
+                        <td className="py-4 px-6 font-mono font-bold text-surface-800">
+                          Suite {t.roomId}
                         </td>
                         <td className="py-4 px-6 font-mono text-surface-600">
-                          {new Date(r.cycleStart).toLocaleString()}
+                          {new Date(t.cycleStart).toLocaleString("en-MY")}
                         </td>
                         <td className="py-4 px-6 font-mono text-surface-600">
-                          {new Date(r.cycleEnd).toLocaleString()}
+                          {new Date(t.cycleEnd).toLocaleString("en-MY")}
                         </td>
-                        <td className="py-4 px-6 text-right font-mono font-bold text-brand-800">
-                          {r.durationMinutes} min
+                        <td className="py-4 px-6 text-right font-mono font-bold text-brand-700">
+                          {t.durationMinutes} min
                         </td>
                       </tr>
                     ))

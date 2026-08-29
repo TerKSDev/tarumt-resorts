@@ -48,6 +48,13 @@ const stageLabel: Record<string, { label: string; badge: string; dot: string }> 
   },
 };
 
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
 export default function HousekeepingStatus() {
   const [rows, setRows] = useState<RoomStatusSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,16 +88,14 @@ export default function HousekeepingStatus() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const { dirtyCount, cleaningCount, inspectingCount, readyCount, longestWaiting } =
+  const { dirtyCount, cleaningCount, inspectingCount, readyCount } =
     useMemo(() => {
-      let longest = 0;
       let dirty = 0;
       let cleaning = 0;
       let inspecting = 0;
       let ready = 0;
 
       for (const r of rows) {
-        if (r.minutesInCurrentStage > longest) longest = r.minutesInCurrentStage;
         if (r.currentStage === "DIRTY") dirty++;
         else if (r.currentStage === "CLEANING_INPROGRESS") cleaning++;
         else if (r.currentStage === "INSPECTING") inspecting++;
@@ -102,7 +107,6 @@ export default function HousekeepingStatus() {
         cleaningCount: cleaning,
         inspectingCount: inspecting,
         readyCount: ready,
-        longestWaiting: longest,
       };
     }, [rows]);
 
@@ -292,7 +296,7 @@ export default function HousekeepingStatus() {
                     <td className="py-4 px-6 font-mono text-surface-700">
                       <div className="flex items-center gap-1.5">
                         <Timer size={14} className="text-surface-400" />
-                        <span>{r.minutesInCurrentStage} min</span>
+                        <span>{formatMinutes(r.minutesInCurrentStage)}</span>
                       </div>
                     </td>
 

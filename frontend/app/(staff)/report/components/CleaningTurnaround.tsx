@@ -2,13 +2,11 @@ import type { MetaFunction } from "react-router";
 import axios from "axios";
 import { useEffect, useState, useMemo } from "react";
 import {
-  Users,
   Timer,
   BedDouble,
   Zap,
   Filter,
   CheckCircle2,
-  Calendar,
   Sparkles,
 } from "lucide-react";
 import { Card, CardHeader } from "../../../../components/Card";
@@ -26,11 +24,18 @@ interface StaffTurnaround {
   durationMinutes: number;
 }
 
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
 export default function CleaningTurnaround() {
   const [rows, setRows] = useState<StaffTurnaround[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Multi-criteria filter: staff AND completion date range
+  // Multi-criteria filter: staff (ID or name) AND completion date range
   const [filterStaffId, setFilterStaffId] = useState("");
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
@@ -119,7 +124,7 @@ export default function CleaningTurnaround() {
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
-            {avgDurationMinutes} <span className="text-xs font-normal text-surface-500">min/suite</span>
+            {formatMinutes(avgDurationMinutes)}
           </p>
           <span className="text-xs text-surface-500 font-light">
             Target benchmark standard: 30 min
@@ -136,7 +141,7 @@ export default function CleaningTurnaround() {
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
-            {fastestDurationMinutes} <span className="text-xs font-normal text-surface-500">min</span>
+            {formatMinutes(fastestDurationMinutes)}
           </p>
           <span className="text-xs text-surface-500 font-light">
             Fastest recorded cleaning cycle
@@ -148,14 +153,14 @@ export default function CleaningTurnaround() {
       <div className="flex flex-wrap items-end gap-4 p-6 border-b border-surface-100 print:hidden bg-white">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
-            Attendant Staff ID
+            Attendant Staff ID or Name
           </label>
           <input
             type="text"
             value={filterStaffId}
             onChange={(e) => setFilterStaffId(e.target.value)}
-            placeholder="e.g. STF001"
-            className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs w-40 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+            placeholder="e.g. STF001 or Alice"
+            className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs w-44 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           />
         </div>
 
@@ -261,7 +266,7 @@ export default function CleaningTurnaround() {
                     <div className="flex items-center justify-end gap-1.5">
                       {index === 0 && <Zap size={14} className="text-brand-600" />}
                       <span className="font-mono font-bold text-xs bg-brand-50 text-brand-900 border border-brand-200 px-2.5 py-1 rounded-full">
-                        {r.durationMinutes} min
+                        {formatMinutes(r.durationMinutes)}
                       </span>
                     </div>
                   </td>
