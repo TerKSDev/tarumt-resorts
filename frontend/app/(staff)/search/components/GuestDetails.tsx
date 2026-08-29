@@ -3,7 +3,7 @@ import {
   Calendar,
   CircleCheckBig,
   Receipt,
-  Trophy,
+  Crown,
   Users,
 } from "lucide-react";
 import {
@@ -11,8 +11,10 @@ import {
   formatDigitDate,
   getDayBetween,
 } from "../../../../lib/util/date";
-import { LOYALTY_TIER } from "../../../../lib/config/loyalty";
+import { TIER_STYLES } from "../../../../lib/config/loyalty";
+import type { TierName } from "../../../../lib/types/loyalty";
 import { useBilling } from "../../../../hooks/useBilling";
+import { Card, CardHeader } from "../../../../components/Card";
 
 export type GuestDetailsProps = {
   guestData: {
@@ -44,255 +46,223 @@ export type GuestDetailsProps = {
 };
 
 export default function GuestDetails({ guestData }: GuestDetailsProps) {
-  const statusMap = {
+  const statusMap: Record<string, { badge: string; dot: string; content: string }> = {
     ACTIVE: {
-      badge: "bg-surface-100 text-surface-700 border-surface-200",
-      dot: "bg-surface-500",
+      badge: "bg-surface-100 text-surface-800 border-surface-300",
+      dot: "bg-surface-600",
       content: "Active",
     },
     CHECKED_IN: {
-      badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      dot: "bg-emerald-500",
+      badge: "bg-brand-50 text-brand-800 border-brand-300",
+      dot: "bg-brand-600",
       content: "Checked In",
     },
     CHECKED_OUT: {
-      badge: "bg-surface-50 text-surface-500 border-surface-200",
+      badge: "bg-surface-100 text-surface-600 border-surface-200",
       dot: "bg-surface-400",
       content: "Checked Out",
     },
     CANCELLED: {
-      badge: "bg-rose-50 text-rose-700 border-rose-200",
-      dot: "bg-rose-500",
+      badge: "bg-surface-100 text-surface-500 border-surface-300",
+      dot: "bg-surface-400",
       content: "Cancelled",
     },
     REFUNDED: {
-      badge: "bg-surface-50 text-surface-500 border-surface-200",
+      badge: "bg-surface-100 text-surface-500 border-surface-200",
       dot: "bg-surface-400",
       content: "Refunded",
     },
   };
 
+  const currentStatus = statusMap[guestData.status] ?? {
+    badge: "bg-surface-100 text-surface-700 border-surface-300",
+    dot: "bg-surface-500",
+    content: guestData.status || "Unknown",
+  };
+
+  const normalizedTier = (
+    guestData.customer.loyaltyTier
+      ? guestData.customer.loyaltyTier.charAt(0).toUpperCase() +
+        guestData.customer.loyaltyTier.slice(1).toLowerCase()
+      : "Bronze"
+  ) as TierName;
+
+  const tierStyle = TIER_STYLES[normalizedTier] || TIER_STYLES.Bronze;
   const billing = useBilling(guestData);
 
   if (!billing) return null;
 
   return (
-    <div className="flex flex-col rounded-3xl border border-surface-200 bg-white shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between gap-2 p-6 md:p-8 border-b border-surface-100">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center justify-center w-12 h-12 bg-surface-50 border border-surface-100 text-surface-600 rounded-full shadow-sm">
-            <CircleCheckBig size={20} strokeWidth={1.5} />
-          </div>
-          <div className="flex flex-col gap-1 justify-between">
-            <h2 className="text-xl font-serif text-surface-900 tracking-wide leading-none">
-              Booking Record Found
-            </h2>
-            <p className="text-xs text-surface-500 font-light leading-tight uppercase tracking-widest">
-              #{guestData.confirmationNo}
-            </p>
-          </div>
-        </div>
-        <div
-          className={`flex items-center px-4 gap-2.5 border py-2 rounded-full text-[10px] tracking-widest uppercase leading-none font-semibold shadow-xs ${statusMap[guestData.status as keyof typeof statusMap].badge}`}
-        >
+    <Card>
+      {/* Unified Header */}
+      <CardHeader
+        title="Verified Reservation Record"
+        subtitle={`Confirmation: #${guestData.confirmationNo}`}
+        icon={CircleCheckBig}
+        action={
           <div
-            className={`flex w-1.5 h-1.5 rounded-full animate-pulse ${statusMap[guestData.status as keyof typeof statusMap].dot} `}
-          />
-          <div className="mb-px">
-            {statusMap[guestData.status as keyof typeof statusMap].content}
+            className={`flex items-center px-4 py-2 gap-2 border rounded-full text-xs uppercase tracking-wider font-semibold shadow-xs ${currentStatus.badge}`}
+          >
+            <div className={`w-2 h-2 rounded-full animate-pulse ${currentStatus.dot}`} />
+            <span>{currentStatus.content}</span>
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 bg-surface-50/30">
-        <div className="flex flex-col gap-3 border-r border-surface-100 border-b p-6 py-5 hover:bg-surface-50 transition-colors">
-          <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-surface-400 leading-none">
-            <Users size={12} strokeWidth={2} />
-            <span className="leading-none">Guest</span>
+      {/* Grid of Key Properties */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-surface-100 border-b border-surface-100 bg-surface-50/20">
+        {/* Guest */}
+        <div className="p-6 flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-surface-400">
+            <Users size={14} className="text-brand-600" />
+            <span>Registered Guest</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-base leading-none font-medium text-surface-900">
-              {guestData.customer.name}
-            </span>
-            <span className="text-xs text-surface-500 font-light tracking-wide">
-              {guestData.customer.identityNo}
-            </span>
-          </div>
+          <p className="text-base font-semibold text-surface-950">{guestData.customer.name}</p>
+          <p className="text-xs text-surface-500 font-mono">{guestData.customer.identityNo}</p>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-100 border-b p-6 py-5 hover:bg-surface-50 transition-colors">
-          <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-surface-400 leading-none">
-            <Bed size={12} strokeWidth={2} />
-            <span className="leading-none">Room</span>
+        {/* Room */}
+        <div className="p-6 flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-surface-400">
+            <Bed size={14} className="text-brand-600" />
+            <span>Suite Allocation</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-base leading-none font-medium text-surface-900">
-              {guestData.room.roomId}
-            </span>
-            <span className="text-xs text-surface-500 font-light tracking-wide">
-              {guestData.room.type}
-            </span>
-          </div>
+          <p className="text-base font-semibold font-serif text-surface-950">
+            Suite {guestData.room.roomId}
+          </p>
+          <p className="text-xs text-surface-500">{guestData.room.type}</p>
         </div>
 
-        <div className="flex flex-col gap-3 border-r border-surface-100 border-b p-6 py-5 hover:bg-surface-50 transition-colors">
-          <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-surface-400 leading-none">
-            <Calendar size={12} strokeWidth={2} />
-            <span className="leading-none">Check-In / Check-Out</span>
+        {/* Check-In / Out */}
+        <div className="p-6 flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-surface-400">
+            <Calendar size={14} className="text-brand-600" />
+            <span>Stay Duration</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <div className="text-base leading-none font-medium text-surface-900 gap-1.5 flex items-center">
-              <span>{format2DigitMonthDate(guestData.checkInDate || "")}</span>
-              <span className="text-surface-300">-</span>
-              <span>{format2DigitMonthDate(guestData.checkOutDate || "")}</span>
-            </div>
-            <span className="text-xs text-surface-500 font-light tracking-wide">
-              {getDayBetween(
-                guestData.checkInDate || "",
-                guestData.checkOutDate || "",
-              )}{" "}
-              day(s)
-            </span>
+          <div className="text-sm font-semibold text-surface-950 flex items-center gap-1.5 font-mono">
+            <span>{format2DigitMonthDate(guestData.checkInDate || "")}</span>
+            <span className="text-surface-400">&rarr;</span>
+            <span>{format2DigitMonthDate(guestData.checkOutDate || "")}</span>
           </div>
+          <p className="text-xs text-surface-500 font-mono">
+            {getDayBetween(guestData.checkInDate || "", guestData.checkOutDate || "")} night(s)
+          </p>
         </div>
 
-        <div className="flex flex-col gap-3 border-surface-100 border-b p-6 py-5 hover:bg-surface-50 transition-colors">
-          <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-surface-400 leading-none">
-            <Trophy size={12} strokeWidth={2} />
-            <span className="leading-none">Loyalty Tier</span>
+        {/* Loyalty Tier */}
+        <div className="p-6 flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-surface-400">
+            <Crown size={14} className="text-brand-600" />
+            <span>Loyalty Status</span>
           </div>
-          <div className="flex flex-col gap-1">
-            <div
-              className={`text-base leading-none font-medium gap-1.5 flex items-center tracking-widest uppercase ${
-                LOYALTY_TIER[
-                  guestData.customer.loyaltyTier as keyof typeof LOYALTY_TIER
-                ].color
-              }`}
+          <div>
+            <span
+              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider ${tierStyle.badge}`}
             >
-              <span>
-                {
-                  LOYALTY_TIER[
-                    guestData.customer.loyaltyTier as keyof typeof LOYALTY_TIER
-                  ].name
-                }
-              </span>
-            </div>
-            <span className="text-xs text-surface-500 font-light tracking-wide">
-              {formatDigitDate(guestData.customer.updatedAt) ||
-                formatDigitDate(guestData.customer.createdAt)}
+              <Crown size={11} />
+              <span>{normalizedTier}</span>
             </span>
           </div>
+          <p className="text-[11px] text-surface-400 font-mono">
+            Member Since {formatDigitDate(guestData.customer.createdAt)}
+          </p>
         </div>
       </div>
 
-      <div className="flex flex-col p-6 md:p-8 py-6 gap-6 bg-white">
+      {/* Billing Breakdown */}
+      <div className="flex flex-col p-6 md:p-8 gap-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Receipt size={18} strokeWidth={1.5} className="text-surface-400" />
-            <h1 className="text-lg font-serif tracking-wide text-surface-900 leading-none mt-1">
-              Billing Details
-            </h1>
+          <div className="flex items-center gap-2.5">
+            <Receipt size={20} className="text-brand-600" />
+            <h3 className="text-base font-serif font-semibold text-surface-950">
+              Folio Itemization & Settlement
+            </h3>
           </div>
-          <div
-            className={`text-[10px] border rounded-full font-semibold uppercase tracking-widest leading-none px-4 py-1.5 shadow-xs ${
+          <span
+            className={`text-xs border rounded-full font-semibold uppercase tracking-wider px-3.5 py-1 shadow-xs ${
               guestData.isPaid
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-surface-50 text-surface-600 border-surface-200"
+                ? "bg-surface-950 text-white border-surface-950"
+                : "bg-brand-50 text-brand-800 border-brand-200"
             }`}
           >
-            {guestData.isPaid ? "Paid" : "Pending"}
-          </div>
+            {guestData.isPaid ? "Settled & Paid" : "Payment Pending"}
+          </span>
         </div>
-        <div className="overflow-x-auto w-full rounded-2xl border border-surface-100 bg-surface-50/50 pb-2">
-          <div className="grid grid-cols-4 text-sm min-w-[600px]">
-            <div className="w-full flex flex-col">
-              <h1 className="text-[10px] font-semibold uppercase tracking-widest text-surface-400 px-4 border-b border-surface-100 py-3">
-                Items
-              </h1>
-              <div className="font-medium border-b px-4 border-surface-100/50 text-surface-700 py-3">
-                Room ({guestData.room.type})
-              </div>
-              <div className="font-medium border-b px-4 border-surface-100/50 text-surface-700 py-3">
-                Tax
-              </div>
+
+        <div className="rounded-2xl border border-surface-200 overflow-hidden bg-surface-50/40">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-surface-100/70 border-b border-surface-200 text-surface-600 uppercase tracking-wider font-semibold text-left">
+                <th className="py-3.5 px-5">Description</th>
+                <th className="py-3.5 px-5 text-center">Unit / Metric</th>
+                <th className="py-3.5 px-5 text-right">Rate</th>
+                <th className="py-3.5 px-5 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100">
+              <tr>
+                <td className="py-3.5 px-5 font-semibold text-surface-900">
+                  Suite Accommodation ({guestData.room.type})
+                </td>
+                <td className="py-3.5 px-5 text-center text-surface-600 font-mono">
+                  {getDayBetween(guestData.checkInDate || "", guestData.checkOutDate || "")} night(s)
+                </td>
+                <td className="py-3.5 px-5 text-right text-surface-600 font-mono">
+                  RM {guestData.room.pricePerNight.toFixed(2)}
+                </td>
+                <td className="py-3.5 px-5 text-right font-semibold text-surface-950 font-mono">
+                  RM {billing.roomSubtotal.toFixed(2)}
+                </td>
+              </tr>
+              <tr>
+                <td className="py-3.5 px-5 font-semibold text-surface-900">
+                  Tourism & Service Tax
+                </td>
+                <td className="py-3.5 px-5 text-center text-surface-600 font-mono">
+                  10%
+                </td>
+                <td className="py-3.5 px-5 text-right text-surface-600 font-mono">
+                  RM {(guestData.room.pricePerNight * 0.1).toFixed(2)}
+                </td>
+                <td className="py-3.5 px-5 text-right font-semibold text-surface-950 font-mono">
+                  RM {billing.tax.toFixed(2)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* Financial Summary Footer */}
+          <div className="border-t border-surface-200 p-5 bg-white flex flex-col items-end gap-2 text-xs">
+            <div className="flex justify-between w-full max-w-xs text-surface-600">
+              <span>Gross Total:</span>
+              <span className="font-mono font-medium">RM {billing.subtotal.toFixed(2)}</span>
             </div>
 
-            <div className="w-full flex flex-col">
-              <h1 className="text-[10px] font-semibold uppercase tracking-widest text-surface-400 px-4 border-b border-surface-100 py-3 text-center">
-                Details
-              </h1>
-              <div className="border-b px-4 border-surface-100/50 text-surface-600 py-3 text-center">
-                {getDayBetween(
-                  guestData.checkInDate || "",
-                  guestData.checkOutDate || "",
-                )}{" "}
-                day(s)
+            {guestData.customer.loyaltyTier.toUpperCase() !== "BRONZE" && (
+              <div className="flex justify-between w-full max-w-xs text-brand-700 font-medium">
+                <span>VIP Membership Discount:</span>
+                <span className="font-mono">- RM {billing.memberDiscount.toFixed(2)}</span>
               </div>
-              <div className="border-b px-4 border-surface-100/50 text-surface-600 py-3 text-center">
-                10%
-              </div>
+            )}
+
+            <div className="flex justify-between w-full max-w-xs text-surface-600">
+              <span>Deposit Collected (30%):</span>
+              <span className="font-mono">- RM {billing.depositPaid.toFixed(2)}</span>
             </div>
 
-            <div className="w-full flex flex-col">
-              <h1 className="text-[10px] font-semibold uppercase tracking-widest text-surface-400 px-4 border-b border-surface-100 py-3 text-right">
-                Unit Price
-              </h1>
-              <div className="border-b px-4 border-surface-100/50 text-surface-600 py-3 text-right font-medium">
-                RM {guestData.room.pricePerNight.toFixed(2)}
-              </div>
-              <div className="border-b px-4 border-surface-100/50 text-surface-600 py-3 text-right font-medium">
-                RM {(guestData.room.pricePerNight * 0.1).toFixed(2)}
-              </div>
-            </div>
-
-            <div className="w-full flex flex-col">
-              <h1 className="text-[10px] font-semibold uppercase tracking-widest text-surface-400 px-4 border-b border-surface-100 py-3 text-right">
-                Subtotal
-              </h1>
-              <div className="font-medium border-b px-4 border-surface-100/50 text-surface-900 py-3 text-right">
-                RM {billing?.roomSubtotal.toFixed(2)}
-              </div>
-              <div className="font-medium border-b px-4 border-surface-100/50 text-surface-900 py-3 text-right">
-                RM {billing?.tax.toFixed(2)}
-              </div>
-            </div>
-
-            <div className="col-start-3 px-4 text-surface-500 text-xs mt-2">
-              <div className="flex flex-col gap-3 border-surface-100 border-b py-4">
-                <div>Subtotal</div>
-                {guestData.customer.loyaltyTier !== "BRONZE" && (
-                  <div>Member Discount:</div>
-                )}
-                <div>Deposit Paid (30%):</div>
-              </div>
-              <div className="font-medium tracking-wide text-base text-surface-900 py-4 uppercase">
-                Total Amount
-              </div>
-            </div>
-
-            <div className="col-start-4 font-medium px-4 text-surface-800 text-right mt-2 text-xs">
-              <div className="flex flex-col gap-3 border-surface-100 border-b py-4">
-                <div className="text-surface-900">RM {billing?.subtotal.toFixed(2)}</div>
-
-                {guestData.customer.loyaltyTier !== "BRONZE" && (
-                  <div className="text-surface-600">
-                    - RM {billing?.memberDiscount.toFixed(2)}
-                  </div>
-                )}
-
-                <div className="text-surface-600">
-                  - RM {billing?.depositPaid.toFixed(2)}
-                </div>
-              </div>
-              <div
-                className={`font-semibold text-lg py-4 tracking-wide ${guestData.isPaid ? "text-emerald-600" : "text-surface-900"}`}
+            <div className="flex justify-between w-full max-w-xs pt-3 mt-1 border-t border-surface-200 text-sm font-bold text-surface-950">
+              <span className="uppercase tracking-wider">Settlement Balance:</span>
+              <span
+                className={`font-mono text-base ${
+                  guestData.isPaid ? "text-surface-950" : "text-brand-700"
+                }`}
               >
-                RM {billing?.totalAmount.toFixed(2)}
-              </div>
+                RM {billing.totalAmount.toFixed(2)}
+              </span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,6 +1,7 @@
-import axios from "axios";
-import { Hash, Search, Ticket } from "lucide-react";
 import { useState, useEffect } from "react";
+import axios from "axios";
+import { Hash, Search, Ticket, X, History } from "lucide-react";
+import { Card, CardHeader } from "../../../../components/Card";
 
 type GuestSearchBarProps = {
   setShowGuestDetail: (value: boolean) => void;
@@ -15,152 +16,166 @@ export default function GuestSearchBar({
   const [history, setHistory] = useState<string[]>([]);
   const [cache, setCache] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("confirmation_no");
-    if (saved) setHistory(saved.split(","));
+    if (saved) setHistory(saved.split(",").filter(Boolean));
   }, []);
 
   const updateHistory = (searchNo: string) => {
     const saved = localStorage.getItem("confirmation_no");
-    let searchesArray = saved ? saved.split(",") : [];
+    let searchesArray = saved ? saved.split(",").filter(Boolean) : [];
     searchesArray = searchesArray.filter((no) => no !== searchNo);
     searchesArray.unshift(searchNo);
-    if (searchesArray.length > 4) searchesArray.pop();
+    if (searchesArray.length > 5) searchesArray.pop();
 
     localStorage.setItem("confirmation_no", searchesArray.join(","));
     setHistory(searchesArray);
   };
 
   const performSearch = async (searchNo: string) => {
-    if (
-      !searchNo ||
-      searchNo.length !== 8 ||
-      !searchNo.match(/^[0-9A-Z]{8}$/)
-    ) {
-      alert("Confirmation number must be 8 alphanumeric characters.");
+    const cleanNo = searchNo.trim().toUpperCase();
+    setErrorMessage(null);
+
+    if (!cleanNo || cleanNo.length !== 8 || !cleanNo.match(/^[0-9A-Z]{8}$/)) {
+      setErrorMessage("Confirmation number must be exactly 8 alphanumeric characters.");
       return;
     }
 
     // Return cached data for instant retrieval if available
-    if (cache[searchNo]) {
-      setGuestData(cache[searchNo]);
+    if (cache[cleanNo]) {
+      setGuestData(cache[cleanNo]);
       setShowGuestDetail(true);
-      updateHistory(searchNo);
+      updateHistory(cleanNo);
       return;
     }
 
     try {
       setIsLoading(true);
       const response = await axios.get(
-        `http://localhost:8081/api/guest-search/${searchNo}`,
+        `http://localhost:8081/api/guest-search/${cleanNo}`,
       );
-      const guestData = response.data;
+      const data = response.data;
 
-      if (guestData) {
-        setCache((prev) => ({ ...prev, [searchNo]: guestData }));
-        setGuestData(guestData);
+      if (data) {
+        setCache((prev) => ({ ...prev, [cleanNo]: data }));
+        setGuestData(data);
         setShowGuestDetail(true);
-        updateHistory(searchNo);
+        updateHistory(cleanNo);
         return;
       }
 
-      alert("No guest found with this confirmation number.");
+      setErrorMessage("No guest booking found matching this confirmation number.");
       setShowGuestDetail(false);
     } catch (error) {
       console.error("Error occurred when fetching guest data: ", error);
-      alert("Error fetching guest data. Please try again later.");
+      setErrorMessage("No reservation record found or server unavailable.");
       setShowGuestDetail(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSearchGuest = async (formData: FormData) => {
-    const searchNo = formData.get("confirmation_no") as string;
-    await performSearch(searchNo);
+  const handleSearchSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performSearch(confirmationNo);
   };
 
   return (
-    <div className="flex flex-col rounded-3xl gap-6 border p-6 md:p-8 border-surface-200 bg-white shadow-xs">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center justify-center w-12 h-12 border border-surface-100 bg-surface-50 text-surface-600 rounded-full shadow-sm">
-          <Ticket size={20} strokeWidth={1.5} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-serif text-surface-900 tracking-wide leading-none">
-            Confirmation Number Search
-          </h2>
-          <p className="text-xs text-surface-500 font-light leading-tight">
-            Enter the 8-digit confirmation number to check customer bookings and bills.
-          </p>
-        </div>
-      </div>
+    <Card>
+      <CardHeader
+        title="Confirmation Identifier Lookup"
+        subtitle="Enter the unique 8-character confirmation code to inspect live reservation status and folio ledger."
+        icon={Ticket}
+      />
 
-      <form
-        action={handleSearchGuest}
-        className="flex items-center gap-3 sm:gap-4 sm:flex-row flex-col"
-      >
-        <div className="min-w-0 group flex items-center flex-1 focus-within:border-surface-400 focus-within:ring-1 focus-within:ring-surface-400/20 focus-within:shadow-md transition-all duration-300 focus-within:bg-white shadow-xs bg-surface-50 border border-surface-200 hover:border-surface-300 rounded-full px-5 h-14 w-full gap-3">
-          <label
-            htmlFor="confirmation-no"
-            className="text-surface-400 bg-transparent flex items-center"
-          >
+      <div className="p-6 md:p-8 flex flex-col gap-5">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex items-center gap-3 sm:gap-4 sm:flex-row flex-col"
+        >
+          <div className="min-w-0 group flex items-center flex-1 focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-100 transition-all duration-200 bg-surface-50 border border-surface-200 rounded-2xl px-5 h-14 w-full gap-3 shadow-inner">
             <Hash
               size={18}
-              strokeWidth={1.5}
-              className="text-surface-400 group-focus-within:text-surface-700 transition-colors"
+              strokeWidth={1.75}
+              className="text-surface-400 group-focus-within:text-brand-700 transition-colors shrink-0"
             />
-          </label>
-          <input
-            value={confirmationNo}
-            onChange={(e) => setConfirmationNo(e.target.value)}
-            id="confirmation-no"
-            name="confirmation_no"
-            type="text"
-            placeholder="E.g. XXXXXXXX"
-            className="flex h-full mb-px placeholder:tracking-[.25rem] tracking-[.4rem] delay-[9999s] [transition-property:background-color,color] tabular-nums slashed-zero outline-none flex-1 text-lg placeholder:text-surface-400 text-surface-800 bg-transparent font-medium"
-            required
-            pattern="^[a-zA-Z0-9]{8}$"
-            title="Confirmation Number must be 8 alphanumeric characters."
-            maxLength={8}
-            minLength={8}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`max-sm:w-full flex items-center justify-center gap-2.5 px-8 h-14 bg-surface-900 hover:bg-surface-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer text-white rounded-full font-medium uppercase tracking-widest mx-0 ${isLoading ? "opacity-75 cursor-wait" : ""}`}
-        >
-          <Search size={16} strokeWidth={1.5} className={isLoading ? "animate-spin" : ""} />
-          <p className="leading-none text-xs">
-            {isLoading ? "Searching" : "Search"}
-          </p>
-        </button>
-      </form>
-
-      {history.length > 0 && (
-        <div className="flex items-center gap-3 px-2 -mt-2">
-          <span className="text-[10px] text-surface-400 uppercase tracking-widest font-semibold leading-none">
-            Recent:
-          </span>
-          <div className="flex items-center gap-2 flex-wrap">
-            {history.map((no, index) => (
+            <input
+              value={confirmationNo}
+              onChange={(e) => {
+                setConfirmationNo(e.target.value.toUpperCase());
+                setErrorMessage(null);
+              }}
+              id="confirmation-no"
+              name="confirmation_no"
+              type="text"
+              placeholder="e.g. 8K9L2M4N"
+              className="flex h-full tracking-[.25rem] font-mono outline-none flex-1 text-base placeholder:text-surface-400 placeholder:tracking-normal text-surface-950 bg-transparent font-semibold uppercase"
+              required
+              maxLength={8}
+              minLength={8}
+            />
+            {confirmationNo && (
               <button
                 type="button"
                 onClick={() => {
-                  setConfirmationNo(no);
-                  performSearch(no);
+                  setConfirmationNo("");
+                  setErrorMessage(null);
                 }}
-                key={index}
-                className="text-[10px] leading-none font-medium shadow-xs text-surface-600 hover:border-surface-400 cursor-pointer hover:text-surface-900 hover:bg-white transition-all duration-300 bg-surface-50 rounded-full border border-surface-200 px-3 py-1.5 uppercase tracking-widest"
+                className="text-surface-400 hover:text-surface-700 p-1 cursor-pointer"
               >
-                {no}
+                <X size={16} />
               </button>
-            ))}
+            )}
           </div>
-        </div>
-      )}
-    </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2.5 px-8 h-14 bg-surface-950 hover:bg-brand-950 text-white rounded-2xl font-semibold uppercase tracking-wider text-xs shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer shrink-0 ${
+              isLoading ? "opacity-75 cursor-wait" : ""
+            }`}
+          >
+            {isLoading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+            ) : (
+              <Search size={16} strokeWidth={2} />
+            )}
+            <span>{isLoading ? "Searching Folio..." : "Verify Record"}</span>
+          </button>
+        </form>
+
+        {errorMessage && (
+          <div className="p-3.5 rounded-xl bg-surface-100 border border-surface-300 text-xs text-surface-800 flex items-center gap-2">
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {history.length > 0 && (
+          <div className="flex items-center gap-3 pt-1 border-t border-surface-100">
+            <div className="flex items-center gap-1.5 text-[11px] text-surface-400 uppercase tracking-wider font-semibold shrink-0">
+              <History size={13} />
+              <span>Recent Queries:</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {history.map((no) => (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmationNo(no);
+                    performSearch(no);
+                  }}
+                  key={no}
+                  className="text-xs font-mono font-semibold text-surface-700 hover:text-brand-900 bg-surface-100 hover:bg-brand-50 border border-surface-200 hover:border-brand-300 rounded-lg px-3 py-1 transition-all cursor-pointer"
+                >
+                  {no}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }

@@ -2,13 +2,14 @@ import type { MetaFunction } from "react-router";
 import axios from "axios";
 import { useEffect, useState, useMemo } from "react";
 import {
-  Users,
-  CheckCircle,
-  UserCircle,
   Timer,
   BedDouble,
   Zap,
+  Filter,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
+import { Card, CardHeader } from "../../../../components/Card";
 
 export const meta: MetaFunction = () => [
   { title: "Staff Cleaning Turnaround | TARUMT Resorts" },
@@ -23,21 +24,18 @@ interface StaffTurnaround {
   durationMinutes: number;
 }
 
-// Converts raw minutes into a more readable "Xh Ym" / "Xm" format.
-// The underlying data (and sorting/filtering) still uses raw minutes -
-// this is purely a display concern.
 function formatMinutes(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
 export default function CleaningTurnaround() {
   const [rows, setRows] = useState<StaffTurnaround[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Multi-criteria filter: staff AND completion date range
+  // Multi-criteria filter: staff (ID or name) AND completion date range
   const [filterStaffId, setFilterStaffId] = useState("");
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
@@ -51,7 +49,7 @@ export default function CleaningTurnaround() {
       if (rangeEnd) params.rangeEnd = rangeEnd;
 
       const response = await axios.get(
-        "http://localhost:8081/api/report/cleaning-turnaround",
+        "http://localhost:8081/api/housekeeping/reports/staff-turnaround",
         { params },
       );
       setRows(Array.isArray(response.data) ? response.data : []);
@@ -83,211 +81,201 @@ export default function CleaningTurnaround() {
     };
   }, [rows]);
 
-  const statCard = [
-    {
-      label: "Completed Cycles",
-      value: completedCycles,
-      statement: "Dirty → Ready For Check-In",
-    },
-    {
-      label: "Avg. Turnaround",
-      value: formatMinutes(avgDurationMinutes),
-      statement: "Minutes per cycle",
-    },
-    {
-      label: "Fastest Turnaround",
-      value: formatMinutes(fastestDurationMinutes),
-      statement: "Minutes, best cycle",
-    },
-  ];
-
   return (
-    <div className="flex flex-col flex-1 rounded-xl border border-surface-300 bg-surface-50">
-      <div className="flex items-start justify-between p-4 md:p-6">
-        <div className="flex items-start gap-3 md:gap-4">
-          <div className="flex items-center justify-center min-w-10.5 min-h-10.5 bg-brand-50 text-brand-600 rounded-xl">
-            <Users size={20} />
+    <Card>
+      <CardHeader
+        title="Housekeeping Turnaround & Sanitization Speed Audit"
+        subtitle="Completed room turnover cycles measured from checkout inspection to ready-for-checkin release."
+        icon={Timer}
+        action={
+          <div className="flex items-center gap-2 text-xs px-3.5 py-1.5 print:hidden bg-brand-50 text-brand-700 font-semibold border border-brand-200 rounded-full shadow-2xs">
+            <Sparkles size={13} className="text-brand-600" />
+            <span>Turnaround Telemetry</span>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <h2 className="text-base md:text-lg font-semibold leading-none">
-              Cleaning Turnaround Report
-            </h2>
-            <p className="text-xs md:text-sm text-surface-600 leading-tight mb-1.5 max-w-3/4">
-              Tracks completed cleaning cycles per staff member, ranked from
-              fastest to slowest turnaround.
-            </p>
-            <span className="text-[10px] md:text-xs text-surface-600 leading-tight">
-              Generated On: {new Date().toLocaleDateString("en-GB")} at{" "}
-              {new Date().toLocaleTimeString()} • TARUMT Resorts
+        }
+      />
+
+      {/* KPI Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-surface-100 border-b border-surface-100 bg-surface-50/30">
+        <div className="flex flex-col gap-2 p-6 justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-widest font-semibold text-surface-500">
+              Completed Turnarounds
             </span>
+            <div className="w-8 h-8 rounded-xl border border-brand-200 flex items-center justify-center text-brand-700 bg-brand-50">
+              <CheckCircle2 size={16} />
+            </div>
           </div>
+          <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
+            {completedCycles} <span className="text-xs font-normal text-surface-500">Cycles</span>
+          </p>
+          <span className="text-xs text-surface-500 font-light">
+            Dirty &rarr; Released for guest check-in
+          </span>
         </div>
-        <div className="flex items-center gap-2 text-sm print:hidden px-3 py-2 bg-emerald-100 text-emerald-700 font-semibold border leading-none border-emerald-400 rounded-xl">
-          <CheckCircle size={14} />
-          Generated
+
+        <div className="flex flex-col gap-2 p-6 justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-widest font-semibold text-surface-500">
+              Average Turnaround
+            </span>
+            <div className="w-8 h-8 rounded-xl border border-brand-200 flex items-center justify-center text-brand-700 bg-brand-50">
+              <Timer size={16} />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
+            {formatMinutes(avgDurationMinutes)}
+          </p>
+          <span className="text-xs text-surface-500 font-light">
+            Target benchmark standard: 30 min
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-2 p-6 justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-widest font-semibold text-surface-500">
+              Fastest Turnaround Record
+            </span>
+            <div className="w-8 h-8 rounded-xl border border-brand-200 flex items-center justify-center text-brand-700 bg-brand-50">
+              <Zap size={16} />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
+            {formatMinutes(fastestDurationMinutes)}
+          </p>
+          <span className="text-xs text-surface-500 font-light">
+            Fastest recorded cleaning cycle
+          </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 border-t border-surface-300 border-b">
-        {statCard.map((card, index) => (
-          <div
-            key={index}
-            className="flex flex-col gap-3 p-4 md:p-6 border-r last:border-0 border-surface-300"
-          >
-            <h4 className="text-sm md:text-base text-surface-600 leading-tight">
-              {card.label}
-            </h4>
-            <p className="text-xl md:text-3xl font-bold text-surface-950 leading-tight">
-              {card.value}
-            </p>
-            <span className="text-xs md:text-sm text-surface-600 leading-tight tracking-tighter">
-              {card.statement}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Multi-criteria filter: staff AND completion date range */}
-      <div className="flex flex-wrap items-end gap-3 px-4 md:px-6 py-4 border-b border-surface-300 print:hidden">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-surface-600">Staff ID or Name</label>
+      {/* Multi-criteria filter */}
+      <div className="flex flex-wrap items-end gap-4 p-6 border-b border-surface-100 print:hidden bg-white">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
+            Attendant Staff ID or Name
+          </label>
           <input
             type="text"
             value={filterStaffId}
             onChange={(e) => setFilterStaffId(e.target.value)}
             placeholder="e.g. STF001 or Alice"
-            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm w-44"
+            className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs w-44 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-surface-600">From</label>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
+            Cycle Start Timestamp
+          </label>
           <input
             type="datetime-local"
             value={rangeStart}
             onChange={(e) => setRangeStart(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm"
+            className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 font-mono"
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-surface-600">To</label>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-surface-700">
+            Cycle End Timestamp
+          </label>
           <input
             type="datetime-local"
             value={rangeEnd}
             onChange={(e) => setRangeEnd(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-surface-300 bg-white text-sm"
+            className="px-3.5 py-2.5 rounded-xl border border-surface-300 bg-white text-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 font-mono"
           />
         </div>
+
         <button
+          type="button"
           onClick={fetchReport}
-          className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium"
+          className="h-10 px-6 bg-surface-950 hover:bg-brand-950 text-white rounded-xl text-xs font-semibold uppercase tracking-wider transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-2"
         >
-          Apply Filters
+          <Filter size={13} />
+          <span>Filter Report</span>
         </button>
       </div>
 
-      <table className="flex-1 relative">
-        <thead>
-          <tr className="text-surface-600 text-xs md:text-sm leading-none border-b border-surface-300">
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Staff ID
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Staff
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Room
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Cycle Start
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Cycle End
-            </th>
-            <th className="py-4 text-start px-6 font-normal tracking-wide">
-              Duration
-            </th>
-          </tr>
-        </thead>
-        {loading && (
-          <tbody>
-            <tr>
-              <td colSpan={6} className="h-80 text-center relative">
-                <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
-                </div>
-              </td>
+      {/* Table Section */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr className="text-surface-600 uppercase tracking-wider font-semibold bg-surface-100/70 border-b border-surface-200">
+              <th className="py-3.5 px-6">Attendant Staff</th>
+              <th className="py-3.5 px-6">Serviced Suite</th>
+              <th className="py-3.5 px-6">Cleaning Commenced</th>
+              <th className="py-3.5 px-6">Quality Inspected</th>
+              <th className="py-3.5 px-6 text-right">Cycle Duration</th>
             </tr>
-          </tbody>
-        )}
-        {!loading && rows.length === 0 ? (
-          <tbody>
-            <tr>
-              <td colSpan={6} className="h-80 text-center relative">
-                <div className="absolute inset-0 flex flex-col gap-4 items-center justify-center opacity-60">
-                  <span className="text-4xl text-surface-950 tracking-tighter">
-                    {"ヽ(*。>Д<)o゜"}
-                  </span>
-                  <span className="text-base text-surface-600 tracking-wide">
-                    No completed cleaning cycles found.
-                  </span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        ) : (
-          <tbody>
-            {rows.map((r, index) => (
-              <tr
-                key={index}
-                className="border-b border-surface-200 last:border-0 hover:bg-surface-100 transition-colors"
-              >
-                <td className="py-4 px-6">
-                  <span className="text-xs font-mono text-surface-600 bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
-                    {r.staffId}
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-surface-100 p-2 rounded-full text-surface-500">
-                      <UserCircle size={18} />
-                    </div>
-                    <span className="text-sm text-surface-950 font-semibold">
-                      {r.staffName}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    <BedDouble size={16} className="text-surface-400" />
-                    <span className="text-sm font-medium text-surface-800">
-                      {r.roomId}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-6">
-                  <span className="text-sm text-surface-600">
-                    {new Date(r.cycleStart).toLocaleString("en-GB")}
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  <span className="text-sm text-surface-600">
-                    {new Date(r.cycleEnd).toLocaleString("en-GB")}
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center gap-2">
-                    {index === 0 && <Zap size={14} className="text-amber-500" />}
-                    <Timer size={14} className="text-surface-400" />
-                    <span className="text-sm font-mono bg-surface-100 px-2 py-1 rounded-md border border-surface-200">
-                      {formatMinutes(r.durationMinutes)}
-                    </span>
+          </thead>
+          {loading ? (
+            <tbody>
+              <tr>
+                <td colSpan={5} className="py-16 text-center">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand-600" />
+                    <span className="text-xs text-surface-500 font-medium">Fetching turnaround analytics...</span>
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        )}
-      </table>
-    </div>
+            </tbody>
+          ) : rows.length === 0 ? (
+            <tbody>
+              <tr>
+                <td colSpan={5} className="py-16 text-center text-xs text-surface-400 font-light">
+                  No completed cleaning cycles found matching query criteria.
+                </td>
+              </tr>
+            </tbody>
+          ) : (
+            <tbody className="divide-y divide-surface-100">
+              {rows.map((r, index) => (
+                <tr key={index} className="hover:bg-surface-50 transition-colors">
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-200 text-brand-700 flex items-center justify-center font-bold text-xs">
+                        {r.staffName.charAt(0)}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-surface-950">{r.staffName}</span>
+                        <span className="text-[10px] text-surface-400 font-mono">({r.staffId})</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-2">
+                      <BedDouble size={15} className="text-brand-600" />
+                      <span className="font-bold font-mono text-surface-800">
+                        Suite {r.roomId}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="py-4 px-6 font-mono text-surface-600">
+                    {new Date(r.cycleStart).toLocaleString("en-MY")}
+                  </td>
+
+                  <td className="py-4 px-6 font-mono text-surface-600">
+                    {new Date(r.cycleEnd).toLocaleString("en-MY")}
+                  </td>
+
+                  <td className="py-4 px-6 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {index === 0 && <Zap size={14} className="text-brand-600" />}
+                      <span className="font-mono font-bold text-xs bg-brand-50 text-brand-900 border border-brand-200 px-2.5 py-1 rounded-full">
+                        {formatMinutes(r.durationMinutes)}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          )}
+        </table>
+      </div>
+    </Card>
   );
 }

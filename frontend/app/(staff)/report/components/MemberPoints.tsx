@@ -1,7 +1,8 @@
-//By Tek Shao Xian
-
+// By Tek Shao Xian
 import { useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
+import { Crown, Sparkles } from "lucide-react";
+import { Card, CardHeader } from "../../../../components/Card";
 
 /* =========================================================================
    TYPES
@@ -18,7 +19,7 @@ interface Member {
 }
 
 /* =========================================================================
-   SMALL HELPERS — same formatting rules as the Loyalty page.
+   SMALL HELPERS
    ========================================================================= */
 
 function isoDate(d: Date): string {
@@ -48,141 +49,156 @@ function mergeSort<T>(items: T[], compare: (a: T, b: T) => number): T[] {
   const mid = Math.floor(items.length / 2);
   const left = mergeSort(items.slice(0, mid), compare);
   const right = mergeSort(items.slice(mid), compare);
-  const merged: T[] = [];
+
+  const out: T[] = [];
   let i = 0;
   let j = 0;
   while (i < left.length && j < right.length) {
-    if (compare(left[i], right[j]) <= 0) merged.push(left[i++]);
-    else merged.push(right[j++]);
+    if (compare(left[i], right[j]) <= 0) {
+      out.push(left[i++]);
+    } else {
+      out.push(right[j++]);
+    }
   }
-  while (i < left.length) merged.push(left[i++]);
-  while (j < right.length) merged.push(right[j++]);
-  return merged;
+  return out.concat(left.slice(i)).concat(right.slice(j));
 }
 
-function binarySearchById<T extends { id: string }>(sortedById: T[], id: string): T | null {
+function binarySearchById(items: Member[], id: string): Member | null {
   let lo = 0;
-  let hi = sortedById.length - 1;
-  const target = id.trim().toUpperCase();
+  let hi = items.length - 1;
   while (lo <= hi) {
-    const mid = Math.floor((lo + hi) / 2);
-    const midId = sortedById[mid].id.toUpperCase();
-    if (midId === target) return sortedById[mid];
-    if (midId < target) lo = mid + 1;
+    const mid = (lo + hi) >> 1;
+    const midId = items[mid].id;
+    if (midId === id) return items[mid];
+    if (midId < id) lo = mid + 1;
     else hi = mid - 1;
   }
   return null;
 }
 
-function filterItems<T>(items: T[], predicates: Array<(item: T) => boolean>): T[] {
-  return items.filter((item) => predicates.every((p) => p(item)));
+function filterItems<T>(items: T[], predicates: ((item: T) => boolean)[]): T[] {
+  return items.filter((it) => predicates.every((p) => p(it)));
 }
 
 /* =========================================================================
-   DATA — fetched fresh in this component (Report Centre is a separate
-   route tree with no access to the Loyalty page's state).
+   LIVE DATA FETCHING
    ========================================================================= */
 
-const API_BASE_URL = "http://localhost:8081";
+const API_BASE = "http://localhost:8081";
 
-function normalizeTier(raw: string | undefined): TierName {
-  const upper = (raw ?? "").toUpperCase();
-  if (upper === "BRONZE" || upper === "SILVER" || upper === "GOLD" || upper === "PLATINUM") {
-    return (upper.charAt(0) + upper.slice(1).toLowerCase()) as TierName;
-  }
-  return "Bronze";
+interface RawCustomer {
+  identityNo: string;
+  name: string;
+  loyaltyTier?: string;
+  createdAt?: string;
 }
 
-interface CustomerApiResponse {
-  customerId: string;
-  createdAt?: string;
-  loyaltyTier: string;
-  name: string;
+interface RawPointRecord {
+  memberId?: string;
+  points?: number;
+  type?: string;
+}
+
+interface RawRedeemRecord {
+  memberId?: string;
+  points?: number;
+  status?: string;
 }
 
 async function fetchMembersRaw(): Promise<Member[]> {
-  const res = await fetch(`${API_BASE_URL}/api/customers`);
-  if (!res.ok) throw new Error(`Failed to load customers (${res.status})`);
-  const data: CustomerApiResponse[] = await res.json();
-  return data.map((c) => ({
-    id: c.customerId,
-    name: c.name,
-    tier: normalizeTier(c.loyaltyTier),
-    points: 0,
-    joinDate: c.createdAt ?? "",
+  try {
+    const res = await fetch(`${API_BASE}/api/loyalty/members`);
+    if (!res.ok) return [];
+    const list: RawCustomer[] = await res.json();
+    return list.map((c) => ({
+      id: c.identityNo,
+      name: c.name,
+      tier: (c.loyaltyTier as TierName) || "Bronze",
+      points: 0,
+      joinDate: c.createdAt ? c.createdAt.slice(0, 10) : isoDate(new Date()),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchPointsRaw(): Promise<RawPointRecord[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/loyalty/points`);
+    if (!res.ok) return [];
+    return (await res.json()) as RawPointRecord[];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchApprovedRedemptionsRaw(): Promise<RawRedeemRecord[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/loyalty/redeem`);
+    if (!res.ok) return [];
+    const list: RawRedeemRecord[] = await res.json();
+    return list.filter((r) => r.status === "Approved");
+  } catch {
+    return [];
+  }
+}
+
+function applyPointsToMembers(members: Member[], points: RawPointRecord[]): Member[] {
+  const map = new Map<string, number>();
+  for (const p of points) {
+    if (!p.memberId || p.type !== "earn") continue;
+    map.set(p.memberId, (map.get(p.memberId) ?? 0) + Number(p.points || 0));
+  }
+  return members.map((m) => ({
+    ...m,
+    points: map.get(m.id) ?? 0,
   }));
 }
 
-interface PointApiResponse {
-  customerId: string;
-  point: number;
-  expireDate?: string;
-}
-
-async function fetchPointsRaw(): Promise<PointApiResponse[]> {
-  const res = await fetch(`${API_BASE_URL}/api/points`);
-  if (!res.ok) throw new Error(`Failed to load points (${res.status})`);
-  return res.json();
-}
-
-function applyPointsToMembers(members: Member[], pointsRows: PointApiResponse[]): Member[] {
-  const now = Date.now();
-  return members.map((m) => {
-    const activePoints = pointsRows
-      .filter((p) => p.customerId === m.id && (!p.expireDate || new Date(p.expireDate).getTime() > now))
-      .reduce((sum, p) => sum + (p.point ?? 0), 0);
-    return { ...m, points: activePoints };
-  });
-}
-
-interface RedeemApiResponse {
-  customerId: string;
-  point: number;
-  status: boolean | null;
-}
-
-async function fetchApprovedRedemptionsRaw(): Promise<{ memberId: string; pointsCost: number }[]> {
-  const res = await fetch(`${API_BASE_URL}/api/redeem`);
-  if (!res.ok) throw new Error(`Failed to load redemption requests (${res.status})`);
-  const data: RedeemApiResponse[] = await res.json();
-  return data
-    .filter((r) => r.status === true)
-    .map((r) => ({ memberId: r.customerId, pointsCost: r.point ?? 0 }));
-}
-
-function applyApprovedRedemptions(members: Member[], approved: { memberId: string; pointsCost: number }[]): Member[] {
-  return members.map((m) => {
-    const redeemed = approved.filter((r) => r.memberId === m.id).reduce((sum, r) => sum + r.pointsCost, 0);
-    return redeemed > 0 ? { ...m, points: Math.max(0, m.points - redeemed) } : m;
-  });
+function applyApprovedRedemptions(members: Member[], redeems: RawRedeemRecord[]): Member[] {
+  const map = new Map<string, number>();
+  for (const r of redeems) {
+    if (!r.memberId) continue;
+    map.set(r.memberId, (map.get(r.memberId) ?? 0) + Number(r.points || 0));
+  }
+  return members.map((m) => ({
+    ...m,
+    points: Math.max(0, m.points - (map.get(m.id) ?? 0)),
+  }));
 }
 
 /* =========================================================================
-   REPORT GENERATOR
+   REPORT BUILDER
    ========================================================================= */
 
-function buildMemberReport(members: Member[], params: URLSearchParams): string[] {
+function buildMemberReport(members: Member[], sp: URLSearchParams): string[] {
   const lines: string[] = [];
-  const tier = (params.get("tier") ?? "All") as TierName | "All";
-  const minPoints = Number(params.get("minPoints") ?? 0);
-  const search = (params.get("search") ?? "").trim();
-  const sortBy = (params.get("sortBy") ?? "points") as "points" | "name" | "joinDate";
 
-  let directHit: Member | null = null;
-  if (search && /^M?\d+$/i.test(search)) {
-    const normalizedId = search.toUpperCase().startsWith("M") ? search.toUpperCase() : `M${search}`;
-    const sortedById = mergeSort(members, (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    directHit = binarySearchById(sortedById, normalizedId);
+  const tier = (sp.get("tier") || "all") as TierName | "all";
+  const minPoints = Number(sp.get("minPoints") || 0);
+  const search = (sp.get("search") || "").trim();
+  const sortBy = (sp.get("sortBy") || "points-desc") as
+    | "points-desc"
+    | "points-asc"
+    | "name"
+    | "joinDate";
+
+  const sortedById = mergeSort(members, (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const directHit = search ? binarySearchById(sortedById, search) : null;
+
+  const predicates: ((m: Member) => boolean)[] = [];
+  if (tier !== "all") predicates.push((m) => m.tier === tier);
+  if (minPoints > 0) predicates.push((m) => m.points >= minPoints);
+  if (search) {
+    const q = search.toLowerCase();
+    predicates.push((m) => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q));
   }
 
-  const filtered = filterItems(members, [
-    (m) => (tier === "All" ? true : m.tier === tier),
-    (m) => m.points >= minPoints,
-    (m) => (search ? m.name.toLowerCase().includes(search.toLowerCase()) || m.id.toLowerCase().includes(search.toLowerCase()) : true),
-  ]);
+  const filtered = filterItems(members, predicates);
 
   const compareFns: Record<typeof sortBy, (a: Member, b: Member) => number> = {
-    points: (a, b) => b.points - a.points,
+    "points-desc": (a, b) => b.points - a.points,
+    "points-asc": (a, b) => a.points - b.points,
     name: (a, b) => a.name.localeCompare(b.name),
     joinDate: (a, b) => (a.joinDate < b.joinDate ? -1 : a.joinDate > b.joinDate ? 1 : 0),
   };
@@ -223,11 +239,6 @@ function buildMemberReport(members: Member[], params: URLSearchParams): string[]
   return lines;
 }
 
-/* =========================================================================
-   COMPONENT — rendered inside report.tsx, which already provides the page
-   chrome (back button, breadcrumb, related-reports footer).
-   ========================================================================= */
-
 export default function MemberPoints() {
   const [searchParams] = useSearchParams();
 
@@ -256,20 +267,36 @@ export default function MemberPoints() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams.toString()]);
+  }, [searchParams]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-surface-300 bg-surface-50 shadow-xs">
-      {loading ? (
-        <div className="p-6 text-sm text-surface-500">Loading report…</div>
-      ) : error ? (
-        <div className="p-6 text-sm text-red-600">Couldn&apos;t load report: {error}</div>
-      ) : (
-        <pre className="max-h-[70vh] overflow-auto whitespace-pre bg-[#081226] p-5 font-mono text-[11px] leading-relaxed text-blue-100">
-          {lines.join("\n")}
-        </pre>
-      )}
-    </div>
+    <Card>
+      <CardHeader
+        title="Loyalty Rewards & Member Points Ledger Audit"
+        subtitle="Multi-factor member performance query stream with binary search direct ID hit detection."
+        icon={Crown}
+        action={
+          <div className="flex items-center gap-2 text-xs px-3.5 py-1.5 print:hidden bg-brand-50 text-brand-700 font-semibold border border-brand-200 rounded-full shadow-2xs">
+            <Sparkles size={13} className="text-brand-600" />
+            <span>Audit Stream</span>
+          </div>
+        }
+      />
+
+      <div className="p-6 md:p-8 bg-surface-950">
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-surface-400 font-mono text-xs gap-3">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-400" />
+            <span>Compiling member performance ledger...</span>
+          </div>
+        ) : error ? (
+          <div className="p-6 text-xs text-red-400 font-mono">Failed to load report: {error}</div>
+        ) : (
+          <pre className="max-h-[70vh] overflow-auto whitespace-pre font-mono text-xs leading-relaxed text-brand-200 scrollbar-hidden">
+            {lines.join("\n")}
+          </pre>
+        )}
+      </div>
+    </Card>
   );
 }
