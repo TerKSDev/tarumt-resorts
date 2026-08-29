@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { LOYALTY_TIER } from "../../../../lib/config/loyalty";
 import type { MetaFunction } from "react-router";
-import { Card, CardHeader } from "../../../../../components/Card";
+import { Card, CardHeader } from "../../../../components/Card";
 
 export const meta: MetaFunction = () => [
   { title: "Registration Cancellation Analysis | TARUMT Resorts" },

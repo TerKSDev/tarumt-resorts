@@ -2,7 +2,7 @@
 import { useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
 import { Crown, Sparkles } from "lucide-react";
-import { Card, CardHeader } from "../../../../../components/Card";
+import { Card, CardHeader } from "../../../../components/Card";
 
 /* =========================================================================
    TYPES

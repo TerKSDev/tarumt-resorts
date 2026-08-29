@@ -11,7 +11,7 @@ import {
   Calendar,
   Sparkles,
 } from "lucide-react";
-import { Card, CardHeader } from "../../../../../components/Card";
+import { Card, CardHeader } from "../../../../components/Card";
 
 export const meta: MetaFunction = () => [
   { title: "Staff Cleaning Turnaround | TARUMT Resorts" },

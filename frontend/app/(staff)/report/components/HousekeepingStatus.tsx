@@ -6,13 +6,12 @@ import {
   CheckCircle,
   Timer,
   BedDouble,
-  AlertTriangle,
   Brush,
   Filter,
   Trash2,
   ClipboardCheck,
 } from "lucide-react";
-import { Card, CardHeader } from "../../../../../components/Card";
+import { Card, CardHeader } from "../../../../components/Card";
 
 export const meta: MetaFunction = () => [
   { title: "Room Housekeeping Status | TARUMT Resorts" },

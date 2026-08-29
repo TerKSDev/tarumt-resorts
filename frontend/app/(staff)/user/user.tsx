@@ -175,7 +175,7 @@ export default function UserManagement() {
             <span className="text-xs uppercase tracking-widest font-semibold text-surface-500">
               Administrators
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-surface-950 border border-surface-800 flex items-center justify-center text-brand-300 shadow-2xs">
+            <div className="w-10 h-10 rounded-2xl bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-700 shadow-2xs">
               <ShieldCheck size={18} strokeWidth={1.75} />
             </div>
           </div>
