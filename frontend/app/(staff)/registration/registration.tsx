@@ -13,6 +13,8 @@ import {
   X,
   BedDouble,
   ShieldCheck,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -20,11 +22,21 @@ import {
   fetchRegistrationQueueApi,
   registerWalkInGuestApi,
   assignRoomToQueueGuestApi,
+  cancelWalkInGuestApi,
 } from "../../../lib/api/registration";
 import { Card, CardHeader } from "../../../components/Card";
+import ReportGeneration from "./components/ReportGeneration";
 
 export const meta: MetaFunction = () => [
   { title: "Walk-In Registration & Queue | TARUMT Resorts" },
+];
+
+const CANCELLATION_REASONS = [
+  { value: "GUEST_REQUEST", label: "Guest Request" },
+  { value: "DUPLICATE_ENTRY", label: "Duplicate Entry" },
+  { value: "NO_SHOW", label: "No Show" },
+  { value: "PAYMENT_ISSUE", label: "Payment Issue" },
+  { value: "OTHER", label: "Other" },
 ];
 
 const formatIdentityNo = (value: string) => {
@@ -54,6 +66,10 @@ export default function RegistrationPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Cancellation State
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState(CANCELLATION_REASONS[0].value);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -132,6 +148,23 @@ export default function RegistrationPage() {
     } catch (err: any) {
       console.error("Error processing queue item:", err);
       flash(err.message || "Unable to process queue item right now.");
+    }
+  };
+
+  const cancelGuestById = async (queueId?: string) => {
+    if (!queueId) {
+      flash("Unable to cancel: missing queue record ID.");
+      return;
+    }
+
+    try {
+      await cancelWalkInGuestApi(queueId, cancelReason);
+      setCancellingId(null);
+      await fetchQueue();
+      flash("Guest registration cancelled successfully.");
+    } catch (err: any) {
+      console.error("Error cancelling queue item:", err);
+      flash(err.message || "Unable to cancel queue item right now.");
     }
   };
 
@@ -300,7 +333,7 @@ export default function RegistrationPage() {
                   <button
                     type="button"
                     onClick={() => setSearchTerm("")}
-                    className="text-surface-400 hover:text-surface-700"
+                    className="text-surface-400 hover:text-surface-700 cursor-pointer"
                   >
                     <X size={12} />
                   </button>
@@ -347,7 +380,7 @@ export default function RegistrationPage() {
                   <th className="py-4 px-6">Guest Identification</th>
                   <th className="py-4 px-6">Party Size</th>
                   <th className="py-4 px-6">Queue Entry Time</th>
-                  <th className="py-4 px-6 text-right">Fulfillment</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-100">
@@ -390,14 +423,59 @@ export default function RegistrationPage() {
                     </td>
 
                     <td className="py-4 px-6 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void processGuestById(item.id)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
-                      >
-                        <BedDouble size={14} />
-                        <span>Assign Room</span>
-                      </button>
+                      {cancellingId === item.id ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <select
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            className="rounded-xl border border-surface-300 bg-white px-2.5 py-1.5 text-xs outline-none font-medium cursor-pointer"
+                          >
+                            {CANCELLATION_REASONS.map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => void cancelGuestById(item.id)}
+                            className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+                          >
+                            Confirm Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCancellingId(null)}
+                            className="px-3 py-1.5 rounded-xl border border-surface-300 text-surface-700 hover:bg-surface-100 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1"
+                          >
+                            <RotateCcw size={12} />
+                            <span>Back</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void processGuestById(item.id)}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
+                          >
+                            <BedDouble size={14} />
+                            <span>Assign Room</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCancelReason(CANCELLATION_REASONS[0].value);
+                              setCancellingId(item.id ?? null);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-2 rounded-full border border-surface-300 text-surface-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                          >
+                            <Ban size={13} />
+                            <span>Cancel</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -406,6 +484,9 @@ export default function RegistrationPage() {
           </div>
         )}
       </Card>
+
+      {/* Registration Reports */}
+      <ReportGeneration />
     </div>
   );
 }

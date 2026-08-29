@@ -1,6 +1,7 @@
 package com.tarumt.tarumt_resorts.entity;
 
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
+import com.tarumt.tarumt_resorts.entity.enums.CancellationReason;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -36,6 +37,13 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private BookingStatus status;
+
+    @Column(name = "is_walk_in")
+    private Boolean isWalkIn = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancellation_reason")
+    private CancellationReason cancellationReason;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -99,6 +107,14 @@ public class Booking {
         return this.status;
     }
 
+    public Boolean getIsWalkIn() {
+        return this.isWalkIn;
+    }
+
+    public CancellationReason getCancellationReason() {
+        return this.cancellationReason;
+    }
+
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }
@@ -142,6 +158,14 @@ public class Booking {
 
     public void setStatus(BookingStatus status) {
         this.status = status;
+    }
+
+    public void setIsWalkIn(Boolean isWalkIn) {
+        this.isWalkIn = isWalkIn;
+    }
+
+    public void setCancellationReason(CancellationReason cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {

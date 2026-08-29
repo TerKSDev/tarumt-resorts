@@ -32,121 +32,179 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function LoyaltyAndMember() {
-  const [tab, setTab] = useState<TabKey>("dashboard");
-  const [rawMembers, setRawMembers] = useState<Member[]>([]);
-  const [membersLoading, setMembersLoading] = useState(true);
-  const [membersError, setMembersError] = useState<string | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
   const [requests, setRequests] = useState<RedemptionRequest[]>([]);
+  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
 
   const flash = (msg: string) => {
     setToast(msg);
-    window.setTimeout(() => setToast(null), 2800);
+    window.setTimeout(() => setToast(null), 3200);
   };
 
-  const members = useMemo(() => applyApprovedRedemptions(rawMembers, requests), [rawMembers, requests]);
-
   useEffect(() => {
-    let cancelled = false;
-    setMembersLoading(true);
-    setMembersError(null);
-    Promise.all([fetchMembersFromApi(), fetchPointsFromApi(), fetchRedeemFromApi()])
-      .then(([customers, points, redeemRows]) => {
-        if (cancelled) return;
-        const merged = applyPointsToMembers(customers, points);
-        setRawMembers(merged);
-        setRequests(redeemRows.map(mapRedeemToRequest));
-        setSelectedMemberId((prev) => prev || merged[0]?.id || "");
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setMembersError(err instanceof Error ? err.message : "Failed to load loyalty records");
-      })
-      .finally(() => {
-        if (!cancelled) setMembersLoading(false);
-      });
+    let isMounted = true;
+    (async () => {
+      try {
+        const [rawMembers, rawPoints, rawRedeems] = await Promise.all([
+          fetchMembersFromApi().catch(() => []),
+          fetchPointsFromApi().catch(() => []),
+          fetchRedeemFromApi().catch(() => []),
+        ]);
+        if (!isMounted) return;
+
+        const baseRequests: RedemptionRequest[] = rawRedeems
+          .map(mapRedeemToRequest)
+          .filter(Boolean) as RedemptionRequest[];
+
+        let unified = rawMembers.map((m) => ({
+          ...m,
+          ledger: [] as PointsLedgerEntry[],
+        }));
+        unified = applyPointsToMembers(unified, rawPoints);
+        unified = applyApprovedRedemptions(unified, baseRequests);
+
+        setMembers(unified);
+        setRequests(baseRequests);
+        if (unified.length && !selectedMemberId) {
+          setSelectedMemberId(unified[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load initial loyalty data", err);
+      }
+    })();
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
   }, []);
 
-  function addPoints(memberId: string, amount: number, description: string) {
-    if (amount <= 0) return;
-    const member = members.find((m) => m.id === memberId);
-    awardPointsApi(memberId, amount, description)
-      .then(() => fetchPointsFromApi())
-      .then((points) => {
-        const merged = applyPointsToMembers(rawMembers, points);
-        const updated = merged.find((m) => m.id === memberId);
-        const newTier = updated ? tierForPoints(updated.lifetimePoints) : undefined;
-
-        if (updated && newTier && newTier !== updated.tier) {
-          const oldTier = updated.tier;
-          return updateCustomerTierApi(memberId, newTier)
-            .then(() => {
-              setRawMembers(merged.map((m) => (m.id === memberId ? { ...m, tier: newTier } : m)));
-              flash(`${updated.name} upgraded from ${oldTier} to ${newTier}!`);
-            })
-            .catch((err: unknown) => {
-              setRawMembers(merged);
-              flash(err instanceof Error ? `Points added, but tier update failed: ${err.message}` : "Points added, but tier update failed");
-            });
-        }
-
-        setRawMembers(merged);
-        flash(member ? `Awarded ${amount.toLocaleString()} points to ${member.name}` : `Awarded ${amount.toLocaleString()} points`);
-      })
-      .catch((err: unknown) => {
-        flash(err instanceof Error ? err.message : "Failed to award points");
-      });
-  }
-
-  function requestRedemption(memberId: string, rewardId: string) {
-    const member = members.find((m) => m.id === memberId);
-    if (!member) return;
-    createRedeemApi(memberId, 0, rewardId)
-      .then(() => fetchRedeemFromApi())
-      .then((redeemRows) => {
-        setRequests(redeemRows.map(mapRedeemToRequest));
-        flash(`Redemption claim for ${rewardId} submitted for authorization.`);
-      })
-      .catch((err: unknown) => {
-        flash(err instanceof Error ? err.message : "Failed to submit redemption request");
-      });
-  }
-
-  function processRequest(requestId: string, action: "Approved" | "Rejected") {
-    updateRedeemStatusApi(requestId, action === "Approved")
-      .then(() => fetchRedeemFromApi())
-      .then((redeemRows) => {
-        setRequests(redeemRows.map(mapRedeemToRequest));
-        flash(`Reward redemption request has been ${action.toLowerCase()}.`);
-      })
-      .catch((err: unknown) => {
-        flash(err instanceof Error ? err.message : `Failed to ${action.toLowerCase()} request`);
-      });
-  }
-
   const expiringSoon = useMemo(() => {
-    const out: { member: Member; entry: PointsLedgerEntry; days: number }[] = [];
-    for (const m of members) {
-      for (const e of m.ledger) {
+    const list: { member: Member; entry: PointsLedgerEntry; days: number }[] = [];
+    members.forEach((m) => {
+      m.ledger.forEach((e) => {
         if (e.type === "earn" && e.expiryDate) {
           const d = daysUntil(e.expiryDate);
-          if (d >= 0 && d <= 30) out.push({ member: m, entry: e, days: d });
+          if (d >= 0 && d <= 30) list.push({ member: m, entry: e, days: d });
         }
-      }
-    }
-    return mergeSort(out, (a, b) => a.days - b.days);
+      });
+    });
+    return mergeSort(list, (a, b) => a.days - b.days);
   }, [members]);
 
-  const pendingRequests = requests.filter((r) => r.status === "Pending");
-  const notificationCount = expiringSoon.length + pendingRequests.length;
+  const pendingRequests = useMemo(
+    () => requests.filter((r) => r.status === "Pending"),
+    [requests],
+  );
+
+  const handleAddPoints = async (memberId: string, amount: number, description: string) => {
+    const num = Math.abs(Number(amount));
+    if (!num) return;
+
+    try {
+      await awardPointsApi(memberId, num, description);
+    } catch (e: any) {
+      console.warn("Backend awardPoints failed, applying optimistic update", e);
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const expDate = new Date();
+    expDate.setFullYear(expDate.getFullYear() + 1);
+
+    setMembers((prev) =>
+      prev.map((m) => {
+        if (m.id !== memberId) return m;
+        const newLifetime = m.lifetimePoints + num;
+        const newTier = tierForPoints(newLifetime);
+
+        if (newTier !== m.tier) {
+          void updateCustomerTierApi(m.id, newTier).catch(() => {});
+        }
+
+        const newLedger: PointsLedgerEntry = {
+          id: `p-${Date.now()}`,
+          date: todayStr,
+          type: "earn",
+          amount: num,
+          description: description || "Points Awarded",
+          expiryDate: expDate.toISOString().slice(0, 10),
+        };
+        return {
+          ...m,
+          points: m.points + num,
+          lifetimePoints: newLifetime,
+          tier: newTier,
+          lastActivity: todayStr,
+          ledger: [newLedger, ...m.ledger],
+        };
+      }),
+    );
+    flash(`Credited ${num.toLocaleString()} points to member.`);
+  };
+
+  const handleDirectRedeem = async (memberId: string, rewardId: string) => {
+    const m = members.find((x) => x.id === memberId);
+    if (!m) return;
+
+    try {
+      await createRedeemApi(memberId, rewardId);
+      flash("Redemption submitted to authorization queue.");
+      const rawRedeems = await fetchRedeemFromApi().catch(() => []);
+      const newRequests = rawRedeems.map(mapRedeemToRequest).filter(Boolean) as RedemptionRequest[];
+      if (newRequests.length) setRequests(newRequests);
+    } catch (err: any) {
+      flash(err.message || "Failed to submit redemption.");
+    }
+  };
+
+  const handleProcessRequest = async (id: string, action: "Approved" | "Rejected") => {
+    try {
+      await updateRedeemStatusApi(id, action);
+    } catch (e) {
+      console.warn("Backend update status failed, applying optimistic update", e);
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const req = requests.find((r) => r.id === id);
+    if (!req) return;
+
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === id ? { ...r, status: action, decisionDate: todayStr } : r,
+      ),
+    );
+
+    if (action === "Approved") {
+      setMembers((prev) =>
+        prev.map((m) => {
+          if (m.id !== req.memberId) return m;
+          const newLedger: PointsLedgerEntry = {
+            id: `p-${Date.now()}`,
+            date: todayStr,
+            type: "redeem",
+            amount: req.pointsCost,
+            description: `Reward Claim: ${req.rewardId}`,
+          };
+          return {
+            ...m,
+            points: Math.max(0, m.points - req.pointsCost),
+            lastActivity: todayStr,
+            ledger: [newLedger, ...m.ledger],
+          };
+        }),
+      );
+    }
+
+    flash(
+      action === "Approved"
+        ? `Request approved and points deducted.`
+        : `Request rejected.`,
+    );
+  };
 
   return (
-    <main className="flex-1 flex flex-col gap-8 pb-10">
-      {/* Toast Notification */}
+    <div className="flex-1 flex flex-col gap-8 pb-10">
+      {/* Toast Alert */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -162,75 +220,56 @@ export default function LoyaltyAndMember() {
       </AnimatePresence>
 
       {/* Top Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="p-6 md:p-8 rounded-3xl bg-surface-950 text-surface-50 relative overflow-hidden shadow-xl border border-surface-800"
-      >
+      <div className="p-6 md:p-8 rounded-3xl bg-surface-950 text-surface-50 relative overflow-hidden shadow-xl border border-surface-800">
         <div className="absolute rounded-full w-96 h-96 bg-brand-900/30 blur-[100px] -top-20 -right-20 pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex flex-col gap-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-900 border border-surface-700/80 text-brand-300 text-xs font-medium tracking-wide w-fit">
               <Crown size={13} />
-              <span>TARUMT Privilege & VIP Concierge</span>
+              <span>Privileged Tier Management</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-serif tracking-tight font-semibold text-white">
-              Loyalty Program & VIP Member Ledger
+              VIP Loyalty & Member Services
             </h1>
             <p className="text-xs md:text-sm text-surface-300 font-light leading-relaxed">
-              Real-time member point issuance, tier progression auditing, and reward redemption fulfillment.
+              Resort tier progressions, point amortization ledgers, exclusive perk redemption queues, and member auditing.
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="flex flex-col items-center justify-center px-5 py-3 rounded-2xl bg-surface-900/80 border border-surface-800 backdrop-blur-md">
-              <span className="text-xl font-bold font-mono text-white">
+              <span className="text-xl font-bold font-mono text-brand-300">
                 {members.length}
               </span>
               <span className="text-[10px] uppercase tracking-wider text-surface-400 font-medium">
-                Enrolled Guests
-              </span>
-            </div>
-            <div className="flex flex-col items-center justify-center px-5 py-3 rounded-2xl bg-surface-900/80 border border-surface-800 backdrop-blur-md">
-              <span className="text-xl font-bold font-mono text-brand-300">
-                {pendingRequests.length}
-              </span>
-              <span className="text-[10px] uppercase tracking-wider text-surface-400 font-medium">
-                Pending Claims
+                Active Members
               </span>
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Navigation Sub-Menu Bar */}
-      <div className="flex items-center gap-2 overflow-x-auto w-full pb-2 scrollbar-hidden border-b border-surface-200">
-        {NAV.map((item) => {
-          const isActive = tab === item.key;
-          const badgeCount =
-            item.key === "notifications"
-              ? notificationCount
-              : item.key === "redemption"
-              ? pendingRequests.length
-              : 0;
-
+      {/* Tab Navigation Pill Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hidden">
+        {NAV.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.key;
           return (
             <button
-              key={item.key}
+              key={tab.key}
               type="button"
-              onClick={() => setTab(item.key)}
-              className={`relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer shrink-0 ${
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? "bg-surface-950 text-white shadow-sm"
-                  : "bg-white text-surface-600 hover:text-surface-950 border border-surface-200 hover:border-surface-300 shadow-2xs"
+                  ? "bg-surface-950 text-white shadow-md"
+                  : "bg-surface-100/80 hover:bg-surface-200 text-surface-600 hover:text-surface-950 border border-surface-200"
               }`}
             >
-              <item.icon size={15} className={isActive ? "text-brand-300" : "text-surface-400"} />
-              <span>{item.label}</span>
-              {badgeCount > 0 && (
-                <span className="rounded-full bg-brand-500 text-white px-2 py-0.5 text-[10px] font-mono font-bold leading-none">
-                  {badgeCount}
+              <Icon size={14} className={isActive ? "text-brand-300" : "text-surface-500"} />
+              <span>{tab.label}</span>
+              {tab.key === "redemption" && pendingRequests.length > 0 && (
+                <span className="ml-1 w-5 h-5 rounded-full bg-brand-600 text-white text-[10px] flex items-center justify-center font-mono">
+                  {pendingRequests.length}
                 </span>
               )}
             </button>
@@ -238,70 +277,56 @@ export default function LoyaltyAndMember() {
         })}
       </div>
 
-      {/* Loading & Error Status */}
-      {membersLoading && (
-        <div className="p-4 rounded-2xl bg-brand-50 border border-brand-200 text-xs text-brand-700 flex items-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-600" />
-          <span>Synchronizing loyalty records with core database...</span>
-        </div>
-      )}
-      {membersError && (
-        <div className="p-4 rounded-2xl bg-surface-100 border border-surface-300 text-xs text-surface-800 flex items-center gap-2">
-          <XCircle size={16} className="text-surface-600" />
-          <span>Unable to connect to backend: {membersError}</span>
-        </div>
+      {/* Tab Panels */}
+      {activeTab === "dashboard" && (
+        <DashboardTab
+          members={members}
+          requests={requests}
+          expiringSoon={expiringSoon}
+          pendingRequests={pendingRequests}
+          goTo={setActiveTab}
+        />
       )}
 
-      {/* Tab Panels */}
-      <motion.div
-        key={tab}
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
-        className="flex flex-col gap-6"
-      >
-        {tab === "dashboard" && (
-          <DashboardTab
-            members={members}
-            requests={requests}
-            expiringSoon={expiringSoon}
-            pendingRequests={pendingRequests}
-            goTo={setTab}
-          />
-        )}
-        {tab === "members" && (
-          <MembersTab
-            members={members}
-            selectedMemberId={selectedMemberId}
-            onSelect={setSelectedMemberId}
-          />
-        )}
-        {tab === "points" && (
-          <PointsTab
-            members={members}
-            onAddPoints={addPoints}
-            onRedeem={requestRedemption}
-          />
-        )}
-        {tab === "tiers" && <TiersTab members={members} />}
-        {tab === "redemption" && (
-          <RedemptionTab
-            members={members}
-            requests={requests}
-            onProcess={processRequest}
-          />
-        )}
-        {tab === "notifications" && (
-          <NotificationsTab
-            members={members}
-            expiringSoon={expiringSoon}
-            pendingRequests={pendingRequests}
-          />
-        )}
-        {tab === "reports" && (
-          <ReportsTab members={members} requests={requests} />
-        )}
-      </motion.div>
-    </main>
+      {activeTab === "members" && (
+        <MembersTab
+          members={members}
+          selectedMemberId={selectedMemberId}
+          onSelect={setSelectedMemberId}
+        />
+      )}
+
+      {activeTab === "points" && (
+        <PointsTab
+          members={members}
+          onAddPoints={handleAddPoints}
+          onRedeem={handleDirectRedeem}
+        />
+      )}
+
+      {activeTab === "tiers" && <TiersTab members={members} />}
+
+      {activeTab === "redemption" && (
+        <RedemptionTab
+          members={members}
+          requests={requests}
+          onProcess={handleProcessRequest}
+        />
+      )}
+
+      {activeTab === "notifications" && (
+        <NotificationsTab
+          members={members}
+          expiringSoon={expiringSoon}
+        />
+      )}
+
+      {activeTab === "reports" && (
+        <ReportsTab
+          members={members}
+          requests={requests}
+        />
+      )}
+    </div>
   );
 }

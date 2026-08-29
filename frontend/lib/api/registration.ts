@@ -45,3 +45,16 @@ export async function assignRoomToQueueGuestApi(queueId: string): Promise<void> 
   }
 }
 
+export async function cancelWalkInGuestApi(queueId: string, reason: string): Promise<void> {
+  const res = await fetch(`${REGISTRATION_QUEUE_ENDPOINT}/cancel/${queueId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const errorMsg = await res.text();
+    throw new Error(errorMsg || `Failed to cancel guest (${res.status})`);
+  }
+}

@@ -70,14 +70,9 @@ export default function Room() {
     : "0.0";
 
   return (
-    <main className="flex-1 flex flex-col gap-8 pb-10">
+    <div className="flex-1 flex flex-col gap-8 pb-10">
       {/* Top Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="p-6 md:p-8 rounded-3xl bg-surface-950 text-surface-50 relative overflow-hidden shadow-xl border border-surface-800"
-      >
+      <div className="p-6 md:p-8 rounded-3xl bg-surface-950 text-surface-50 relative overflow-hidden shadow-xl border border-surface-800">
         <div className="absolute rounded-full w-96 h-96 bg-brand-900/30 blur-[100px] -top-20 -right-20 pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex flex-col gap-2 max-w-2xl">
@@ -113,7 +108,7 @@ export default function Room() {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Filter and Search Section */}
       <div className="flex items-center xl:justify-between gap-4 xl:flex-row flex-col">
@@ -225,6 +220,6 @@ export default function Room() {
           refreshData={fetchRooms}
         />
       )}
-    </main>
+    </div>
   );
 }

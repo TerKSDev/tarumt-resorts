@@ -1,4 +1,4 @@
-import { Plus, X, Edit, Bed } from "lucide-react";
+import { Plus, X, Edit } from "lucide-react";
 import axios from "axios";
 import { motion } from "motion/react";
 
@@ -74,6 +74,7 @@ export function AddRoomModal({
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={() => setIsModalOpen("")}
@@ -109,7 +110,7 @@ export function AddRoomModal({
                 htmlFor="room_no"
                 className="text-xs font-semibold uppercase tracking-wider text-surface-700"
               >
-                Room Index No.
+                Room Index (01-99)
               </label>
               <input
                 id="room_no"
@@ -117,7 +118,7 @@ export function AddRoomModal({
                 type="number"
                 min={1}
                 max={99}
-                defaultValue={10}
+                defaultValue={1}
                 required
                 className="px-4 py-2.5 rounded-xl border border-surface-300 text-sm focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none"
               />
@@ -151,7 +152,7 @@ export function AddRoomModal({
                 htmlFor="capacity"
                 className="text-xs font-semibold uppercase tracking-wider text-surface-700"
               >
-                Capacity (Pax)
+                Max Capacity (Pax)
               </label>
               <input
                 id="capacity"
@@ -170,7 +171,7 @@ export function AddRoomModal({
                 htmlFor="price"
                 className="text-xs font-semibold uppercase tracking-wider text-surface-700"
               >
-                Price Per Night
+                Rate Per Night
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-500 text-xs font-mono font-bold">
@@ -182,7 +183,7 @@ export function AddRoomModal({
                   type="number"
                   step="0.01"
                   min={0}
-                  placeholder="0.00"
+                  defaultValue={250.0}
                   required
                   className="pl-11 pr-4 py-2.5 rounded-xl border border-surface-300 text-sm focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none w-full font-mono"
                 />
@@ -276,6 +277,7 @@ export function EditRoomModal({
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={() => setIsModalOpen("")}

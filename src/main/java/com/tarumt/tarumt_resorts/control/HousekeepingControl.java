@@ -1,6 +1,8 @@
 package com.tarumt.tarumt_resorts.control;
 
+import com.tarumt.tarumt_resorts.adt.MyArrayList;
 import com.tarumt.tarumt_resorts.adt.MyLinkedStack;
+import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dao.RoomDAO;
 import com.tarumt.tarumt_resorts.dao.StaffDAO;
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class HousekeepingControl {
@@ -44,12 +45,22 @@ public class HousekeepingControl {
         HousekeepingStatus.READY_FOR_CHECKIN
     };
 
+    private <T> MyList<T> toMyList(Iterable<T> iterable) {
+        MyList<T> myList = new MyArrayList<>();
+        if (iterable != null) {
+            for (T item : iterable) {
+                myList.add(item);
+            }
+        }
+        return myList;
+    }
+
     // ---------------------------------------------------------------
     // Basic reads
     // ---------------------------------------------------------------
 
-    public List<Room> getAllRooms() {
-        return roomDAO.findAll();
+    public MyList<Room> getAllRooms() {
+        return toMyList(roomDAO.findAll());
     }
 
     // ---------------------------------------------------------------
@@ -80,7 +91,7 @@ public class HousekeepingControl {
     }
 
     private HousekeepingStatus getCurrentStage(String roomId) {
-        List<HousekeepingTask> existing = taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(roomId);
+        MyList<HousekeepingTask> existing = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(roomId));
         return existing.isEmpty() ? HousekeepingStatus.DIRTY : existing.get(0).getCurrentStatus();
     }
 
@@ -169,13 +180,13 @@ public class HousekeepingControl {
     // ---------------------------------------------------------------
 
     public RoomStatusSummaryDTO[] generateRoomStatusReport(String filterStatus, Long minMinutesWaiting) {
-        List<Room> allRooms = roomDAO.findAll();
+        MyList<Room> allRooms = toMyList(roomDAO.findAll());
 
         RoomStatusSummaryDTO[] temp = new RoomStatusSummaryDTO[allRooms.size()];
         int count = 0;
 
         for (Room room : allRooms) {
-            List<HousekeepingTask> tasks = taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(room.getRoomId());
+            MyList<HousekeepingTask> tasks = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtDesc(room.getRoomId()));
 
             HousekeepingStatus stage = tasks.isEmpty()
                     ? HousekeepingStatus.DIRTY
@@ -239,13 +250,13 @@ public class HousekeepingControl {
     public StaffTurnaroundDTO[] generateStaffTurnaroundReport(String filterStaffId,
                                                                 LocalDateTime rangeStart,
                                                                 LocalDateTime rangeEnd) {
-        List<Room> allRooms = roomDAO.findAll();
+        MyList<Room> allRooms = toMyList(roomDAO.findAll());
 
         StaffTurnaroundDTO[] temp = new StaffTurnaroundDTO[500];
         int count = 0;
 
         for (Room room : allRooms) {
-            List<HousekeepingTask> history = taskDAO.findByRoom_RoomIdOrderByCreatedAtAsc(room.getRoomId());
+            MyList<HousekeepingTask> history = toMyList(taskDAO.findByRoom_RoomIdOrderByCreatedAtAsc(room.getRoomId()));
 
             LocalDateTime cycleStart = null;
 

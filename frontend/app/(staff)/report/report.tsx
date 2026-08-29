@@ -226,6 +226,7 @@ export default function Report() {
         report_name === "registration-cancellation") && (
         <RegistrationCancellation />
       )}
+<<<<<<< HEAD
       {(currentReport.id === "cleaning-turnaround" ||
         report_name === "cleaning-turnaround") && <CleaningTurnaround />}
       {(currentReport.id === "walkin-summary" ||
@@ -237,6 +238,13 @@ export default function Report() {
       <div className="flex flex-col md:flex-row items-center mt-6 pt-6 border-t border-surface-200 justify-between gap-4 w-full print:hidden">
         <h3 className="text-xs font-bold text-surface-600 uppercase tracking-[0.18em]">
           Department Modules ({currentReport.from}):
+=======
+      {currentReport.id === "cleaning-turnaround" && <CleaningTurnaround />}
+      {currentReport.id === "walkin-summary" && <WalkInSummary />}
+      <div className="flex items-center justify-center gap-4 w-fit print:hidden">
+        <h3 className="text-xs font-semibold text-surface-500 uppercase tracking-wider">
+          More from {currentReport.from}:
+>>>>>>> main
         </h3>
         <div className="flex flex-wrap items-center gap-2.5">
           {REPORT.filter((r) => r.from === currentReport.from).map((related) => {
