@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.tarumt.tarumt_resorts.adt.Queue;
 import com.tarumt.tarumt_resorts.adt.interfaces.QueueInterface;
+import com.tarumt.tarumt_resorts.adt.List;
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,6 +58,7 @@ public class RegistrationControl {
     public RegistrationControl(CustomerDAO customerRepository, BookingDAO bookingRepository, RoomDAO roomRepository) {
         this.customerRepository = customerRepository;
         this.bookingRepository = bookingRepository;
+        this.roomRepository = roomRepository;
         this.queue = new Queue<>(DEFAULT_CAPACITY);
     }
 
@@ -71,7 +74,8 @@ public class RegistrationControl {
         private int guests;
         private LocalDateTime checkIn;
 
-        public QueueItem() {}
+        public QueueItem() {
+        }
 
         public QueueItem(String id, String name, String identityNo, int guests) {
             this.id = id;
@@ -81,20 +85,45 @@ public class RegistrationControl {
             this.checkIn = LocalDateTime.now();
         }
 
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
+        public String getId() {
+            return id;
+        }
 
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
+        public void setId(String id) {
+            this.id = id;
+        }
 
-        public String getIdentityNo() { return identityNo; }
-        public void setIdentityNo(String identityNo) { this.identityNo = identityNo; }
+        public String getName() {
+            return name;
+        }
 
-        public int getGuests() { return guests; }
-        public void setGuests(int guests) { this.guests = guests; }
+        public void setName(String name) {
+            this.name = name;
+        }
 
-        public LocalDateTime getCheckIn() { return checkIn; }
-        public void setCheckIn(LocalDateTime checkIn) { this.checkIn = checkIn; }
+        public String getIdentityNo() {
+            return identityNo;
+        }
+
+        public void setIdentityNo(String identityNo) {
+            this.identityNo = identityNo;
+        }
+
+        public int getGuests() {
+            return guests;
+        }
+
+        public void setGuests(int guests) {
+            this.guests = guests;
+        }
+
+        public LocalDateTime getCheckIn() {
+            return checkIn;
+        }
+
+        public void setCheckIn(LocalDateTime checkIn) {
+            this.checkIn = checkIn;
+        }
     }
 
     /**
@@ -106,7 +135,8 @@ public class RegistrationControl {
      * 1. Request payload is not null
      * 2. Identity number is not blank
      * 3. Identity number is NOT already in queue (prevents duplicate queuing)
-     * 4. Identity number is NOT already in Customer database (prevents duplicate accounts)
+     * 4. Identity number is NOT already in Customer database (prevents duplicate
+     * accounts)
      * 
      * If all validations pass:
      * - Generates unique queue ID (UUID)
@@ -124,8 +154,8 @@ public class RegistrationControl {
         }
 
         String normalizedIdentityNo = item.getIdentityNo() == null
-            ? ""
-            : item.getIdentityNo().trim();
+                ? ""
+                : item.getIdentityNo().trim();
 
         if (normalizedIdentityNo.isBlank()) {
             throw new IllegalArgumentException("Identity number is required.");
@@ -159,7 +189,8 @@ public class RegistrationControl {
      * Get Snapshot of Current Queue
      * 
      * Returns array of all QueueItems currently in queue (FIFO order).
-     * This is a safe snapshot - modifications to returned array don't affect internal queue.
+     * This is a safe snapshot - modifications to returned array don't affect
+     * internal queue.
      * 
      * Used by:
      * - Dashboard to display waiting guests list
@@ -185,13 +216,13 @@ public class RegistrationControl {
      * 1. Locate guest by queue ID (must exist in queue)
      * 2. Remove from queue (DEQUEUE operation)
      * 3. Check if Customer exists by identity number:
-     *    - If NEW: Create Customer with BRONZE loyalty tier
-     *    - If EXISTS: Update existing customer record
+     * - If NEW: Create Customer with BRONZE loyalty tier
+     * - If EXISTS: Update existing customer record
      * 4. Create Booking entity:
-     *    - Set Customer reference
-     *    - Generate confirmation number
-     *    - Mark as WALK_IN and ACTIVE
-     *    - Initialize default total amount (150.00)
+     * - Set Customer reference
+     * - Generate confirmation number
+     * - Mark as WALK_IN and ACTIVE
+     * - Initialize default total amount (150.00)
      * 5. Persist both Customer and Booking to database
      * 
      * @Transactional ensures atomicity - either both entities save or both rollback
@@ -213,7 +244,7 @@ public class RegistrationControl {
                 break;
             }
         }
-        
+
         if (selectedIndex < 0) {
             throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
@@ -260,8 +291,8 @@ public class RegistrationControl {
      * 1. Validate queue ID and room ID
      * 2. Locate guest by queue ID (must exist in queue)
      * 3. Locate and validate room:
-     *    - Room must exist
-     *    - Room status must be AVAILABLE
+     * - Room must exist
+     * - Room status must be AVAILABLE
      * 4. Remove guest from queue (DEQUEUE operation)
      * 5. Update room status to CHECKED_IN (guest has checked in)
      * 6. Create Customer (BRONZE tier)
@@ -271,7 +302,7 @@ public class RegistrationControl {
      * @Transactional ensures atomicity
      * 
      * @param queueId UUID of guest in queue
-     * @param roomId ID of the room to assign (must be AVAILABLE)
+     * @param roomId  ID of the room to assign (must be AVAILABLE)
      * @return Booking entity with confirmation number and assigned room
      * @throws IllegalArgumentException if validation fails
      */
@@ -286,10 +317,11 @@ public class RegistrationControl {
 
         // Validate room exists and is available
         Room room = roomRepository.findById(roomId)
-            .orElseThrow(() -> new IllegalArgumentException("Room with id '" + roomId + "' not found."));
-        
+                .orElseThrow(() -> new IllegalArgumentException("Room with id '" + roomId + "' not found."));
+
         if (room.getStatus() != RoomStatus.AVAILABLE) {
-            throw new IllegalArgumentException("Room '" + roomId + "' is not available. Current status: " + room.getStatus());
+            throw new IllegalArgumentException(
+                    "Room '" + roomId + "' is not available. Current status: " + room.getStatus());
         }
 
         int selectedIndex = -1;
@@ -299,7 +331,7 @@ public class RegistrationControl {
                 break;
             }
         }
-        
+
         if (selectedIndex < 0) {
             throw new IllegalArgumentException("Selected guest was not found in the queue.");
         }
@@ -350,9 +382,9 @@ public class RegistrationControl {
      * @return Array of Room objects with AVAILABLE status
      */
     public Room[] getAvailableRooms() {
-        MyList<Room> allRoomsMyList = SortingUtil.toMyList(roomRepository.findAll());
-        MyList<Room> availableRooms = new MyArrayList<>();
-        
+        ListInterface<Room> allRoomsMyList = SortingUtil.toMyList(roomRepository.findAll());
+        ListInterface<Room> availableRooms = new List<>();
+
         // Manual filtering without stream() - ECB compliant
         for (int i = 0; i < allRoomsMyList.size(); i++) {
             Room room = allRoomsMyList.get(i);
@@ -360,13 +392,13 @@ public class RegistrationControl {
                 availableRooms.add(room);
             }
         }
-        
+
         // Convert MyList to array
         Room[] rooms = new Room[availableRooms.size()];
         for (int i = 0; i < availableRooms.size(); i++) {
             rooms[i] = availableRooms.get(i);
         }
-        
+
         return rooms;
     }
 
@@ -381,13 +413,13 @@ public class RegistrationControl {
      * 2. Locate guest by queue ID (must exist in queue)
      * 3. Remove from queue (DEQUEUE operation)
      * 4. Check if Customer exists by identity number:
-     *    - If NEW: Create Customer with BRONZE loyalty tier
-     *    - If EXISTS: Update existing customer record
+     * - If NEW: Create Customer with BRONZE loyalty tier
+     * - If EXISTS: Update existing customer record
      * 5. Create Booking entity:
-     *    - Set Customer reference
-     *    - Generate confirmation number
-     *    - Mark as CANCELLED with provided reason
-     *    - Initialize same details as processGuestById but with CANCELLED status
+     * - Set Customer reference
+     * - Generate confirmation number
+     * - Mark as CANCELLED with provided reason
+     * - Initialize same details as processGuestById but with CANCELLED status
      * 6. Persist both Customer and Booking to database
      * 
      * Cancellation Reasons:
@@ -400,7 +432,7 @@ public class RegistrationControl {
      * @Transactional ensures atomicity
      * 
      * @param queueId UUID of guest in queue
-     * @param reason CancellationReason enum value
+     * @param reason  CancellationReason enum value
      * @return Booking entity with CANCELLED status and reason
      * @throws IllegalArgumentException if queueId not found or reason invalid
      */

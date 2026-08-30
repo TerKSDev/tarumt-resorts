@@ -8,7 +8,7 @@ import com.tarumt.tarumt_resorts.adt.interfaces.StackInterface;
  * action(s), enabling instant rollback.
  * Author: See Wei Jian
  */
-public class Stack<T> implements StackInterface<T> {
+public class LinkedStack<T> implements StackInterface<T> {
 
     private Node<T> top;
     private int size;
@@ -19,7 +19,7 @@ public class Stack<T> implements StackInterface<T> {
         Node(T data) { this.data = data; }
     }
 
-    public Stack() {
+    public LinkedStack() {
         this.top = null;
         this.size = 0;
     }

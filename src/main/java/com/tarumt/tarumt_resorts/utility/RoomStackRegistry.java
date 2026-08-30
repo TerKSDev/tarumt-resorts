@@ -1,6 +1,6 @@
 package com.tarumt.tarumt_resorts.utility;
 
-import com.tarumt.tarumt_resorts.adt.Stack;
+import com.tarumt.tarumt_resorts.adt.LinkedStack;
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 
 /**
@@ -17,18 +17,18 @@ import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 public class RoomStackRegistry {
 
     private String[] roomIds;
-    private Stack<HousekeepingTask>[] stacks;
+    private LinkedStack<HousekeepingTask>[] stacks;
     private int count;
 
     @SuppressWarnings("unchecked")
     public RoomStackRegistry() {
         this.roomIds = new String[16];
-        this.stacks = new Stack[16];
+        this.stacks = new LinkedStack[16];
         this.count = 0;
     }
 
     /** Returns the Stack for this room, creating a new empty one if it doesn't exist yet. */
-    public Stack<HousekeepingTask> getStackFor(String roomId) {
+    public LinkedStack<HousekeepingTask> getStackFor(String roomId) {
         for (int i = 0; i < count; i++) {
             if (roomIds[i].equals(roomId)) {
                 return stacks[i];
@@ -37,7 +37,7 @@ public class RoomStackRegistry {
         if (count == roomIds.length) {
             resize();
         }
-        Stack<HousekeepingTask> newStack = new Stack<>();
+        LinkedStack<HousekeepingTask> newStack = new LinkedStack<>();
         roomIds[count] = roomId;
         stacks[count] = newStack;
         count++;
@@ -47,7 +47,7 @@ public class RoomStackRegistry {
     @SuppressWarnings("unchecked")
     private void resize() {
         String[] newIds = new String[roomIds.length * 2];
-        Stack<HousekeepingTask>[] newStacks = new Stack[stacks.length * 2];
+        LinkedStack<HousekeepingTask>[] newStacks = new LinkedStack[stacks.length * 2];
         for (int i = 0; i < count; i++) {
             newIds[i] = roomIds[i];
             newStacks[i] = stacks[i];

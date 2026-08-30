@@ -1,6 +1,6 @@
 package com.tarumt.tarumt_resorts.control;
 
-import com.tarumt.tarumt_resorts.adt.Stack;
+import com.tarumt.tarumt_resorts.adt.LinkedStack;
 import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dao.RoomDAO;
@@ -165,7 +165,7 @@ public class HousekeepingControl {
     // ---------------------------------------------------------------
 
     public String rollbackLastAction(String roomId) {
-        Stack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
+        LinkedStack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
         if (stack.isEmpty()) return "No recent actions to rollback for room " + roomId + ".";
 
         // Re-fetch the room fresh (not lastTask.getRoom(), which reflects
