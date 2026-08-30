@@ -4,24 +4,11 @@ import { useEffect, useState } from "react";
 import { TicketCheck, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "../../../../components/Card";
 
-/* =========================================================================
-   TYPES
-   ========================================================================= */
-
-type RequestStatus = "Pending" | "Approved" | "Rejected";
+import type { RedemptionRequest, RequestStatus } from "../../../../lib/types/loyalty";
 
 interface MemberLite {
   id: string;
   name: string;
-}
-
-interface RedemptionRequest {
-  id: string;
-  memberId: string;
-  rewardId: string;
-  pointsCost: number;
-  status: RequestStatus;
-  requestDate: string;
 }
 
 interface Reward {
@@ -89,59 +76,11 @@ function filterItems<T>(items: T[], predicates: ((item: T) => boolean)[]): T[] {
   return items.filter((it) => predicates.every((p) => p(it)));
 }
 
-/* =========================================================================
-   LIVE DATA FETCHING
-   ========================================================================= */
-
-const API_BASE = "http://localhost:8081";
-
-interface RawCustomer {
-  identityNo: string;
-  name: string;
-}
-
-interface RawRedeemRecord {
-  redeemId?: number;
-  memberId?: string;
-  points?: number;
-  status?: string;
-  redeemedAt?: string;
-  remarks?: string;
-}
-
-async function fetchMembersRaw(): Promise<MemberLite[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/loyalty/members`);
-    if (!res.ok) return [];
-    const list: RawCustomer[] = await res.json();
-    return list.map((c) => ({ id: c.identityNo, name: c.name }));
-  } catch {
-    return [];
-  }
-}
-
-async function fetchRedeemRaw(): Promise<RedemptionRequest[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/loyalty/redeem`);
-    if (!res.ok) return [];
-    const list: RawRedeemRecord[] = await res.json();
-    return list.map((r, idx) => {
-      const rewardMatch =
-        REWARDS.find((rw) => rw.name.toLowerCase() === (r.remarks || "").toLowerCase()) ||
-        REWARDS.find((rw) => rw.cost === Number(r.points || 0));
-      return {
-        id: `REQ-${String(r.redeemId ?? idx + 1).padStart(4, "0")}`,
-        memberId: r.memberId || "UNKNOWN",
-        rewardId: rewardMatch ? rewardMatch.id : "R1",
-        pointsCost: Number(r.points || 0),
-        status: (r.status as RequestStatus) || "Pending",
-        requestDate: r.redeemedAt ? r.redeemedAt.slice(0, 10) : isoDate(new Date()),
-      };
-    });
-  } catch {
-    return [];
-  }
-}
+import {
+  fetchMembersFromApi,
+  fetchRedeemFromApi,
+  mapRedeemToRequest
+} from "../../../../lib/api/loyalty";
 
 /* =========================================================================
    REPORT BUILDER
@@ -255,9 +194,10 @@ export default function RedemptionRecord() {
     setLoading(true);
     setError(null);
 
-    Promise.all([fetchMembersRaw(), fetchRedeemRaw()])
-      .then(([members, requests]) => {
+    Promise.all([fetchMembersFromApi(), fetchRedeemFromApi()])
+      .then(([members, rawRedeems]) => {
         if (cancelled) return;
+        const requests = rawRedeems.map(mapRedeemToRequest);
         setLines(buildRedemptionReport(members, requests, searchParams));
       })
       .catch((err: unknown) => {
