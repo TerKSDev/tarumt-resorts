@@ -1,45 +1,85 @@
-=======================================================================
-🚨 CRITICAL NOTICE: NO JAVA COLLECTIONS FRAMEWORK ALLOWED 🚨
-=======================================================================
-為了符合 BMCS2063 規格書規範，我們【絕對禁止】使用任何 Java 內建的集合框架 。
-請所有隊友在提交代碼前，務必檢查並清除以下內容：
+# TARUMT Resorts Management System
 
-## ❌ 絕對【不能】出現的 Import 與類別：
+A full-stack resort management and front-desk operations system built with **React** and **Spring Boot**, featuring custom Abstract Data Types (ADTs), high-performance search caching, and real-time ledger auditing.
 
-- java.util.List / java.util.ArrayList
-- java.util.LinkedList (不管是拿來當 List 還是 Queue)
-- java.util.Queue / java.util.PriorityQueue
-- java.util.Stack
-- java.util.Vector
-- java.util.Set / java.util.HashSet / java.util.TreeSet
-- java.util.Map / java.util.HashMap / java.util.TreeMap
-- java.util.Collections (尤其是 Collections.sort()，排序必須自己手寫！[cite: 13, 20])
+---
 
-=======================================================================
-✅ 安全通行與替代方案（Safe & Allowed Alternatives）
-=======================================================================
+## 📖 Introduction
 
-1. 資料容器（Data Containers）：
-   只能使用我們小組自己手工刻寫（或者課程範例提供）的 ADT 介面與實作類別 [cite: 5, 37]。
-   👉 正確範例：
-   import com.tarumt.resort.adt.MyListInterface;
-   import com.tarumt.resort.adt.MyLinkedList;
+This project is architected with a decoupled full-stack design using **React** as the Frontend Client and **Spring Boot (Java)** as the Backend RESTful API server.
 
-   MyListInterface<Customer> list = new MyLinkedList<>();
+### What is React?
 
-2. 基礎資料型態與陣列（Allowed Raw Types & Arrays）：
-   - 傳統的 Java 陣列（例如：Customer[] 或 String[]）是完全合法的，可以用來作為 ADT 的底層實作。
-   - 所有的基本型態（int, double, boolean 等）與 String。
+**React** is a declarative, component-based JavaScript library for building modern user interfaces. In this project, React powers the interactive staff dashboard, dynamic reporting modules, and real-time validation for front-desk operations with seamless state management.
 
-3. 安全的 java.util.\* 工具（與集合無關，允許使用）：
-   - java.util.Scanner (Console 輸入測試可用)
-   - java.util.Date / java.util.Calendar (時間處理可用)
-   - java.util.UUID / java.util.Random (隨機數與確認號生成可用)
+### What is Spring Boot?
 
-4. 推薦的時間處理（更推薦使用 java.time.\* 包，100% 安全）：
-   - java.time.LocalDateTime
-   - java.time.LocalDate
+**Spring Boot** is an enterprise-grade Java framework designed to simplify the development of stand-alone, production-ready Spring applications. In this system, Spring Boot serves as the core Business Logic and Control Layer (ECB Pattern), providing RESTful endpoints, managing database persistence, and executing custom ADT algorithms.
 
-請大家在寫 Control (Controller) 和 Entity 類別時嚴格遵守 ECB 架構 [cite: 41]，
-雙手遠離 java.util 的集合類別，確保我們的 Academic Integrity 拿滿分！[cite: 15, 71]
-=======================================================================
+---
+
+## 🛠️ Prerequisites
+
+Make sure the following environments and software are installed on your machine:
+
+1. **Node.js (v18+)**: [https://nodejs.org/en](https://nodejs.org/en) _(Includes npm)_
+2. **JDK 21+**: [Oracle JDK 21 Downloads](https://www.oracle.com/asean/java/technologies/downloads/#java21)
+3. **Code Editor / IDE**: [Visual Studio Code](https://code.visualstudio.com/) (Recommended) / [Apache NetBeans](https://netbeans.apache.org/) / [IntelliJ IDEA](https://www.jetbrains.com/idea/)
+
+> **Note:**
+> **No external database installation (e.g., MySQL / PostgreSQL) is required.** The application uses an embedded **SQLite** database (`tarumt_resorts.db`) that initializes and synchronizes automatically upon starting the backend.
+
+---
+
+## 🚀 How to Run the Project
+
+To run the complete system, please open **two separate terminal windows** (one for the Backend server and one for the Frontend client).
+
+### 1. Start the Backend Server (Spring Boot)
+
+Open a terminal in the root directory (`tarumt-resorts`) and execute the Maven wrapper:
+
+- **Windows (Command Prompt / PowerShell):**
+   ```bash
+   .\mvnw.cmd spring-boot:run
+   ```
+- **macOS / Linux:**
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+_Backend REST API Server will be running at:_ `http://localhost:8081`
+
+---
+
+### 2. Start the Frontend Client (React)
+
+Open a **new** terminal window, navigate to the `frontend` directory, install dependencies, and launch the Vite development server:
+
+```bash
+# Navigate to the frontend directory
+cd frontend
+
+# Install pnpm package manager globally (if not already installed)
+npm install -g pnpm
+
+# Install project dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+```
+
+_Frontend Web Application will be available at:_ `http://localhost:5173`
+
+---
+
+## 🔐 Default Demo Accounts
+
+For grading and quick verification, preset credentials are provided on the login page:
+
+| Role                     | Email                         | Password      |
+| :----------------------- | :---------------------------- | :------------ |
+| **Manager / Admin**      | `manager@tarumtresorts.com`   | `password123` |
+| **Front Desk**           | `frontdesk@tarumtresorts.com` | `password123` |
+| **General Staff (Demo)** | `mock@gmail.com`              | `password123` |
