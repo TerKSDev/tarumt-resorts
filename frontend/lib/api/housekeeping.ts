@@ -56,8 +56,9 @@ export async function fetchStaffTurnaroundReportApi(
 }
 
 export async function advanceRoomStageApi(roomId: string): Promise<string> {
+  const staffId = localStorage.getItem("currentStaffId") || "";
   const res = await fetch(
-    `${API_BASE}/advance?roomId=${roomId}&remarks=UpdatedViaWeb`,
+    `${API_BASE}/advance?roomId=${roomId}&staffId=${staffId}&remarks=UpdatedViaWeb`,
     { method: "POST" },
   );
   const text = await res.text();
