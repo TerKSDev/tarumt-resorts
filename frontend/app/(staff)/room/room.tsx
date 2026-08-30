@@ -17,6 +17,14 @@ export default function Room() {
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [rooms, setRooms] = useState<RoomProps[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState("Manager");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("currentStaffRole");
+    if (saved) setUserRole(saved);
+  }, []);
+
+  const isManager = userRole === "Manager" || userRole === "Admin";
 
   const fetchRooms = async () => {
     try {
@@ -98,14 +106,16 @@ export default function Room() {
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsModalOpen("add")}
-              className="flex items-center gap-2 px-5 py-3 rounded-full bg-white hover:bg-brand-50 text-surface-950 hover:text-brand-900 text-xs font-bold uppercase tracking-widest transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
-            >
-              <Plus size={16} strokeWidth={2} />
-              <span>Add Suite</span>
-            </button>
+            {isManager && (
+              <button
+                type="button"
+                onClick={() => setIsModalOpen("add")}
+                className="flex items-center gap-2 px-5 py-3 rounded-full bg-white hover:bg-brand-50 text-surface-950 hover:text-brand-900 text-xs font-bold uppercase tracking-widest transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
+              >
+                <Plus size={16} strokeWidth={2} />
+                <span>Add Suite</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -197,7 +207,9 @@ export default function Room() {
             <RoomCard
               key={idx}
               room={room}
+              canEdit={isManager}
               setIsModalOpen={(action) => {
+                if (!isManager) return;
                 setIsModalOpen(action);
                 if (action === "edit") setSelectedRoom(room);
               }}

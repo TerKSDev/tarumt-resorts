@@ -30,7 +30,7 @@ export const PATHS = [
     to: "/dashboard",
     icon: LayoutDashboard,
     category: CATEGORIES.MAIN_MENU,
-    role: [ROLES.MANAGER, ROLES.FRONT_DESK],
+    role: [ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.HOUSEKEEPING],
   },
   {
     label: "Room Management",
@@ -38,7 +38,7 @@ export const PATHS = [
     to: "/room",
     icon: Bed,
     category: CATEGORIES.MANAGEMENT,
-    role: [ROLES.MANAGER, ROLES.FRONT_DESK],
+    role: [ROLES.MANAGER, ROLES.FRONT_DESK, ROLES.HOUSEKEEPING],
   },
   {
     label: "User Management",
@@ -77,14 +77,6 @@ export const PATHS = [
     desc: "Search for existing guests and check booking and billing details.",
     to: "/search",
     icon: UserRoundSearch,
-    category: CATEGORIES.FRONT_DESK,
-    role: [ROLES.FRONT_DESK, ROLES.MANAGER],
-  },
-  {
-    label: "VIP Priority Queue",
-    desc: "Manage VIP priority queue",
-    to: "/vip",
-    icon: Trophy,
     category: CATEGORIES.FRONT_DESK,
     role: [ROLES.FRONT_DESK, ROLES.MANAGER],
   },

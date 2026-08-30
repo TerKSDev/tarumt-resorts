@@ -39,17 +39,30 @@ public class UserManagementControl {
             throw new IllegalArgumentException("Staff details cannot be null");
         }
 
+        // Restrict email domain to official corporate domain
+        String cleanEmail = staff.getEmail().trim().toLowerCase();
+        if (!cleanEmail.endsWith("@tarumtresorts.com")) {
+            throw new IllegalArgumentException(
+                    "Staff email must use the official corporate domain (@tarumtresorts.com)");
+        }
+        staff.setEmail(cleanEmail);
+
+        // Ensure isActive is defaulted to true if null
+        if (staff.getIsActive() == null) {
+            staff.setIsActive(true);
+        }
+
         // Simple SHA-256 hashing to avoid storing plain-text passwords
         staff.setPassword(hashPassword(staff.getPassword()));
-        
+
         return staffDao.save(staff);
     }
 
     // Toggle staff active status (soft delete)
     public Staff toggleStaffStatus(String staffId) {
         Staff staff = staffDao.findById(staffId)
-            .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
-        
+                .orElseThrow(() -> new IllegalArgumentException("Staff not found"));
+
         staff.setIsActive(!staff.getIsActive());
         return staffDao.save(staff);
     }
@@ -60,7 +73,7 @@ public class UserManagementControl {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(password.getBytes());
             StringBuilder hexString = new StringBuilder();
-            
+
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
                 if (hex.length() == 1) {

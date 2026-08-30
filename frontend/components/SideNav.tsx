@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { Building2, LogOut, X, ShieldCheck } from "lucide-react";
-import { PATHS, CATEGORIES } from "../lib/config/routes";
+import { PATHS, CATEGORIES, ROLES } from "../lib/config/routes";
 import { Link, NavLink } from "react-router";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -15,6 +16,19 @@ function NavContent({
   isMobile?: boolean;
   onClose?: () => void;
 }) {
+  const [userRole, setUserRole] = useState<string>("Manager");
+  const [userName, setUserName] = useState<string>("Manager Account");
+  const [userEmail, setUserEmail] = useState<string>("manager@tarumtresorts.com");
+
+  useEffect(() => {
+    const savedRole = localStorage.getItem("currentStaffRole");
+    const savedName = localStorage.getItem("currentStaffName");
+    const savedEmail = localStorage.getItem("currentStaffEmail");
+    if (savedRole) setUserRole(savedRole);
+    if (savedName) setUserName(savedName);
+    if (savedEmail) setUserEmail(savedEmail);
+  }, []);
+
   return (
     <div className="flex flex-col h-full bg-surface-950 text-surface-50 border-r border-surface-800">
       {/* Mobile Close Button */}
@@ -47,7 +61,16 @@ function NavContent({
       {/* Navigation Section */}
       <nav className="overflow-y-auto flex-1 py-5 px-3.5 scrollbar-hidden flex flex-col gap-6">
         {Object.values(CATEGORIES).map((category) => {
-          const filteredPaths = PATHS.filter((path) => path.category === category);
+          const filteredPaths = PATHS.filter((path) => {
+            if (path.category !== category) return false;
+            // Managers / Admins can see all menu items
+            if (userRole === ROLES.MANAGER || userRole === "Admin") return true;
+            // Match allowed roles
+            return (path.role as readonly string[]).some(
+              (r) => r.toLowerCase() === userRole.toLowerCase()
+            );
+          });
+
           if (filteredPaths.length === 0) return null;
 
           return (
@@ -115,24 +138,30 @@ function NavContent({
         <div className="flex items-center justify-between p-3 rounded-2xl bg-surface-900/90 border border-surface-800">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-brand-900 border border-brand-700 flex items-center justify-center text-brand-200 font-serif font-bold text-sm shrink-0 shadow-inner">
-              M
+              {(userName.charAt(0) || "U").toUpperCase()}
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
                 <p className="text-surface-100 text-xs font-semibold leading-tight truncate">
-                  Mock Account
+                  {userName}
                 </p>
                 <ShieldCheck size={13} className="text-brand-400 shrink-0" />
               </div>
               <span className="text-[10px] text-surface-400 truncate mt-0.5">
-                mock@gmail.com
+                {userEmail}
               </span>
             </div>
           </div>
 
           <Link
-            to="/auth/login"
+            to="/"
             title="Sign Out"
+            onClick={() => {
+              localStorage.removeItem("currentStaffId");
+              localStorage.removeItem("currentStaffName");
+              localStorage.removeItem("currentStaffEmail");
+              localStorage.removeItem("currentStaffRole");
+            }}
             className="text-surface-400 hover:text-white hover:bg-surface-800 p-2 rounded-xl transition-all duration-200 cursor-pointer ml-1 shrink-0"
           >
             <LogOut size={16} strokeWidth={1.75} />

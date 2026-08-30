@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/user-management")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/user-management")
+@CrossOrigin(origins = "*")
 public class UserManagementBoundary {
 
     private final UserManagementControl userManagementControl;
@@ -24,7 +24,10 @@ public class UserManagementBoundary {
     }
 
     @PostMapping
-    public ResponseEntity<?> addStaff(@RequestBody Staff staff) {
+    public ResponseEntity<?> addStaff(@RequestBody(required = false) Staff staff) {
+        if (staff == null) {
+            return ResponseEntity.badRequest().body("Staff payload cannot be empty");
+        }
         try {
             Staff newStaff = userManagementControl.addStaff(staff);
             return ResponseEntity.ok(newStaff);

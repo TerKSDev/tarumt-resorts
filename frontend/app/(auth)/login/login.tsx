@@ -21,10 +21,10 @@ export const meta: MetaFunction = () => [
 
 const PRESET_ACCOUNTS = [
   {
-    role: "General Staff",
-    email: "mock@gmail.com",
+    role: "Manager",
+    email: "manager@tarumtresorts.com",
     password: "password123",
-    badge: "Demo",
+    badge: "Admin",
   },
   {
     role: "Front Desk",
@@ -33,10 +33,10 @@ const PRESET_ACCOUNTS = [
     badge: "Front Desk",
   },
   {
-    role: "Manager",
-    email: "manager@tarumtresorts.com",
+    role: "Housekeeping",
+    email: "housekeeping@tarumtresorts.com",
     password: "password123",
-    badge: "Admin",
+    badge: "Housekeeping",
   },
 ] as const;
 
@@ -47,29 +47,89 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [rememberTerminal, setRememberTerminal] = useState(true);
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleApplyPreset = (account: (typeof PRESET_ACCOUNTS)[number]) => {
     setEmail(account.email);
     setPassword(account.password);
     setActivePreset(account.role);
+    setErrorMessage(null);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const mockStaffId = email.split('@')[0].toUpperCase() + "-001";
-    const mockStaffName = activePreset || "Staff";
+    setErrorMessage(null);
+    setIsLoading(true);
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    try {
+      // 1. Fetch live staff list from backend database
+      const res = await fetch("http://localhost:8081/api/user-management");
+      if (res.ok) {
+        const staffList = await res.json();
+        if (Array.isArray(staffList)) {
+          const matchedStaff = staffList.find(
+            (s: any) => s.email && s.email.trim().toLowerCase() === cleanEmail
+          );
+
+          if (matchedStaff) {
+            // Check if staff account is suspended / deactivated
+            if (matchedStaff.isActive === false) {
+              setErrorMessage("This staff account is deactivated. Please contact your manager.");
+              setIsLoading(false);
+              return;
+            }
+
+            // Map backend Enum (MANAGER, FRONT_DESK, HOUSEKEEPING) to UI role
+            let roleFormatted = "Front Desk";
+            if (matchedStaff.role === "MANAGER") roleFormatted = "Manager";
+            else if (matchedStaff.role === "HOUSEKEEPING") roleFormatted = "Housekeeping";
+            else if (matchedStaff.role === "FRONT_DESK") roleFormatted = "Front Desk";
+
+            localStorage.setItem("currentStaffId", matchedStaff.staffId || `${roleFormatted.toUpperCase()}-001`);
+            localStorage.setItem("currentStaffName", matchedStaff.name || roleFormatted);
+            localStorage.setItem("currentStaffEmail", matchedStaff.email || email);
+            localStorage.setItem("currentStaffRole", roleFormatted);
+
+            navigate("/dashboard");
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Backend user-management API offline, falling back to mock authentication:", err);
+    }
+
+    // 2. Preset / Mock fallback support (for standalone testing or preset profiles)
+    let resolvedRole = activePreset;
+    if (!resolvedRole) {
+      if (cleanEmail.includes("manager") || cleanEmail.includes("admin")) {
+        resolvedRole = "Manager";
+      } else if (cleanEmail.includes("housekeeping") || cleanEmail.includes("clean")) {
+        resolvedRole = "Housekeeping";
+      } else {
+        resolvedRole = "Front Desk";
+      }
+    }
+
+    const mockStaffId = email.split("@")[0].toUpperCase() + "-001";
+    const mockStaffName = resolvedRole;
 
     localStorage.setItem("currentStaffId", mockStaffId);
     localStorage.setItem("currentStaffName", mockStaffName);
+    localStorage.setItem("currentStaffEmail", email);
+    localStorage.setItem("currentStaffRole", resolvedRole);
 
-    navigate("/dashboard"); 
+    navigate("/dashboard");
+    setIsLoading(false);
   };
 
   return (
     <section className="flex flex-1 min-h-screen w-full bg-surface-100 selection:bg-brand-500 selection:text-white">
       {/* Left Panel - Premium Resort Showcase */}
-      <div className="relative lg:flex flex-col w-1/2 overflow-hidden bg-surface-950 flex-1 p-10 xl:p-12 justify-between hidden box-border">
+      <div className="relative lg:flex flex-col w-2/3 overflow-hidden bg-surface-950 flex-1 p-10 xl:p-12 justify-between hidden box-border">
         {/* Subtle Ambient Light Accents */}
         <div className="absolute rounded-full w-140 h-140 bg-brand-900/30 blur-[120px] -top-28 -left-28 pointer-events-none" />
         <div className="absolute rounded-full w-120 h-120 bg-brand-700/15 blur-[100px] -bottom-24 -right-24 pointer-events-none" />
@@ -100,7 +160,7 @@ export default function Login() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
-          className="flex flex-col gap-8 relative z-10 max-w-xl my-auto py-8"
+          className="flex flex-col gap-8 relative z-10 my-auto py-8"
         >
           <div className="flex flex-col gap-4">
             <h2 className="text-3xl xl:text-4xl font-serif leading-tight tracking-wide text-surface-50">
@@ -217,12 +277,12 @@ export default function Login() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex flex-col flex-1 min-w-1/2 py-10 lg:py-16 max-w-160 mx-auto px-6 sm:px-12 md:px-16 xl:px-24 justify-center bg-surface-50 border-l border-surface-200 shadow-2xl">
+      <div className="flex flex-col flex-1 w-1/3 py-10 lg:py-16 px-6 sm:px-12 md:px-16 justify-center bg-surface-50 border-l border-surface-200 shadow-2xl">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-md mx-auto flex flex-col gap-8"
+          className="w-full flex flex-col gap-8"
         >
           {/* Mobile Logo Display */}
           <div className="flex items-center gap-3 text-surface-950 lg:hidden">
@@ -294,6 +354,17 @@ export default function Login() {
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            {errorMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5 shadow-xs"
+              >
+                <CheckCircle2 size={16} className="text-red-500 shrink-0 hidden" />
+                <div className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                <span className="font-medium leading-relaxed">{errorMessage}</span>
+              </motion.div>
+            )}
             {/* Email Field */}
             <div className="flex flex-col gap-2">
               <label
@@ -393,16 +464,26 @@ export default function Login() {
 
             {/* Submit Action */}
             <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: isLoading ? 1 : 1.01 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
+              disabled={isLoading}
               type="submit"
-              className="w-full mt-2 py-4 px-6 rounded-2xl bg-surface-950 hover:bg-brand-950 text-surface-50 text-xs font-semibold tracking-[0.15em] uppercase transition-colors shadow-lg hover:shadow-xl cursor-pointer flex items-center justify-center gap-2 group border border-surface-800"
+              className="w-full mt-2 py-4 px-6 rounded-2xl bg-surface-950 hover:bg-brand-950 text-surface-50 text-xs font-semibold tracking-[0.15em] uppercase transition-colors shadow-lg hover:shadow-xl cursor-pointer flex items-center justify-center gap-2 group border border-surface-800 disabled:opacity-75 disabled:cursor-not-allowed"
             >
-              <span>Sign In to Console</span>
-              <ArrowRight
-                size={16}
-                className="group-hover:translate-x-1 transition-transform duration-200"
-              />
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <span>Verifying Credentials...</span>
+                </div>
+              ) : (
+                <>
+                  <span>Sign In to Console</span>
+                  <ArrowRight
+                    size={16}
+                    className="group-hover:translate-x-1 transition-transform duration-200"
+                  />
+                </>
+              )}
             </motion.button>
           </form>
 

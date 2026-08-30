@@ -78,8 +78,8 @@ _Frontend Web Application will be available at:_ `http://localhost:5173`
 
 For grading and quick verification, preset credentials are provided on the login page:
 
-| Role                     | Email                         | Password      |
-| :----------------------- | :---------------------------- | :------------ |
-| **Manager / Admin**      | `manager@tarumtresorts.com`   | `password123` |
-| **Front Desk**           | `frontdesk@tarumtresorts.com` | `password123` |
-| **General Staff (Demo)** | `mock@gmail.com`              | `password123` |
+| Role                | Email                            | Password      |
+| :------------------ | :------------------------------- | :------------ |
+| **Manager / Admin** | `manager@tarumtresorts.com`      | `password123` |
+| **Front Desk**      | `frontdesk@tarumtresorts.com`    | `password123` |
+| **Housekeeping**    | `housekeeping@tarumtresorts.com` | `password123` |

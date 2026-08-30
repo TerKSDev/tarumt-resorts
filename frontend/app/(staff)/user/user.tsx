@@ -15,6 +15,9 @@ import {
   Shield,
   CheckCircle2,
   XCircle,
+  Copy,
+  Check,
+  RefreshCw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Card, CardHeader } from "../../../components/Card";
@@ -40,6 +43,14 @@ export default function UserManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState("Manager");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("currentStaffRole");
+    if (saved) setUserRole(saved);
+  }, []);
+
+  const isManager = userRole === "Manager" || userRole === "Admin";
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -141,14 +152,16 @@ export default function UserManagement() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-3 rounded-full bg-white hover:bg-brand-50 text-surface-950 hover:text-brand-900 text-xs font-bold uppercase tracking-widest transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
-            >
-              <Plus size={16} strokeWidth={2} />
-              <span>Create Account</span>
-            </button>
+            {isManager && (
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center gap-2 px-5 py-3 rounded-full bg-white hover:bg-brand-50 text-surface-950 hover:text-brand-900 text-xs font-bold uppercase tracking-widest transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
+              >
+                <Plus size={16} strokeWidth={2} />
+                <span>Create Account</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -300,7 +313,7 @@ export default function UserManagement() {
                   <th className="py-3.5 px-6">Staff Identifier</th>
                   <th className="py-3.5 px-6">System Role</th>
                   <th className="py-3.5 px-6">Account Status</th>
-                  <th className="py-3.5 px-6 text-right">Access Control</th>
+                  {isManager && <th className="py-3.5 px-6 text-right">Access Control</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-100">
@@ -358,22 +371,24 @@ export default function UserManagement() {
                       </span>
                     </td>
 
-                    <td className="py-4 px-6 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void handleToggleStatus(user.staffId)}
-                        disabled={user.role === "MANAGER"}
-                        className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
-                          user.role === "MANAGER"
-                            ? "text-surface-300 cursor-not-allowed bg-transparent"
-                            : user.isActive
-                            ? "border border-red-200 text-red-700 hover:bg-red-50"
-                            : "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                        }`}
-                      >
-                        {user.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                    </td>
+                    {isManager && (
+                      <td className="py-4 px-6 text-right">
+                        <button
+                          type="button"
+                          onClick={() => void handleToggleStatus(user.staffId)}
+                          disabled={user.role === "MANAGER"}
+                          className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
+                            user.role === "MANAGER"
+                              ? "text-surface-300 cursor-not-allowed bg-transparent"
+                              : user.isActive
+                              ? "border border-red-200 text-red-700 hover:bg-red-50"
+                              : "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                          }`}
+                        >
+                          {user.isActive ? "Deactivate" : "Activate"}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -397,6 +412,15 @@ export default function UserManagement() {
   );
 }
 
+const generateRandomPassword = () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+  let pwd = "Resort!";
+  for (let i = 0; i < 6; i++) {
+    pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pwd;
+};
+
 function AddStaffModal({
   onClose,
   onSuccess,
@@ -405,18 +429,46 @@ function AddStaffModal({
   onSuccess: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [password, setPassword] = useState(() => generateRandomPassword());
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!password) return;
+    navigator.clipboard.writeText(password);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRegenerate = () => {
+    setPassword(generateRandomPassword());
+    setCopied(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
+    const emailStr = String(data.email || "").trim().toLowerCase();
+    if (!emailStr.endsWith("@tarumtresorts.com")) {
+      alert("Invalid domain. Staff accounts must use an official @tarumtresorts.com email address.");
+      return;
+    }
+
+    const payload = {
+      name: String(data.name || ""),
+      email: emailStr,
+      role: String(data.role || "FRONT_DESK"),
+      password: String(data.password || ""),
+      isActive: true,
+    };
+
     try {
       setIsSubmitting(true);
       const res = await fetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -502,24 +554,63 @@ function AddStaffModal({
               >
                 <option value="FRONT_DESK">Front Desk Concierge</option>
                 <option value="HOUSEKEEPING">Housekeeping Sanitation</option>
+                <option value="MANAGER">Operations Manager</option>
               </select>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-semibold uppercase tracking-wider text-surface-700">
-              Initial Account Password
-            </label>
-            <div className="relative">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold uppercase tracking-wider text-surface-700">
+                Initial Account Password
+              </label>
+              <span className="text-[10px] text-surface-400 font-light">
+                Auto-generated secure credential
+              </span>
+            </div>
+            <div className="relative flex items-center">
               <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400" />
               <input
                 name="password"
-                type="password"
+                type="text"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 minLength={6}
                 required
-                placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 bg-surface-50 border border-surface-300 rounded-xl focus:bg-white focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none text-surface-900 font-mono"
+                className="w-full pl-10 pr-24 py-2.5 bg-surface-50 border border-surface-300 rounded-xl focus:bg-white focus:border-brand-600 focus:ring-2 focus:ring-brand-100 outline-none text-surface-900 font-mono font-medium text-xs tracking-wider"
               />
+              <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleRegenerate}
+                  title="Generate new random password"
+                  className="p-1.5 rounded-lg text-surface-400 hover:text-surface-700 hover:bg-surface-200/60 transition-colors cursor-pointer"
+                >
+                  <RefreshCw size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  title="Copy password to clipboard"
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    copied
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-surface-200/70 hover:bg-surface-300/80 text-surface-700"
+                  }`}
+                >
+                  {copied ? (
+                    <>
+                      <Check size={12} strokeWidth={2.5} />
+                      <span className="text-[10px]">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} />
+                      <span className="text-[10px]">Copy</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 

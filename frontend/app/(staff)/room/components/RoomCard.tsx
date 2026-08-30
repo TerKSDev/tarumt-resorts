@@ -20,25 +20,27 @@ export type RoomProps = {
 
 export default function RoomCard({
   room,
+  canEdit = true,
   setIsModalOpen,
 }: {
   room: RoomProps;
+  canEdit?: boolean;
   setIsModalOpen: (val: string) => void;
 }) {
   const statusKey = (room.status?.toUpperCase() || "AVAILABLE") as keyof typeof ROOM_STATUS;
   const status = ROOM_STATUS[statusKey] || ROOM_STATUS.AVAILABLE;
   
-  // Allow editing CHECKED_IN rooms to change status, disable only if booking exists AND status is not CHECKED_IN
-  const isEditDisabled = !!room.booking && room.status !== "CHECKED_IN" && room.status !== "RESERVED";
+  // Allow editing CHECKED_IN rooms to change status, disable only if booking exists AND status is not CHECKED_IN, or if user cannot edit
+  const isEditDisabled = !canEdit || (!!room.booking && room.status !== "CHECKED_IN" && room.status !== "RESERVED");
 
   return (
     <button
       type="button"
-      onClick={() => setIsModalOpen("edit")}
+      onClick={() => canEdit && setIsModalOpen("edit")}
       disabled={isEditDisabled}
       className={`group flex flex-col relative p-5 bg-white border border-surface-200 rounded-3xl shadow-xs transition-all duration-300 text-left ${status.card} ${
         isEditDisabled
-          ? "opacity-85 cursor-not-allowed"
+          ? "opacity-85 cursor-default"
           : "hover:-translate-y-1 hover:shadow-md cursor-pointer hover:border-brand-400"
       }`}
     >

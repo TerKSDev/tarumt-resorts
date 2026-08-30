@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "staffs")
 public class Staff {
-    
+
     // Define Entity Attributes
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -42,30 +42,39 @@ public class Staff {
     private Boolean isActive = true;
 
     // Constructor
-    public Staff() {}
+    public Staff() {
+    }
 
-    public Staff(String staffId, String name, String email, String password, StaffRole role, LocalDateTime createdAt, LocalDateTime updatedAt, Boolean isActive) {
-        this.staffId = staffId;   
-        this.name = name;   
-        this.email = email;   
+    public Staff(String staffId, String name, String email, String password, StaffRole role, LocalDateTime createdAt,
+            LocalDateTime updatedAt, Boolean isActive) {
+        this.staffId = staffId;
+        this.name = name;
+        this.email = email;
         this.password = password;
-        this.role = role;   
-        this.createdAt = createdAt;   
-        this.updatedAt = updatedAt;   
+        this.role = role;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.isActive = isActive;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (this.isActive == null) {
+            this.isActive = true;
+        }
     }
 
     // Getters
     public String getStaffId() {
-        return this.staffId;    
+        return this.staffId;
     }
 
     public String getName() {
-        return this.name;    
+        return this.name;
     }
 
     public String getEmail() {
-        return this.email;    
+        return this.email;
     }
 
     public String getPassword() {
@@ -73,32 +82,32 @@ public class Staff {
     }
 
     public StaffRole getRole() {
-        return this.role;    
+        return this.role;
     }
 
     public LocalDateTime getCreatedAt() {
-        return this.createdAt;    
+        return this.createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {
-        return this.updatedAt;    
+        return this.updatedAt;
     }
 
     public Boolean getIsActive() {
-        return this.isActive;    
+        return this.isActive;
     }
 
     // Setters
     public void setStaffId(String staffId) {
-        this.staffId = staffId;   
+        this.staffId = staffId;
     }
 
     public void setName(String name) {
-        this.name = name;   
+        this.name = name;
     }
 
     public void setEmail(String email) {
-        this.email = email;   
+        this.email = email;
     }
 
     public void setPassword(String password) {
@@ -106,18 +115,18 @@ public class Staff {
     }
 
     public void setRole(StaffRole role) {
-        this.role = role;   
+        this.role = role;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;   
+        this.createdAt = createdAt;
     }
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;   
+        this.updatedAt = updatedAt;
     }
 
     public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;   
+        this.isActive = isActive;
     }
 }

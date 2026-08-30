@@ -68,6 +68,15 @@ export default function RegistrationPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState("Manager");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("currentStaffRole");
+    if (saved) setUserRole(saved);
+  }, []);
+
+  const canRegister =
+    userRole === "Front Desk" || userRole === "Manager" || userRole === "Admin";
 
   // Room Selection State
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
@@ -462,10 +471,16 @@ export default function RegistrationPage() {
           <div className="md:col-span-3 flex justify-end pt-2">
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-95"
+              disabled={!canRegister}
+              title={!canRegister ? "Front Desk or Manager privileges required" : undefined}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-md active:scale-95 ${
+                !canRegister
+                  ? "bg-surface-300 cursor-not-allowed opacity-70"
+                  : "bg-surface-950 hover:bg-brand-950 hover:shadow-lg cursor-pointer"
+              }`}
             >
               <UserPlus size={15} strokeWidth={2} />
-              <span>Enqueue Guest</span>
+              <span>{canRegister ? "Enqueue Guest" : "View Only Mode"}</span>
             </button>
           </div>
         </form>
@@ -615,23 +630,30 @@ export default function RegistrationPage() {
                           <button
                             type="button"
                             onClick={() => void processGuestById(item.id)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider shadow-sm hover:shadow transition-all cursor-pointer"
+                            disabled={!canRegister}
+                            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all ${
+                              !canRegister
+                                ? "bg-surface-100 text-surface-400 border border-surface-200 cursor-not-allowed"
+                                : "bg-surface-950 hover:bg-brand-950 text-white shadow-sm hover:shadow cursor-pointer"
+                            }`}
                           >
                             <BedDouble size={14} />
-                            <span>Assign Room</span>
+                            <span>{canRegister ? "Assign Room" : "View Only"}</span>
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCancelReason(CANCELLATION_REASONS[0].value);
-                              setCancellingId(item.id ?? null);
-                            }}
-                            className="inline-flex items-center gap-1 px-3 py-2 rounded-full border border-surface-300 text-surface-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
-                          >
-                            <Ban size={13} />
-                            <span>Cancel</span>
-                          </button>
+                          {canRegister && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCancelReason(CANCELLATION_REASONS[0].value);
+                                setCancellingId(item.id ?? null);
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-2 rounded-full border border-surface-300 text-surface-600 hover:text-red-700 hover:border-red-300 hover:bg-red-50 text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer"
+                            >
+                              <Ban size={13} />
+                              <span>Cancel</span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </td>

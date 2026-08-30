@@ -103,6 +103,15 @@ export default function Log() {
   const [historyStack, setHistoryStack] = useState<ActionLogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState("Manager");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("currentStaffRole");
+    if (saved) setUserRole(saved);
+  }, []);
+
+  const canOperate =
+    userRole === "Housekeeping" || userRole === "Manager" || userRole === "Admin";
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -351,9 +360,11 @@ export default function Log() {
                       <button
                         type="button"
                         onClick={() => void handleRollback(room.roomId)}
-                        disabled={!canRollback}
+                        disabled={!canOperate || !canRollback}
                         title={
-                          outOfTerritory
+                          !canOperate
+                            ? "Housekeeping or Manager privileges required"
+                            : outOfTerritory
                             ? `${reason} - not available to housekeeping`
                             : canRollback
                             ? "Undo this suite's last action"
@@ -367,9 +378,11 @@ export default function Log() {
                       <button
                         type="button"
                         onClick={() => void handleAdvance(room.roomId)}
-                        disabled={!canAdvance}
+                        disabled={!canOperate || !canAdvance}
                         className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                          outOfTerritory
+                          !canOperate
+                            ? "bg-surface-100 text-surface-400 border border-surface-200 cursor-not-allowed opacity-60"
+                            : outOfTerritory
                             ? "bg-surface-100 text-surface-400 border border-surface-200 cursor-not-allowed"
                             : isReady
                             ? "bg-brand-50 text-brand-700 border border-brand-200 cursor-default"
@@ -377,7 +390,9 @@ export default function Log() {
                         }`}
                       >
                         <span>
-                          {outOfTerritory
+                          {!canOperate
+                            ? "View Only"
+                            : outOfTerritory
                             ? reason
                             : isReady
                             ? "Suite Released"
