@@ -63,7 +63,7 @@ export default function WalkInSummary() {
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-1">
-            {summary?.totalRegistrations ?? 0} <span className="text-xs font-normal text-surface-500">Arrivals</span>
+            {summary?.totalWalkIns ?? 0} <span className="text-xs font-normal text-surface-500">Arrivals</span>
           </p>
           <span className="text-xs text-surface-500 font-light">Direct desk walk-in check-ins</span>
         </div>

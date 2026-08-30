@@ -124,7 +124,6 @@ public class ReportControl {
         ListInterface<CancellationReasonDTO> reasonBreakdown = new List<>();
 
         for (Booking booking : cancelledBookings) {
-            totalLostRevenue = totalLostRevenue.add(booking.getTotalAmount());
 
             // Group by the month the cancellation was recorded (updated_at)
             String period = String.format("%04d-%02d", booking.getUpdatedAt().getYear(),
@@ -175,7 +174,7 @@ public class ReportControl {
 
         double cancellationRate = totalBookings == 0 ? 0.0 : (double) cancelledBookings.length / totalBookings * 100;
 
-        return new RegistrationCancellationReportDTO(cancelledBookings.length, totalLostRevenue, cancellationRate,
+        return new RegistrationCancellationReportDTO(cancelledBookings.length, cancellationRate,
                 trendArray, reasonArray, cancelledBookings);
     }
 
