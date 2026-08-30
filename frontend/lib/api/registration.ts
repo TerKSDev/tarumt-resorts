@@ -6,6 +6,14 @@ export type QueueItem = {
   checkIn?: string;
 };
 
+export type Room = {
+  roomId: string;
+  type: string;
+  status: string;
+  capacity: number;
+  pricePerNight: number;
+};
+
 const API_BASE_URL = "http://localhost:8081";
 const REGISTRATION_QUEUE_ENDPOINT = `${API_BASE_URL}/api/registration/queue`;
 
@@ -35,13 +43,36 @@ export async function registerWalkInGuestApi(data: {
   }
 }
 
-export async function assignRoomToQueueGuestApi(queueId: string): Promise<void> {
+export async function assignRoomToQueueGuestApi(queueId: string, roomId: string): Promise<void> {
   const res = await fetch(`${REGISTRATION_QUEUE_ENDPOINT}/assign-room/${queueId}`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ roomId }),
   });
   if (!res.ok) {
     const errorMsg = await res.text();
     throw new Error(errorMsg || `Failed to assign room (${res.status})`);
+  }
+}
+
+export async function fetchAvailableRoomsApi(): Promise<Room[]> {
+  try {
+    const res = await fetch(`${REGISTRATION_QUEUE_ENDPOINT}/available-rooms`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) {
+      const errorMsg = await res.text();
+      throw new Error(errorMsg || `Failed to fetch available rooms (${res.status})`);
+    }
+    return res.json();
+  } catch (error: any) {
+    console.error("Fetch error details:", error);
+    throw new Error(error.message || "Network error: Unable to fetch available rooms");
   }
 }
 

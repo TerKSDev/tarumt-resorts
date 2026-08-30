@@ -19,10 +19,12 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import {
   type QueueItem,
+  type Room,
   fetchRegistrationQueueApi,
   registerWalkInGuestApi,
   assignRoomToQueueGuestApi,
   cancelWalkInGuestApi,
+  fetchAvailableRoomsApi,
 } from "../../../lib/api/registration";
 import { Card, CardHeader } from "../../../components/Card";
 import ReportGeneration from "./components/ReportGeneration";
@@ -66,6 +68,13 @@ export default function RegistrationPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Room Selection State
+  const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [showRoomSelector, setShowRoomSelector] = useState(false);
+  const [selectingForQueueId, setSelectingForQueueId] = useState<string | null>(null);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   // Cancellation State
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -141,9 +150,40 @@ export default function RegistrationPage() {
       return;
     }
 
+    // Fetch available rooms first
     try {
-      await assignRoomToQueueGuestApi(queueId);
+      setLoadingRooms(true);
+      const rooms = await fetchAvailableRoomsApi();
+      
+      if (rooms.length === 0) {
+        flash("No available rooms to assign at this time. Please try again later.");
+        return;
+      }
+
+      setAvailableRooms(rooms);
+      setSelectedRoom(rooms[0].roomId); // Set first room as default
+      setSelectingForQueueId(queueId);
+      setShowRoomSelector(true);
+    } catch (err: any) {
+      console.error("Error fetching available rooms:", err);
+      flash(err.message || "Unable to fetch available rooms right now.");
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  const confirmRoomAssignment = async () => {
+    if (!selectingForQueueId || !selectedRoom) {
+      flash("Please select a room before assigning.");
+      return;
+    }
+
+    try {
+      await assignRoomToQueueGuestApi(selectingForQueueId, selectedRoom);
       await fetchQueue();
+      setShowRoomSelector(false);
+      setSelectingForQueueId(null);
+      setSelectedRoom(null);
       flash("Guest successfully assigned suite and checked in.");
     } catch (err: any) {
       console.error("Error processing queue item:", err);
@@ -210,6 +250,124 @@ export default function RegistrationPage() {
           >
             <Sparkles size={14} className="text-brand-300 shrink-0" />
             <span>{toast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Room Selection Modal */}
+      <AnimatePresence>
+        {showRoomSelector && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden"
+            >
+              <div className="p-8 border-b border-surface-100">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-serif font-semibold text-surface-950 mb-2">
+                      Select Available Room
+                    </h2>
+                    <p className="text-sm text-surface-600">
+                      Choose which suite to assign to this guest.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowRoomSelector(false);
+                      setSelectingForQueueId(null);
+                      setSelectedRoom(null);
+                    }}
+                    className="text-surface-400 hover:text-surface-700 transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-8 max-h-96 overflow-y-auto">
+                {loadingRooms ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
+                    <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand-600" />
+                    <span className="text-sm text-surface-500">Loading available rooms...</span>
+                  </div>
+                ) : availableRooms.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                    <BedDouble size={32} className="text-surface-300" />
+                    <p className="text-sm font-medium text-surface-700">No available rooms</p>
+                    <p className="text-xs text-surface-500">All rooms are currently occupied or under maintenance.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {availableRooms.map((room) => (
+                      <button
+                        key={room.roomId}
+                        type="button"
+                        onClick={() => setSelectedRoom(room.roomId)}
+                        className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                          selectedRoom === room.roomId
+                            ? "border-brand-600 bg-brand-50"
+                            : "border-surface-200 bg-surface-50 hover:border-surface-300"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <h3 className="font-semibold text-surface-950">Room {room.roomId}</h3>
+                            <p className="text-xs text-surface-500 capitalize">{room.type}</p>
+                          </div>
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              selectedRoom === room.roomId
+                                ? "border-brand-600 bg-brand-600"
+                                : "border-surface-300 bg-white"
+                            }`}
+                          >
+                            {selectedRoom === room.roomId && (
+                              <CheckCircle2 size={16} className="text-white" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-surface-600">
+                          <span>Capacity: {room.capacity} Pax</span>
+                          <span>•</span>
+                          <span className="font-mono">RM {room.pricePerNight.toFixed(2)}/night</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-8 border-t border-surface-100 bg-surface-50 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRoomSelector(false);
+                    setSelectingForQueueId(null);
+                    setSelectedRoom(null);
+                  }}
+                  className="px-6 py-2.5 rounded-full border border-surface-300 text-surface-700 hover:bg-surface-100 text-sm font-semibold uppercase tracking-wider transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmRoomAssignment()}
+                  disabled={!selectedRoom}
+                  className="px-6 py-2.5 rounded-full bg-surface-950 hover:bg-brand-950 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold uppercase tracking-wider transition-colors flex items-center gap-2"
+                >
+                  <BedDouble size={16} />
+                  Confirm Assignment
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

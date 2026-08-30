@@ -2,15 +2,21 @@ package com.tarumt.tarumt_resorts.control;
 
 import com.tarumt.tarumt_resorts.dao.BookingDAO;
 import com.tarumt.tarumt_resorts.dao.CustomerDAO;
+import com.tarumt.tarumt_resorts.dao.RoomDAO;
 import com.tarumt.tarumt_resorts.entity.Booking;
 import com.tarumt.tarumt_resorts.entity.Customer;
+import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.CancellationReason;
 import com.tarumt.tarumt_resorts.entity.enums.LoyaltyTier;
+import com.tarumt.tarumt_resorts.entity.enums.RoomStatus;
+import com.tarumt.tarumt_resorts.utility.SortingUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
+import com.tarumt.tarumt_resorts.adt.MyArrayList;
 import com.tarumt.tarumt_resorts.adt.MyQueue;
+import com.tarumt.tarumt_resorts.adt.MyList;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +39,10 @@ import java.util.UUID;
  * 3. cancelGuestById() → Removes from queue, records cancellation with reason
  * 4. getQueue() → Snapshots current queue state for display
  */
+
+/**
+ * Author: Lew Chun Hoe
+ */
 @Service
 public class RegistrationControl {
 
@@ -40,13 +50,15 @@ public class RegistrationControl {
 
     private final CustomerDAO customerRepository;
     private final BookingDAO bookingRepository;
+    private final RoomDAO roomRepository;
 
     // In-memory FIFO queue ADT (custom implementation, NOT java.util.Queue)
     private final MyQueue<QueueItem> queue;
 
-    public RegistrationControl(CustomerDAO customerRepository, BookingDAO bookingRepository) {
+    public RegistrationControl(CustomerDAO customerRepository, BookingDAO bookingRepository, RoomDAO roomRepository) {
         this.customerRepository = customerRepository;
         this.bookingRepository = bookingRepository;
+        this.roomRepository = roomRepository;
         this.queue = new MyArrayQueue<>(DEFAULT_CAPACITY);
     }
 
@@ -240,6 +252,125 @@ public class RegistrationControl {
         booking.setUpdatedAt(now);
 
         return bookingRepository.save(booking);
+    }
+
+    /**
+     * Process Guest with Room Assignment
+     * 
+     * Removes guest from queue and assigns an available room.
+     * 
+     * Workflow:
+     * 1. Validate queue ID and room ID
+     * 2. Locate guest by queue ID (must exist in queue)
+     * 3. Locate and validate room:
+     *    - Room must exist
+     *    - Room status must be AVAILABLE
+     * 4. Remove guest from queue (DEQUEUE operation)
+     * 5. Update room status to CHECKED_IN (guest has checked in)
+     * 6. Create Customer (BRONZE tier)
+     * 7. Create Booking with room assignment
+     * 8. Persist all entities to database
+     * 
+     * @Transactional ensures atomicity
+     * 
+     * @param queueId UUID of guest in queue
+     * @param roomId ID of the room to assign (must be AVAILABLE)
+     * @return Booking entity with confirmation number and assigned room
+     * @throws IllegalArgumentException if validation fails
+     */
+    @Transactional
+    public Booking processGuestById(String queueId, String roomId) {
+        if (queueId == null || queueId.isBlank()) {
+            throw new IllegalArgumentException("Queue item id is required.");
+        }
+        if (roomId == null || roomId.isBlank()) {
+            throw new IllegalArgumentException("Room id is required.");
+        }
+
+        // Validate room exists and is available
+        Room room = roomRepository.findById(roomId)
+            .orElseThrow(() -> new IllegalArgumentException("Room with id '" + roomId + "' not found."));
+        
+        if (room.getStatus() != RoomStatus.AVAILABLE) {
+            throw new IllegalArgumentException("Room '" + roomId + "' is not available. Current status: " + room.getStatus());
+        }
+
+        int selectedIndex = -1;
+        for (int i = 0; i < queue.size(); i++) {
+            if (queueId.equals(queue.get(i).getId())) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        
+        if (selectedIndex < 0) {
+            throw new IllegalArgumentException("Selected guest was not found in the queue.");
+        }
+
+        QueueItem selectedItem = queue.get(selectedIndex);
+        queue.removeAt(selectedIndex);
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Update room status to CHECKED_IN (guest has checked in)
+        room.setStatus(RoomStatus.CHECKED_IN);
+        room.setUpdatedAt(now);
+        roomRepository.save(room);
+
+        // Create and persist Customer
+        Customer newCustomer = new Customer();
+        newCustomer.setName(selectedItem.getName() == null ? "" : selectedItem.getName().trim());
+        newCustomer.setLoyaltyTier(LoyaltyTier.BRONZE);
+        newCustomer.setCreatedAt(now);
+        newCustomer.setUpdatedAt(now);
+        newCustomer.setIsActive(true);
+        Customer customer = customerRepository.save(newCustomer);
+
+        // Create and persist Booking entity with room assignment
+        Booking booking = new Booking();
+        booking.setCustomer(customer);
+        booking.setRoom(room);
+        booking.setConfirmationNo(generateConfirmationNumber());
+        booking.setCheckInDate(now);
+        booking.setCheckOutDate(null);
+        booking.setTotalAmount(room.getPricePerNight());
+        booking.setIsPaid(true);
+        booking.setStatus(BookingStatus.ACTIVE);
+        booking.setIsWalkIn(true);
+        booking.setCreatedAt(now);
+        booking.setUpdatedAt(now);
+
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Get All Available Rooms
+     * 
+     * Returns array of Room entities with AVAILABLE status.
+     * Useful for staff to select which room to assign to a guest.
+     * Uses custom ADT (MyList) for filtering without Java Collections Framework.
+     * 
+     * @return Array of Room objects with AVAILABLE status
+     */
+    public Room[] getAvailableRooms() {
+        MyList<Room> allRoomsMyList = SortingUtil.toMyList(roomRepository.findAll());
+        MyList<Room> availableRooms = new MyArrayList<>();
+        
+        // Manual filtering without stream() - ECB compliant
+        for (int i = 0; i < allRoomsMyList.size(); i++) {
+            Room room = allRoomsMyList.get(i);
+            if (room.getStatus() == RoomStatus.AVAILABLE) {
+                availableRooms.add(room);
+            }
+        }
+        
+        // Convert MyList to array
+        Room[] rooms = new Room[availableRooms.size()];
+        for (int i = 0; i < availableRooms.size(); i++) {
+            rooms[i] = availableRooms.get(i);
+        }
+        
+        return rooms;
     }
 
     /**

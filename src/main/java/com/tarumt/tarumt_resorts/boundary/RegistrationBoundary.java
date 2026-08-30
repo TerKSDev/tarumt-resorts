@@ -4,7 +4,9 @@ package com.tarumt.tarumt_resorts.boundary;
 import com.tarumt.tarumt_resorts.control.RegistrationControl;
 import com.tarumt.tarumt_resorts.control.RegistrationControl.QueueItem;
 import com.tarumt.tarumt_resorts.dto.CancellationRequestDTO;
+import com.tarumt.tarumt_resorts.dto.RoomAssignmentDTO;
 import com.tarumt.tarumt_resorts.entity.Booking;
+import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.entity.enums.CancellationReason;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -66,20 +68,42 @@ public class RegistrationBoundary {
     }
 
     /**
+     * GET all available rooms for assignment
+     * 
+     * Returns array of Room entities with AVAILABLE status.
+     * Staff uses this to select which room to assign to a guest.
+     */
+    @GetMapping("/available-rooms")
+    public ResponseEntity<?> getAvailableRooms() {
+        try {
+            Room[] rooms = registrationControl.getAvailableRooms();
+            return ResponseEntity.ok(rooms);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error fetching available rooms: " + e.getMessage());
+        }
+    }
+
+    /**
      * POST process (assign room) to guest in queue
      * 
-     * Removes guest from queue, then:
-     * - Creates or updates Customer record if not exists
-     * - Creates Booking entity with default check-in time
+     * Removes guest from queue and assigns a specific available room, then:
+     * - Updates room status to RESERVED
+     * - Creates Customer record
+     * - Creates Booking entity with room assignment
      * - Sets guest as walk-in with ACTIVE status
      * 
-     * On success: Returns Booking entity with confirmation number
-     * On failure: Returns error message (e.g., guest not found in queue)
+     * Request body must include roomId of an AVAILABLE room.
+     * 
+     * On success: Returns Booking entity with confirmation number and assigned room
+     * On failure: Returns error message (e.g., guest not found, room not available)
      */
     @PostMapping("/assign-room/{queueId}")
-    public ResponseEntity<?> assignRoom(@PathVariable String queueId) {
+    public ResponseEntity<?> assignRoom(@PathVariable String queueId, @RequestBody RoomAssignmentDTO request) {
         try {
-            Booking booking = registrationControl.processGuestById(queueId);
+            if (request == null || request.getRoomId() == null || request.getRoomId().isBlank()) {
+                return ResponseEntity.badRequest().body("Room ID is required.");
+            }
+            Booking booking = registrationControl.processGuestById(queueId, request.getRoomId());
             return ResponseEntity.ok(booking);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

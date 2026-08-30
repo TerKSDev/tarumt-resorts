@@ -8,17 +8,15 @@ import com.tarumt.tarumt_resorts.entity.Booking;
 public class RegistrationCancellationReportDTO {
 
     private int totalCancellations;
-    private BigDecimal totalLostRevenue;
     private double cancellationRate;
     private CancellationTrendDTO[] trends;
     private CancellationReasonDTO[] reasonBreakdown;
     private Booking[] cancelledBookings;
 
-    public RegistrationCancellationReportDTO(int totalCancellations, BigDecimal totalLostRevenue,
+    public RegistrationCancellationReportDTO(int totalCancellations,
             double cancellationRate, CancellationTrendDTO[] trends, CancellationReasonDTO[] reasonBreakdown,
             Booking[] cancelledBookings) {
         this.totalCancellations = totalCancellations;
-        this.totalLostRevenue = totalLostRevenue;
         this.cancellationRate = cancellationRate;
         this.trends = trends;
         this.reasonBreakdown = reasonBreakdown;
@@ -26,7 +24,6 @@ public class RegistrationCancellationReportDTO {
     }
 
     public int getTotalCancellations() { return totalCancellations; }
-    public BigDecimal getTotalLostRevenue() { return totalLostRevenue; }
     public double getCancellationRate() { return cancellationRate; }
     public CancellationTrendDTO[] getTrends() { return trends; }
     public CancellationReasonDTO[] getReasonBreakdown() { return reasonBreakdown; }
