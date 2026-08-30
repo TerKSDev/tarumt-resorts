@@ -2,15 +2,11 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import {
   ChartNoAxesCombined,
-  CheckCircle,
-  Hash,
-  CalendarDays,
   Sparkles,
   Ban,
   TrendingDown,
   CircleDollarSign,
 } from "lucide-react";
-import { LOYALTY_TIER } from "../../../../lib/config/loyalty";
 import type { MetaFunction } from "react-router";
 import { Card, CardHeader } from "../../../../components/Card";
 
@@ -168,12 +164,8 @@ export default function RegistrationCancellation() {
             </tbody>
           ) : (
             <tbody className="divide-y divide-surface-100">
-              {cancelledBookings.map((booking: any, index: number) => {
-                const tier =
-                  LOYALTY_TIER.find((t) => t.name === booking.customer?.loyaltyTier) ||
-                  LOYALTY_TIER[0];
-                return (
-                  <tr key={index} className="hover:bg-surface-50 transition-colors">
+              {cancelledBookings.map((booking: any, index: number) => (
+                <tr key={index} className="hover:bg-surface-50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-xl bg-surface-100 border border-surface-200 flex items-center justify-center font-bold text-xs text-surface-800">
@@ -210,8 +202,7 @@ export default function RegistrationCancellation() {
                       RM {Number(booking.totalAmount ?? 0).toFixed(2)}
                     </td>
                   </tr>
-                );
-              })}
+                ))}
             </tbody>
           )}
         </table>
