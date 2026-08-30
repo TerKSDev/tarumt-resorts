@@ -7,11 +7,10 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 
 // ADTs
-import com.tarumt.tarumt_resorts.adt.MyArrayList;
-import com.tarumt.tarumt_resorts.adt.MyList;
-import com.tarumt.tarumt_resorts.adt.MyQueue;
-import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
-
+import com.tarumt.tarumt_resorts.adt.List;
+import com.tarumt.tarumt_resorts.adt.Queue;
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
+import com.tarumt.tarumt_resorts.adt.interfaces.QueueInterface;
 // DAOs
 import com.tarumt.tarumt_resorts.dao.BookingDAO;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
@@ -61,8 +60,8 @@ public class ReportControl {
 
         // --- Custom ADT Application: MyQueue (FIFO) ---
         // Using the custom MyArrayQueue ADT implemented for the project
-        MyQueue<Booking> arrivalQueue = new MyArrayQueue<>();
-        MyQueue<Booking> departureQueue = new MyArrayQueue<>();
+        QueueInterface<Booking> arrivalQueue = new Queue<>();
+        QueueInterface<Booking> departureQueue = new Queue<>();
 
         // Categorize into the respective Queues
         for (Booking b : bookings) {
@@ -99,7 +98,7 @@ public class ReportControl {
         String today = java.time.LocalDate.now().toString();
         Booking[] todaysRegistrations = bookingDAO.findByCreatedDate(today);
 
-        MyList<Booking> walkIns = new MyArrayList<>();
+        ListInterface<Booking> walkIns = new List<>();
         BigDecimal totalRevenue = BigDecimal.ZERO;
         for (Booking booking : todaysRegistrations) {
             if (Boolean.TRUE.equals(booking.getIsWalkIn())) {
@@ -120,8 +119,9 @@ public class ReportControl {
         Booking[] cancelledBookings = bookingDAO.findByStatus(BookingStatus.CANCELLED);
         long totalBookings = bookingDAO.count();
 
-        MyList<CancellationTrendDTO> trends = new MyArrayList<>();
-        MyList<CancellationReasonDTO> reasonBreakdown = new MyArrayList<>();
+        BigDecimal totalLostRevenue = BigDecimal.ZERO;
+        ListInterface<CancellationTrendDTO> trends = new List<>();
+        ListInterface<CancellationReasonDTO> reasonBreakdown = new List<>();
 
         for (Booking booking : cancelledBookings) {
 
@@ -180,7 +180,7 @@ public class ReportControl {
 
     // See Wei Jian: Housekeeping Task Logs Reports
     public RoomStatusSummaryDTO[] generateHousekeepingStatusReport(String filterStatus, Long minMinutesWaiting) {
-        MyList<Room> allRooms = SortingUtil.toMyList(roomDAO.findAll());
+        ListInterface<Room> allRooms = SortingUtil.toMyList(roomDAO.findAll());
         RoomStatusSummaryDTO[] temp = new RoomStatusSummaryDTO[allRooms.size()];
         int count = 0;
 
@@ -191,7 +191,7 @@ public class ReportControl {
             HousekeepingStatus stage = hkControl.syncAndGetCurrentStage(room);
 
             // Fetch tasks and sort DESCENDING to get the latest task's time
-            MyList<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
+            ListInterface<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
             HousekeepingTask[] sortedDesc = SortingUtil.sortTasksByDate(unsortedTasks, true);
 
             LocalDateTime since = sortedDesc.length == 0 ? room.getCreatedAt() : sortedDesc[0].getCreatedAt();
@@ -216,13 +216,13 @@ public class ReportControl {
 
     public StaffTurnaroundDTO[] generateCleaningTurnaroundReport(String filterStaffId, LocalDateTime rangeStart,
             LocalDateTime rangeEnd) {
-        MyList<Room> allRooms = SortingUtil.toMyList(roomDAO.findAll());
+        ListInterface<Room> allRooms = SortingUtil.toMyList(roomDAO.findAll());
         StaffTurnaroundDTO[] temp = new StaffTurnaroundDTO[500];
         int count = 0;
 
         for (int r = 0; r < allRooms.size(); r++) {
             Room room = allRooms.get(r);
-            MyList<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
+            ListInterface<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
 
             HousekeepingTask[] history = SortingUtil.sortTasksByDate(unsortedTasks, false);
             LocalDateTime cycleStart = null;

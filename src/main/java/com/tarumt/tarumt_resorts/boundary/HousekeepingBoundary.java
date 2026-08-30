@@ -3,8 +3,8 @@
  */
 package com.tarumt.tarumt_resorts.boundary;
 
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 import com.tarumt.tarumt_resorts.control.HousekeepingControl;
-import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.entity.Room;
 
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +21,7 @@ public class HousekeepingBoundary {
 
     @GetMapping("/rooms")
     public Room[] getRooms() {
-        MyList<Room> roomsList = housekeepingControl.getAllRooms();
+        ListInterface<Room> roomsList = housekeepingControl.getAllRooms();
         Room[] roomArray = new Room[roomsList.size()];
         for (int i = 0; i < roomsList.size(); i++) {
             roomArray[i] = roomsList.get(i);

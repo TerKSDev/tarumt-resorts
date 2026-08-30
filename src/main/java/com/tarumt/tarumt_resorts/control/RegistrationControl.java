@@ -13,14 +13,12 @@ import com.tarumt.tarumt_resorts.entity.enums.RoomStatus;
 import com.tarumt.tarumt_resorts.utility.SortingUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
-import com.tarumt.tarumt_resorts.adt.MyArrayList;
-import com.tarumt.tarumt_resorts.adt.MyQueue;
-import com.tarumt.tarumt_resorts.adt.MyList;
+import com.tarumt.tarumt_resorts.adt.Queue;
+import com.tarumt.tarumt_resorts.adt.interfaces.QueueInterface;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.UUID; // ✅
 
 /**
  * Registration Control Layer (ECB Pattern)
@@ -53,13 +51,12 @@ public class RegistrationControl {
     private final RoomDAO roomRepository;
 
     // In-memory FIFO queue ADT (custom implementation, NOT java.util.Queue)
-    private final MyQueue<QueueItem> queue;
+    private final QueueInterface<QueueItem> queue;
 
     public RegistrationControl(CustomerDAO customerRepository, BookingDAO bookingRepository, RoomDAO roomRepository) {
         this.customerRepository = customerRepository;
         this.bookingRepository = bookingRepository;
-        this.roomRepository = roomRepository;
-        this.queue = new MyArrayQueue<>(DEFAULT_CAPACITY);
+        this.queue = new Queue<>(DEFAULT_CAPACITY);
     }
 
     // Inner Class representing temporary queue memory item.

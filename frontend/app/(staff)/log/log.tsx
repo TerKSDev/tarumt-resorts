@@ -62,7 +62,6 @@ const stageConfig: Record<
 };
 
 const NOT_HOUSEKEEPINGS_TERRITORY = [
-  "AVAILABLE",
   "RESERVED",
   "CHECKED_IN",
   "MAINTENANCE",

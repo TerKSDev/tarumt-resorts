@@ -4,19 +4,7 @@ import { useEffect, useState } from "react";
 import { Crown, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "../../../../components/Card";
 
-/* =========================================================================
-   TYPES
-   ========================================================================= */
-
-type TierName = "Bronze" | "Silver" | "Gold" | "Platinum";
-
-interface Member {
-  id: string;
-  name: string;
-  tier: TierName;
-  points: number;
-  joinDate: string;
-}
+import type { Member, TierName } from "../../../../lib/types/loyalty";
 
 /* =========================================================================
    SMALL HELPERS
@@ -80,92 +68,14 @@ function filterItems<T>(items: T[], predicates: ((item: T) => boolean)[]): T[] {
   return items.filter((it) => predicates.every((p) => p(it)));
 }
 
-/* =========================================================================
-   LIVE DATA FETCHING
-   ========================================================================= */
-
-const API_BASE = "http://localhost:8081";
-
-interface RawCustomer {
-  identityNo: string;
-  name: string;
-  loyaltyTier?: string;
-  createdAt?: string;
-}
-
-interface RawPointRecord {
-  memberId?: string;
-  points?: number;
-  type?: string;
-}
-
-interface RawRedeemRecord {
-  memberId?: string;
-  points?: number;
-  status?: string;
-}
-
-async function fetchMembersRaw(): Promise<Member[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/loyalty/members`);
-    if (!res.ok) return [];
-    const list: RawCustomer[] = await res.json();
-    return list.map((c) => ({
-      id: c.identityNo,
-      name: c.name,
-      tier: (c.loyaltyTier as TierName) || "Bronze",
-      points: 0,
-      joinDate: c.createdAt ? c.createdAt.slice(0, 10) : isoDate(new Date()),
-    }));
-  } catch {
-    return [];
-  }
-}
-
-async function fetchPointsRaw(): Promise<RawPointRecord[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/loyalty/points`);
-    if (!res.ok) return [];
-    return (await res.json()) as RawPointRecord[];
-  } catch {
-    return [];
-  }
-}
-
-async function fetchApprovedRedemptionsRaw(): Promise<RawRedeemRecord[]> {
-  try {
-    const res = await fetch(`${API_BASE}/api/loyalty/redeem`);
-    if (!res.ok) return [];
-    const list: RawRedeemRecord[] = await res.json();
-    return list.filter((r) => r.status === "Approved");
-  } catch {
-    return [];
-  }
-}
-
-function applyPointsToMembers(members: Member[], points: RawPointRecord[]): Member[] {
-  const map = new Map<string, number>();
-  for (const p of points) {
-    if (!p.memberId || p.type !== "earn") continue;
-    map.set(p.memberId, (map.get(p.memberId) ?? 0) + Number(p.points || 0));
-  }
-  return members.map((m) => ({
-    ...m,
-    points: map.get(m.id) ?? 0,
-  }));
-}
-
-function applyApprovedRedemptions(members: Member[], redeems: RawRedeemRecord[]): Member[] {
-  const map = new Map<string, number>();
-  for (const r of redeems) {
-    if (!r.memberId) continue;
-    map.set(r.memberId, (map.get(r.memberId) ?? 0) + Number(r.points || 0));
-  }
-  return members.map((m) => ({
-    ...m,
-    points: Math.max(0, m.points - (map.get(m.id) ?? 0)),
-  }));
-}
+import {
+  fetchMembersFromApi,
+  fetchPointsFromApi,
+  fetchRedeemFromApi,
+  applyPointsToMembers,
+  applyApprovedRedemptions,
+  mapRedeemToRequest
+} from "../../../../lib/api/loyalty";
 
 /* =========================================================================
    REPORT BUILDER
@@ -251,10 +161,11 @@ export default function MemberPoints() {
     setLoading(true);
     setError(null);
 
-    Promise.all([fetchMembersRaw(), fetchPointsRaw(), fetchApprovedRedemptionsRaw()])
-      .then(([rawMembers, points, approvedRedemptions]) => {
+    Promise.all([fetchMembersFromApi(), fetchPointsFromApi(), fetchRedeemFromApi()])
+      .then(([rawMembers, points, rawRedeems]) => {
         if (cancelled) return;
-        const members = applyApprovedRedemptions(applyPointsToMembers(rawMembers, points), approvedRedemptions);
+        const requests = rawRedeems.map(mapRedeemToRequest);
+        const members = applyApprovedRedemptions(applyPointsToMembers(rawMembers, points), requests);
         setLines(buildMemberReport(members, searchParams));
       })
       .catch((err: unknown) => {

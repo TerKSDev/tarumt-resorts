@@ -1,6 +1,6 @@
-package com.tarumt.tarumt_resorts.adt;
+package com.tarumt.tarumt_resorts.adt.interfaces;
 
-public interface MyQueue<T> {
+public interface QueueInterface<T> {
     void enqueue(T item);
     Object[] snapshot();
     int indexOf(T item);

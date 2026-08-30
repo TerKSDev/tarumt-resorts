@@ -5,14 +5,16 @@ package com.tarumt.tarumt_resorts.adt;
 import java.util.Iterator; // ✅
 import java.util.NoSuchElementException; // ✅
 
-public class MyArrayList<T> implements MyList<T> {
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
+
+public class List<T> implements ListInterface<T> {
 
     private static final int DEFAULT_CAPACITY = 10;
 
     private Object[] elements;
     private int size;
 
-    public MyArrayList() {
+    public List() {
         elements = new Object[DEFAULT_CAPACITY];
         size = 0;
     }
