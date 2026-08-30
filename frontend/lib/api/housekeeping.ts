@@ -36,7 +36,7 @@ export async function fetchRoomStatusReportApi(
   const params = new URLSearchParams();
   if (statusFilter) params.set("filterStatus", statusFilter);
   if (minMinutesFilter) params.set("minMinutesWaiting", minMinutesFilter);
-  const res = await fetch(`${API_BASE}/reports/room-status?${params}`);
+  const res = await fetch(`http://localhost:8081/api/report/housekeeping-status?${params}`);
   if (!res.ok) throw new Error(`Failed to load room status report (${res.status})`);
   return res.json();
 }
@@ -50,7 +50,7 @@ export async function fetchStaffTurnaroundReportApi(
   if (staffFilter) params.set("filterStaffId", staffFilter);
   if (rangeStart) params.set("rangeStart", rangeStart);
   if (rangeEnd) params.set("rangeEnd", rangeEnd);
-  const res = await fetch(`${API_BASE}/reports/staff-turnaround?${params}`);
+  const res = await fetch(`http://localhost:8081/api/report/cleaning-turnaround?${params}`);
   if (!res.ok) throw new Error(`Failed to load staff turnaround report (${res.status})`);
   return res.json();
 }
