@@ -1,7 +1,7 @@
 package com.tarumt.tarumt_resorts.utility;
 
-import com.tarumt.tarumt_resorts.adt.MyArrayList;
-import com.tarumt.tarumt_resorts.adt.MyList;
+import com.tarumt.tarumt_resorts.adt.List;
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
 import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
@@ -16,8 +16,8 @@ import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 public class SortingUtil {
 
     // 1. Convert an Iterable collection into the custom MyList ADT
-    public static <T> MyList<T> toMyList(Iterable<T> iterable) {
-        MyList<T> myList = new MyArrayList<>();
+    public static <T> ListInterface<T> toMyList(Iterable<T> iterable) {
+        ListInterface<T> myList = new List<>();
 
         if (iterable != null) {
             for (T item : iterable) {
@@ -30,7 +30,7 @@ public class SortingUtil {
 
     // 2. Perform Insertion Sort to sort housekeeping tasks by creation date
     public static HousekeepingTask[] sortTasksByDate(
-            MyList<HousekeepingTask> list,
+            ListInterface<HousekeepingTask> list,
             boolean descending) {
 
         HousekeepingTask[] arr = new HousekeepingTask[list.size()];

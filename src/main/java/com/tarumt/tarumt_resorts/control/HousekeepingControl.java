@@ -1,7 +1,7 @@
 package com.tarumt.tarumt_resorts.control;
 
-import com.tarumt.tarumt_resorts.adt.MyLinkedStack;
-import com.tarumt.tarumt_resorts.adt.MyList;
+import com.tarumt.tarumt_resorts.adt.Stack;
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dao.RoomDAO;
 import com.tarumt.tarumt_resorts.dao.StaffDAO;
@@ -41,7 +41,7 @@ public class HousekeepingControl {
     };
 
 
-    public MyList<Room> getAllRooms() {
+    public ListInterface<Room> getAllRooms() {
         return SortingUtil.toMyList(roomDAO.findAll());
     }
 
@@ -81,7 +81,7 @@ public class HousekeepingControl {
     // For ReportControl access
     public HousekeepingStatus syncAndGetCurrentStage(Room room) {
         // Extract the latest task in descending order using a hand-written Insertion Sort.
-        MyList<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
+        ListInterface<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
         HousekeepingTask[] sortedDesc = SortingUtil.sortTasksByDate(unsortedTasks, true);
         
         HousekeepingTask latest = sortedDesc.length > 0 ? sortedDesc[0] : null;
@@ -165,7 +165,7 @@ public class HousekeepingControl {
     // ---------------------------------------------------------------
 
     public String rollbackLastAction(String roomId) {
-        MyLinkedStack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
+        Stack<HousekeepingTask> stack = stackRegistry.getStackFor(roomId);
         if (stack.isEmpty()) return "No recent actions to rollback for room " + roomId + ".";
 
         // Re-fetch the room fresh (not lastTask.getRoom(), which reflects

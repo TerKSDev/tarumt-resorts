@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.tarumt.tarumt_resorts.dao.StaffDAO;
 import com.tarumt.tarumt_resorts.entity.Staff;
-import com.tarumt.tarumt_resorts.adt.MyList;
-import com.tarumt.tarumt_resorts.adt.MyArrayList;
+import com.tarumt.tarumt_resorts.adt.List;
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +22,7 @@ public class UserManagementControl {
     // Get all staff members using custom ADT
     public Staff[] getAllStaff() {
         Iterable<Staff> staffIterable = staffDao.findAll();
-        MyList<Staff> myStaffList = new MyArrayList<>();
+        ListInterface<Staff> myStaffList = new List<>();
         for (Staff staff : staffIterable) {
             myStaffList.add(staff);
         }

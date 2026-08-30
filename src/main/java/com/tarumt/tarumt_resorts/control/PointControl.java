@@ -2,8 +2,8 @@
 
 package com.tarumt.tarumt_resorts.control;
 
-import com.tarumt.tarumt_resorts.adt.MyList;
-import com.tarumt.tarumt_resorts.adt.MyArrayList;
+import com.tarumt.tarumt_resorts.adt.List;
+import com.tarumt.tarumt_resorts.adt.interfaces.ListInterface;
 import com.tarumt.tarumt_resorts.entity.Point;
 import com.tarumt.tarumt_resorts.dao.PointDAO;
 
@@ -20,17 +20,17 @@ public class PointControl {
         this.PointDAO = PointDAO;
     }
 
-    public MyList<Point> getAllPoints() {
+    public ListInterface<Point> getAllPoints() {
         var rows = PointDAO.findAll();
-        MyList<Point> ledger = new MyArrayList<>();
+        ListInterface<Point> ledger = new List<>();
         for (Point p : rows) {
             ledger.add(p);
         }
         return ledger;
     }
 
-    public MyList<Point> getLedgerForCustomer(String customerId) {
-        MyList<Point> result = new MyArrayList<>();
+    public ListInterface<Point> getLedgerForCustomer(String customerId) {
+        ListInterface<Point> result = new List<>();
         for (Point p : getAllPoints()) {
             if (p.getCustomerId() != null && p.getCustomerId().equals(customerId)) {
                 result.add(p);

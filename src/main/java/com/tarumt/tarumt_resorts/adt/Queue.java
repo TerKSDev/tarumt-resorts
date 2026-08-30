@@ -1,15 +1,17 @@
 package com.tarumt.tarumt_resorts.adt;
 
-public class MyArrayQueue<T> implements MyQueue<T> {
+import com.tarumt.tarumt_resorts.adt.interfaces.QueueInterface;
+
+public class Queue<T> implements QueueInterface<T> {
     private Object[] elements;
     private int front;
     private int size;
 
-    public MyArrayQueue() {
+    public Queue() {
         this(16);
     }
 
-    public MyArrayQueue(int initialCapacity) {
+    public Queue(int initialCapacity) {
         if (initialCapacity <= 0) {
             initialCapacity = 16;
         }
