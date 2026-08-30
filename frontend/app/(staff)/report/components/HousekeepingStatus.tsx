@@ -71,7 +71,7 @@ export default function HousekeepingStatus() {
       if (minMinutesWaiting) params.minMinutesWaiting = minMinutesWaiting;
 
       const response = await axios.get(
-        "http://localhost:8081/api/housekeeping/reports/room-status",
+        "http://localhost:8081/api/report/housekeeping-status",
         { params },
       );
       setRows(Array.isArray(response.data) ? response.data : []);

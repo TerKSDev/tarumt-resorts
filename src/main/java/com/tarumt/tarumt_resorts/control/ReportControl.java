@@ -6,26 +6,35 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
+// ADTs
 import com.tarumt.tarumt_resorts.adt.MyArrayList;
 import com.tarumt.tarumt_resorts.adt.MyList;
 import com.tarumt.tarumt_resorts.adt.MyQueue;
 import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
+
+// DAOs
 import com.tarumt.tarumt_resorts.dao.BookingDAO;
-import com.tarumt.tarumt_resorts.dao.RoomDAO;
 import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
+import com.tarumt.tarumt_resorts.dao.RoomDAO;
+
+// DTOs (Combined from both branches)
 import com.tarumt.tarumt_resorts.dto.CancellationReasonDTO;
 import com.tarumt.tarumt_resorts.dto.CancellationTrendDTO;
 import com.tarumt.tarumt_resorts.dto.RegistrationCancellationReportDTO;
 import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
 import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.dto.WalkInSummaryDTO;
+
+// Entities & Enums
 import com.tarumt.tarumt_resorts.entity.Booking;
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.entity.Staff;
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
 import com.tarumt.tarumt_resorts.entity.enums.HousekeepingStatus;
-import com.tarumt.tarumt_resorts.utility.SortingUtil;
+
+// Utilities
+import com.tarumt.tarumt_resorts.utility.SortingUtil; 
 
 @Service
 public class ReportControl {
