@@ -11,7 +11,7 @@ import {
   Search,
   ClipboardPen,
   Users,
-  Trophy,
+  Crown,
   Activity,
   Layers,
 } from "lucide-react";
@@ -243,14 +243,14 @@ export default function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="h-full flex flex-col justify-between">
-            <div>
-              <CardHeader
-                title="Suites Inventory & Status"
-                subtitle="Live status distribution across all accommodation tiers"
-                icon={Layers}
-              />
-              <div className="flex flex-col gap-4 mt-6">
+          <Card className="h-full flex flex-col">
+            <CardHeader
+              title="Suites Inventory & Status"
+              subtitle="Live status distribution across all accommodation tiers"
+              icon={Layers}
+            />
+            <div className="p-6 flex flex-col flex-1 justify-between gap-6">
+              <div className="flex flex-col gap-4">
                 {/* Progress Bar Overview */}
                 <div className="w-full h-3.5 bg-surface-100 rounded-full overflow-hidden flex shadow-inner">
                   <div
@@ -331,19 +331,19 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-6 border-t border-surface-200/80 mt-6 flex items-center justify-between">
-              <span className="text-xs text-surface-500 font-light">
-                Est. Daily Room Folio Revenue: <strong className="text-surface-900 font-medium font-mono">RM {totalGrossRevenue.toLocaleString()}</strong>
-              </span>
-              <Link
-                to="/room"
-                className="text-xs font-semibold text-brand-700 hover:text-brand-900 flex items-center gap-1 group transition-colors"
-              >
-                <span>View Suites Inventory</span>
-                <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              <div className="pt-4 border-t border-surface-200/80 flex items-center justify-between">
+                <span className="text-xs text-surface-500 font-light">
+                  Est. Daily Room Revenue: <strong className="text-surface-900 font-medium font-mono">RM {totalGrossRevenue.toLocaleString()}</strong>
+                </span>
+                <Link
+                  to="/room"
+                  className="text-xs font-semibold text-brand-700 hover:text-brand-900 flex items-center gap-1 group transition-colors"
+                >
+                  <span>Suites Inventory</span>
+                  <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
             </div>
           </Card>
         </motion.div>
@@ -354,78 +354,75 @@ export default function Dashboard() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="h-full flex flex-col justify-between">
-            <div>
-              <CardHeader
-                title="Housekeeping Workflow"
-                subtitle="Sanitation lifecycle and room inspection stages"
-                icon={BrushCleaning}
-              />
-              
-              <div className="flex flex-col gap-4 mt-6">
-                <div className="flex flex-col gap-3">
-                  {/* Stage 1: Dirty */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-50 border border-surface-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
-                        1
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-semibold text-surface-900">Dirty / Vacated</h4>
-                        <p className="text-[11px] text-surface-500 font-light">Queued for housekeeping turnaround</p>
-                      </div>
+          <Card className="h-full flex flex-col">
+            <CardHeader
+              title="Housekeeping Workflow"
+              subtitle="Sanitation lifecycle and room inspection stages"
+              icon={BrushCleaning}
+            />
+            <div className="p-6 flex flex-col flex-1 justify-between gap-6">
+              <div className="flex flex-col gap-3">
+                {/* Stage 1: Dirty */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-50 border border-surface-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                      1
                     </div>
-                    <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                      {cleaningRooms} Suites
-                    </span>
+                    <div>
+                      <h4 className="text-xs font-semibold text-surface-900">Dirty / Vacated</h4>
+                      <p className="text-[11px] text-surface-500 font-light">Queued for housekeeping turnaround</p>
+                    </div>
                   </div>
+                  <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                    {cleaningRooms} Suites
+                  </span>
+                </div>
 
-                  {/* Stage 2: In Progress */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-50 border border-surface-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-xs">
-                        2
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-semibold text-surface-900">Cleaning In Progress</h4>
-                        <p className="text-[11px] text-surface-500 font-light">Assigned housekeeping attendants active</p>
-                      </div>
+                {/* Stage 2: In Progress */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-50 border border-surface-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-xs">
+                      2
                     </div>
-                    <span className="text-xs font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
-                      Active
-                    </span>
+                    <div>
+                      <h4 className="text-xs font-semibold text-surface-900">Cleaning In Progress</h4>
+                      <p className="text-[11px] text-surface-500 font-light">Assigned housekeeping attendants active</p>
+                    </div>
                   </div>
+                  <span className="text-xs font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
+                    Active
+                  </span>
+                </div>
 
-                  {/* Stage 3: Inspected & Clean */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-50 border border-surface-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-                        3
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-semibold text-surface-900">Inspected & Ready</h4>
-                        <p className="text-[11px] text-surface-500 font-light">Supervisor approved for check-in</p>
-                      </div>
+                {/* Stage 3: Inspected & Clean */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-surface-50 border border-surface-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                      3
                     </div>
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                      {availableRooms} Ready
-                    </span>
+                    <div>
+                      <h4 className="text-xs font-semibold text-surface-900">Inspected & Ready</h4>
+                      <p className="text-[11px] text-surface-500 font-light">Supervisor approved for check-in</p>
+                    </div>
                   </div>
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                    {availableRooms} Ready
+                  </span>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-6 border-t border-surface-200/80 mt-6 flex items-center justify-between">
-              <span className="text-xs text-surface-500 font-light">
-                Turnaround SLA: <strong className="text-emerald-700 font-medium">96.4% on time</strong>
-              </span>
-              <Link
-                to="/log"
-                className="text-xs font-semibold text-brand-700 hover:text-brand-900 flex items-center gap-1 group transition-colors"
-              >
-                <span>Open Cleaning Logs</span>
-                <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              <div className="pt-4 border-t border-surface-200/80 flex items-center justify-between">
+                <span className="text-xs text-surface-500 font-light">
+                  Turnaround SLA: <strong className="text-emerald-700 font-medium">96.4% on time</strong>
+                </span>
+                <Link
+                  to="/log"
+                  className="text-xs font-semibold text-brand-700 hover:text-brand-900 flex items-center gap-1 group transition-colors"
+                >
+                  <span>Open Cleaning Logs</span>
+                  <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
             </div>
           </Card>
         </motion.div>
@@ -444,7 +441,7 @@ export default function Dashboard() {
             icon={Activity}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {isFrontDesk && (
               <>
                 <Link
@@ -482,18 +479,18 @@ export default function Dashboard() {
                 </Link>
 
                 <Link
-                  to="/vip"
+                  to="/loyalty"
                   className="p-4 rounded-2xl bg-surface-50 hover:bg-brand-50/50 border border-surface-200 hover:border-brand-300 transition-all duration-200 group flex items-center gap-3.5 shadow-2xs hover:shadow-xs"
                 >
                   <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <Trophy size={18} />
+                    <Crown size={18} />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold text-surface-900 group-hover:text-brand-950">
-                      VIP Priority Queue
+                      Loyalty & Members
                     </span>
                     <span className="text-[11px] text-surface-500 font-light">
-                      Tiered membership express
+                      Manage tiers & points
                     </span>
                   </div>
                 </Link>
@@ -501,22 +498,41 @@ export default function Dashboard() {
             )}
 
             {isHousekeeping && (
-              <Link
-                to="/log"
-                className="p-4 rounded-2xl bg-surface-50 hover:bg-brand-50/50 border border-surface-200 hover:border-brand-300 transition-all duration-200 group flex items-center gap-3.5 shadow-2xs hover:shadow-xs"
-              >
-                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <BrushCleaning size={18} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-surface-900 group-hover:text-brand-950">
-                    Housekeeping Logs
-                  </span>
-                  <span className="text-[11px] text-surface-500 font-light">
-                    Advance cleaning tasks
-                  </span>
-                </div>
-              </Link>
+              <>
+                <Link
+                  to="/log"
+                  className="p-4 rounded-2xl bg-surface-50 hover:bg-brand-50/50 border border-surface-200 hover:border-brand-300 transition-all duration-200 group flex items-center gap-3.5 shadow-2xs hover:shadow-xs"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <BrushCleaning size={18} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-surface-900 group-hover:text-brand-950">
+                      Housekeeping Logs
+                    </span>
+                    <span className="text-[11px] text-surface-500 font-light">
+                      Advance cleaning tasks
+                    </span>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/room"
+                  className="p-4 rounded-2xl bg-surface-50 hover:bg-brand-50/50 border border-surface-200 hover:border-brand-300 transition-all duration-200 group flex items-center gap-3.5 shadow-2xs hover:shadow-xs"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Bed size={18} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-surface-900 group-hover:text-brand-950">
+                      Room Management
+                    </span>
+                    <span className="text-[11px] text-surface-500 font-light">
+                      View all room statuses
+                    </span>
+                  </div>
+                </Link>
+              </>
             )}
 
             {isManager && (
@@ -551,6 +567,23 @@ export default function Dashboard() {
                     </span>
                     <span className="text-[11px] text-surface-500 font-light">
                       Staff accounts & access
+                    </span>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/room"
+                  className="p-4 rounded-2xl bg-surface-50 hover:bg-brand-50/50 border border-surface-200 hover:border-brand-300 transition-all duration-200 group flex items-center gap-3.5 shadow-2xs hover:shadow-xs"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Bed size={18} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-surface-900 group-hover:text-brand-950">
+                      Room Management
+                    </span>
+                    <span className="text-[11px] text-surface-500 font-light">
+                      Manage suites & rates
                     </span>
                   </div>
                 </Link>
