@@ -11,7 +11,7 @@ import {
   KeyRound,
   CheckCircle2,
 } from "lucide-react";
-import { Link, type MetaFunction } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { useState } from "react";
 import { motion } from "motion/react";
 
@@ -41,6 +41,7 @@ const PRESET_ACCOUNTS = [
 ] as const;
 
 export default function Login() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +52,18 @@ export default function Login() {
     setEmail(account.email);
     setPassword(account.password);
     setActivePreset(account.role);
+  };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const mockStaffId = email.split('@')[0].toUpperCase() + "-001";
+    const mockStaffName = activePreset || "Staff";
+
+    localStorage.setItem("currentStaffId", mockStaffId);
+    localStorage.setItem("currentStaffName", mockStaffName);
+
+    navigate("/dashboard"); 
   };
 
   return (
@@ -280,7 +293,7 @@ export default function Login() {
           </div>
 
           {/* Login Form */}
-          <form action="/dashboard" className="flex flex-col gap-5">
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
             {/* Email Field */}
             <div className="flex flex-col gap-2">
               <label
