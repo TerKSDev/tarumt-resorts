@@ -11,6 +11,7 @@ import {
   padL,
 } from "../../../../lib/util/loyalty";
 import type { Member, RedemptionRequest, RequestStatus, TierName } from "../../../../lib/types/loyalty";
+import { FileText } from "lucide-react";
 
 export default function ReportsTab({
   members,

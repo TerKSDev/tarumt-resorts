@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Users, Crown } from "lucide-react";
 import { Card, CardHeader, TierBadge, TierRing } from "./UiPrimitives";
 import { filterItems, formatDate, nextTierInfo } from "../../../../lib/util/loyalty";
 import type { Member } from "../../../../lib/types/loyalty";
