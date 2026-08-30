@@ -2,15 +2,11 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import {
   Footprints,
-  CheckCircle,
   Clock,
-  Hash,
   BedDouble,
   Sparkles,
   TrendingUp,
-  CreditCard,
 } from "lucide-react";
-import { LOYALTY_TIER } from "../../../../lib/config/loyalty";
 import type { MetaFunction } from "react-router";
 import { Card, CardHeader } from "../../../../components/Card";
 
@@ -121,63 +117,58 @@ export default function WalkInSummary() {
             </tbody>
           ) : (
             <tbody className="divide-y divide-surface-100">
-              {walkIns.map((booking: any, index: number) => {
-                const tier =
-                  LOYALTY_TIER.find((t) => t.name === booking.customer?.loyaltyTier) ||
-                  LOYALTY_TIER[0];
-                return (
-                  <tr key={index} className="hover:bg-surface-50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-200 flex items-center justify-center font-bold text-xs text-brand-800">
-                          {booking.customer?.name?.charAt(0) || "W"}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-surface-950">
-                            {booking.customer?.name}
-                          </span>
-                          <span className="text-[10px] text-surface-400 font-mono">
-                            {booking.customer?.loyaltyTier || "GUEST"}
-                          </span>
-                        </div>
+              {walkIns.map((booking: any, index: number) => (
+                <tr key={index} className="hover:bg-surface-50 transition-colors">
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-brand-50 border border-brand-200 flex items-center justify-center font-bold text-xs text-brand-800">
+                        {booking.customer?.name?.charAt(0) || "W"}
                       </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-1.5">
-                        <BedDouble size={14} className="text-brand-600" />
-                        <span className="font-mono font-bold text-surface-800">
-                          Suite {booking.room?.roomId || "Unassigned"}
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-surface-950">
+                          {booking.customer?.name}
+                        </span>
+                        <span className="text-[10px] text-surface-400 font-mono">
+                          {booking.customer?.loyaltyTier || "GUEST"}
                         </span>
                       </div>
-                    </td>
+                    </div>
+                  </td>
 
-                    <td className="py-4 px-6 font-mono text-surface-600">
-                      <div className="flex items-center gap-1.5">
-                        <Clock size={13} className="text-surface-400" />
-                        <span>
-                          {booking.createdAt
-                            ? new Date(booking.createdAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "—"}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="py-4 px-6">
-                      <span className="text-xs font-mono font-bold text-surface-800 bg-surface-100 px-2.5 py-1 rounded-md border border-surface-200">
-                        {booking.confirmationNo}
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-1.5">
+                      <BedDouble size={14} className="text-brand-600" />
+                      <span className="font-mono font-bold text-surface-800">
+                        Suite {booking.room?.roomId || "Unassigned"}
                       </span>
-                    </td>
+                    </div>
+                  </td>
 
-                    <td className="py-4 px-6 text-right font-mono font-bold text-surface-950">
-                      RM {Number(booking.totalAmount ?? 0).toFixed(2)}
-                    </td>
-                  </tr>
-                );
-              })}
+                  <td className="py-4 px-6 font-mono text-surface-600">
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={13} className="text-surface-400" />
+                      <span>
+                        {booking.createdAt
+                          ? new Date(booking.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="py-4 px-6">
+                    <span className="text-xs font-mono font-bold text-surface-800 bg-surface-100 px-2.5 py-1 rounded-md border border-surface-200">
+                      {booking.confirmationNo}
+                    </span>
+                  </td>
+
+                  <td className="py-4 px-6 text-right font-mono font-bold text-surface-950">
+                    RM {Number(booking.totalAmount ?? 0).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           )}
         </table>

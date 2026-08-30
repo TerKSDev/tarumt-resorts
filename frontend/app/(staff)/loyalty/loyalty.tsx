@@ -4,7 +4,7 @@ import { Crown, Sparkles, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 import type { Member, PointsLedgerEntry, RedemptionRequest, TabKey } from "../../../lib/types/loyalty";
-import { NAV } from "../../../lib/config/loyalty";
+import { NAV, REWARDS } from "../../../lib/config/loyalty";
 import { daysUntil, mergeSort, tierForPoints } from "../../../lib/util/loyalty";
 import {
   applyApprovedRedemptions,
@@ -144,10 +144,11 @@ export default function LoyaltyAndMember() {
 
   const handleDirectRedeem = async (memberId: string, rewardId: string) => {
     const m = members.find((x) => x.id === memberId);
-    if (!m) return;
+    const reward = REWARDS.find((r) => r.id === rewardId);
+    if (!m || !reward) return;
 
     try {
-      await createRedeemApi(memberId, rewardId);
+      await createRedeemApi(memberId, reward.cost, reward.name);
       flash("Redemption submitted to authorization queue.");
       const rawRedeems = await fetchRedeemFromApi().catch(() => []);
       const newRequests = rawRedeems.map(mapRedeemToRequest).filter(Boolean) as RedemptionRequest[];
@@ -159,7 +160,7 @@ export default function LoyaltyAndMember() {
 
   const handleProcessRequest = async (id: string, action: "Approved" | "Rejected") => {
     try {
-      await updateRedeemStatusApi(id, action);
+      await updateRedeemStatusApi(id, action === "Approved");
     } catch (e) {
       console.warn("Backend update status failed, applying optimistic update", e);
     }

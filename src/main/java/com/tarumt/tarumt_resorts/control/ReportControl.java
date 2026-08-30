@@ -1,24 +1,31 @@
 package com.tarumt.tarumt_resorts.control;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
 import com.tarumt.tarumt_resorts.adt.MyArrayList;
 import com.tarumt.tarumt_resorts.adt.MyList;
+import com.tarumt.tarumt_resorts.adt.MyQueue;
+import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
 import com.tarumt.tarumt_resorts.dao.BookingDAO;
+import com.tarumt.tarumt_resorts.dao.RoomDAO;
+import com.tarumt.tarumt_resorts.dao.HousekeepingTaskDAO;
 import com.tarumt.tarumt_resorts.dto.CancellationReasonDTO;
 import com.tarumt.tarumt_resorts.dto.CancellationTrendDTO;
 import com.tarumt.tarumt_resorts.dto.RegistrationCancellationReportDTO;
+import com.tarumt.tarumt_resorts.dto.RoomStatusSummaryDTO;
+import com.tarumt.tarumt_resorts.dto.StaffTurnaroundDTO;
 import com.tarumt.tarumt_resorts.dto.WalkInSummaryDTO;
 import com.tarumt.tarumt_resorts.entity.Booking;
 import com.tarumt.tarumt_resorts.entity.HousekeepingTask;
 import com.tarumt.tarumt_resorts.entity.Room;
 import com.tarumt.tarumt_resorts.entity.Staff;
-import com.tarumt.tarumt_resorts.utility.SortingUtil;
 import com.tarumt.tarumt_resorts.entity.enums.BookingStatus;
-import com.tarumt.tarumt_resorts.adt.MyQueue;
-import com.tarumt.tarumt_resorts.adt.MyArrayQueue;
+import com.tarumt.tarumt_resorts.entity.enums.HousekeepingStatus;
+import com.tarumt.tarumt_resorts.utility.SortingUtil;
 
 @Service
 public class ReportControl {
@@ -31,7 +38,8 @@ public class ReportControl {
     private final HousekeepingTaskDAO taskDAO;
     private final HousekeepingControl hkControl;
 
-    public ReportControl(BookingDAO bookingDAO, RoomDAO roomDAO, HousekeepingTaskDAO taskDAO, HousekeepingControl hkControl) {
+    public ReportControl(BookingDAO bookingDAO, RoomDAO roomDAO, HousekeepingTaskDAO taskDAO,
+            HousekeepingControl hkControl) {
         this.bookingDAO = bookingDAO;
         this.roomDAO = roomDAO;
         this.taskDAO = taskDAO;
@@ -56,11 +64,11 @@ public class ReportControl {
             }
         }
 
-        // Process Queues and combine them back into an ordered Report array 
+        // Process Queues and combine them back into an ordered Report array
         // Priority is given to Arrival guests first, then Departure guests
         Booking[] sortedReport = new Booking[bookings.length];
         int index = 0;
-        
+
         while (arrivalQueue.size() > 0) {
             sortedReport[index++] = arrivalQueue.removeAt(0); // Dequeue (FIFO)
         }
@@ -74,10 +82,11 @@ public class ReportControl {
     public Booking[] generateGuestDirectoryReport() {
         return bookingDAO.findByStatus(BookingStatus.CHECKED_IN);
     }
-    
+
     // Lew Chun Hoe: Walk-In Registration Reports
-    // Uses the explicit isWalkIn flag set at check-in time, instead of inferring from dates
-    public WalkInSummaryDTO generateWalkInSummaryReport(){
+    // Uses the explicit isWalkIn flag set at check-in time, instead of inferring
+    // from dates
+    public WalkInSummaryDTO generateWalkInSummaryReport() {
         String today = java.time.LocalDate.now().toString();
         Booking[] todaysRegistrations = bookingDAO.findByCreatedDate(today);
 
@@ -98,7 +107,7 @@ public class ReportControl {
         return new WalkInSummaryDTO(today, walkInBookings.length, totalRevenue, walkInBookings);
     }
 
-    public RegistrationCancellationReportDTO generateRegistrationCancellationReport(){
+    public RegistrationCancellationReportDTO generateRegistrationCancellationReport() {
         Booking[] cancelledBookings = bookingDAO.findByStatus(BookingStatus.CANCELLED);
         long totalBookings = bookingDAO.count();
 
@@ -110,7 +119,8 @@ public class ReportControl {
             totalLostRevenue = totalLostRevenue.add(booking.getTotalAmount());
 
             // Group by the month the cancellation was recorded (updated_at)
-            String period = String.format("%04d-%02d", booking.getUpdatedAt().getYear(), booking.getUpdatedAt().getMonthValue());
+            String period = String.format("%04d-%02d", booking.getUpdatedAt().getYear(),
+                    booking.getUpdatedAt().getMonthValue());
 
             CancellationTrendDTO matchingTrend = null;
             for (int i = 0; i < trends.size(); i++) {
@@ -169,24 +179,25 @@ public class ReportControl {
 
         for (int i = 0; i < allRooms.size(); i++) {
             Room room = allRooms.get(i);
-            
+
             // Re-use the smart lazy-sync logic from your original code
             HousekeepingStatus stage = hkControl.syncAndGetCurrentStage(room);
 
             // Fetch tasks and sort DESCENDING to get the latest task's time
             MyList<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
             HousekeepingTask[] sortedDesc = SortingUtil.sortTasksByDate(unsortedTasks, true);
-            
+
             LocalDateTime since = sortedDesc.length == 0 ? room.getCreatedAt() : sortedDesc[0].getCreatedAt();
             long minutes = Duration.between(since, LocalDateTime.now()).toMinutes();
 
-            if (filterStatus != null && !filterStatus.isBlank() && !stage.name().equalsIgnoreCase(filterStatus)) continue;
-            if (minMinutesWaiting != null && minutes < minMinutesWaiting) continue;
+            if (filterStatus != null && !filterStatus.isBlank() && !stage.name().equalsIgnoreCase(filterStatus))
+                continue;
+            if (minMinutesWaiting != null && minutes < minMinutesWaiting)
+                continue;
 
             temp[count++] = new RoomStatusSummaryDTO(
-                    room.getRoomId(), stage, hkControl.nextStatus(stage), 
-                    minutes, hkControl.canRollback(room.getRoomId())
-            );
+                    room.getRoomId(), stage, hkControl.nextStatus(stage),
+                    minutes, hkControl.canRollback(room.getRoomId()));
         }
 
         RoomStatusSummaryDTO[] result = new RoomStatusSummaryDTO[count];
@@ -196,7 +207,8 @@ public class ReportControl {
         return result;
     }
 
-    public StaffTurnaroundDTO[] generateCleaningTurnaroundReport(String filterStaffId, LocalDateTime rangeStart, LocalDateTime rangeEnd) {
+    public StaffTurnaroundDTO[] generateCleaningTurnaroundReport(String filterStaffId, LocalDateTime rangeStart,
+            LocalDateTime rangeEnd) {
         MyList<Room> allRooms = SortingUtil.toMyList(roomDAO.findAll());
         StaffTurnaroundDTO[] temp = new StaffTurnaroundDTO[500];
         int count = 0;
@@ -204,7 +216,7 @@ public class ReportControl {
         for (int r = 0; r < allRooms.size(); r++) {
             Room room = allRooms.get(r);
             MyList<HousekeepingTask> unsortedTasks = SortingUtil.toMyList(taskDAO.findByRoom_RoomId(room.getRoomId()));
-            
+
             HousekeepingTask[] history = SortingUtil.sortTasksByDate(unsortedTasks, false);
             LocalDateTime cycleStart = null;
 
@@ -215,23 +227,23 @@ public class ReportControl {
                     Staff staff = task.getStaff();
                     String staffId = staff != null ? staff.getStaffId() : "UNASSIGNED";
                     String staffName = staff != null ? staff.getName() : "Unassigned";
-                    
+
                     boolean staffMatches = false;
                     if (filterStaffId == null || filterStaffId.isBlank()) {
                         staffMatches = true;
                     } else {
                         String query = filterStaffId.toLowerCase().trim();
-                        staffMatches = staffId.toLowerCase().contains(query) 
-                                    || staffName.toLowerCase().contains(query);
+                        staffMatches = staffId.toLowerCase().contains(query)
+                                || staffName.toLowerCase().contains(query);
                     }
 
                     boolean withinRange = (rangeStart == null || !task.getCreatedAt().isBefore(rangeStart))
-                                       && (rangeEnd == null || !task.getCreatedAt().isAfter(rangeEnd));
+                            && (rangeEnd == null || !task.getCreatedAt().isAfter(rangeEnd));
 
                     if (staffMatches && withinRange && count < temp.length) {
                         long minutes = Duration.between(cycleStart, task.getCreatedAt()).toMinutes();
                         temp[count++] = new StaffTurnaroundDTO(
-                                room.getRoomId(), staffId, staffName, 
+                                room.getRoomId(), staffId, staffName,
                                 cycleStart, task.getCreatedAt(), minutes);
                     }
                     cycleStart = null;
@@ -247,11 +259,11 @@ public class ReportControl {
     }
 
     // Tek Shao Xian: Loyalty & Members Reports
-    public String generateMemberPointsReport(){
+    public String generateMemberPointsReport() {
         return new String();
     }
 
-    public String generateRedemptionRecordReport(){
+    public String generateRedemptionRecordReport() {
         return new String();
     }
 }
