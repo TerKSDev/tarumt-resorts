@@ -147,6 +147,11 @@ export default function LoyaltyAndMember() {
     const reward = REWARDS.find((r) => r.id === rewardId);
     if (!m || !reward) return;
 
+    if (m.points < reward.cost) {
+      flash(`Cannot submit claim: Member has ${m.points.toLocaleString()} pts, but "${reward.name}" requires ${reward.cost.toLocaleString()} pts.`);
+      return;
+    }
+
     try {
       await createRedeemApi(memberId, reward.cost, reward.name);
       flash("Redemption submitted to authorization queue.");
@@ -159,6 +164,17 @@ export default function LoyaltyAndMember() {
   };
 
   const handleProcessRequest = async (id: string, action: "Approved" | "Rejected") => {
+    const req = requests.find((r) => r.id === id);
+    if (!req) return;
+
+    if (action === "Approved") {
+      const member = members.find((m) => m.id === req.memberId);
+      if (member && member.points < req.pointsCost) {
+        flash(`Cannot authorize claim: Member only has ${member.points.toLocaleString()} pts (Requires ${req.pointsCost.toLocaleString()} pts).`);
+        return;
+      }
+    }
+
     try {
       await updateRedeemStatusApi(id, action === "Approved");
     } catch (e) {
@@ -166,8 +182,6 @@ export default function LoyaltyAndMember() {
     }
 
     const todayStr = new Date().toISOString().slice(0, 10);
-    const req = requests.find((r) => r.id === id);
-    if (!req) return;
 
     setRequests((prev) =>
       prev.map((r) =>
@@ -323,10 +337,7 @@ export default function LoyaltyAndMember() {
       )}
 
       {activeTab === "reports" && (
-        <ReportsTab
-          members={members}
-          requests={requests}
-        />
+        <ReportsTab />
       )}
     </div>
   );

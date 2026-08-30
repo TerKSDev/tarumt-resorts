@@ -104,26 +104,36 @@ export default function PointsTab({
           </div>
 
           <div className="divide-y divide-surface-100 rounded-2xl border border-surface-200 overflow-hidden">
-            {REWARDS.map((r) => (
-              <div
-                key={r.id}
-                className="flex items-center justify-between p-4 text-xs hover:bg-surface-50 transition-colors"
-              >
-                <div>
-                  <p className="font-semibold text-surface-950 text-sm">{r.name}</p>
-                  <p className="text-xs text-surface-500 font-mono mt-0.5">
-                    {r.category} &bull; {r.cost.toLocaleString()} pts
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onRedeem(redeemMember, r.id)}
-                  className="px-4 py-1.5 rounded-full bg-brand-900 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+            {REWARDS.map((r) => {
+              const currentMember = members.find((m) => m.id === redeemMember);
+              const canAfford = currentMember ? currentMember.points >= r.cost : false;
+
+              return (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between p-4 text-xs hover:bg-surface-50 transition-colors"
                 >
-                  Claim
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <p className="font-semibold text-surface-950 text-sm">{r.name}</p>
+                    <p className="text-xs text-surface-500 font-mono mt-0.5">
+                      {r.category} &bull; {r.cost.toLocaleString()} pts
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!canAfford}
+                    onClick={() => onRedeem(redeemMember, r.id)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors ${
+                      canAfford
+                        ? "bg-brand-900 hover:bg-brand-950 text-white cursor-pointer"
+                        : "bg-surface-200 text-surface-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {canAfford ? "Claim" : "Insufficient Pts"}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Card>

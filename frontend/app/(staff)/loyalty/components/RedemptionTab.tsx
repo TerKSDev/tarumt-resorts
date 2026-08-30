@@ -42,6 +42,7 @@ export default function RedemptionTab({
         {sorted.map((r) => {
           const member = members.find((m) => m.id === r.memberId);
           const reward = REWARDS.find((rw) => rw.id === r.rewardId);
+          const hasEnoughPoints = (member?.points ?? 0) >= r.pointsCost;
 
           return (
             <div
@@ -56,6 +57,11 @@ export default function RedemptionTab({
                   <span className="text-xs text-surface-400 font-mono">
                     ({r.memberId})
                   </span>
+                  {member && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-surface-100 border border-surface-200 text-surface-600 font-mono font-medium">
+                      Balance: {member.points.toLocaleString()} pts
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-surface-600 font-mono">
                   {reward?.name ?? r.rewardId} &bull;{" "}
@@ -63,6 +69,12 @@ export default function RedemptionTab({
                   {r.requestDate ? ` \u2022 Requested: ${formatDate(r.requestDate)}` : ""}
                   {r.decisionDate ? ` \u2022 Decided: ${formatDate(r.decisionDate)}` : ""}
                 </p>
+                {!hasEnoughPoints && r.status === "Pending" && (
+                  <p className="text-[11px] text-amber-600 font-medium mt-0.5 flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span>Insufficient points: Member has {member?.points.toLocaleString() ?? 0} pts (requires {r.pointsCost.toLocaleString()} pts)</span>
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center gap-3 self-end sm:self-auto">
@@ -71,8 +83,13 @@ export default function RedemptionTab({
                   <div className="flex gap-2">
                     <button
                       type="button"
+                      disabled={!hasEnoughPoints}
                       onClick={() => onProcess(r.id, "Approved")}
-                      className="px-4 py-1.5 rounded-full bg-surface-950 hover:bg-brand-950 text-white text-xs font-semibold uppercase tracking-wider cursor-pointer"
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                        hasEnoughPoints
+                          ? "bg-surface-950 hover:bg-brand-950 text-white cursor-pointer"
+                          : "bg-surface-200 text-surface-400 cursor-not-allowed"
+                      }`}
                     >
                       Authorize
                     </button>

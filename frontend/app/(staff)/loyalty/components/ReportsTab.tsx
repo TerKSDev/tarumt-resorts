@@ -1,25 +1,12 @@
 import { useState } from "react";
 import { Card, CardHeader } from "./UiPrimitives";
 import { REWARDS } from "../../../../lib/config/loyalty";
-import {
-  binarySearchById,
-  filterItems,
-  formatDate,
-  isoDate,
-  mergeSort,
-  pad,
-  padL,
-} from "../../../../lib/util/loyalty";
-import type { Member, RedemptionRequest, RequestStatus, TierName } from "../../../../lib/types/loyalty";
+import type { RequestStatus, TierName } from "../../../../lib/types/loyalty";
 import { FileText } from "lucide-react";
+import { useNavigate } from "react-router";
 
-export default function ReportsTab({
-  members,
-  requests,
-}: {
-  members: Member[];
-  requests: RedemptionRequest[];
-}) {
+export default function ReportsTab() {
+  const navigate = useNavigate();
   const [reportKind, setReportKind] = useState<"members" | "redemption">("members");
 
   // Member Performance filters
@@ -33,128 +20,41 @@ export default function ReportsTab({
   const [rCategory, setRCategory] = useState<string>("All");
   const [rSortBy, setRSortBy] = useState<"date" | "points">("date");
 
-  const [output, setOutput] = useState<string[]>([
-    "TARUMT RESORTS — EXECUTIVE LOYALTY & REWARDS REPORTING CONSOLE",
-    "Select a report specification, configure parameters, and click Generate Report.",
-  ]);
-
   function generateMemberReport() {
-    const lines: string[] = [];
-    const bySearch = mSearch.trim();
-    let directHit: Member | null = null;
-    if (bySearch && /^M?\d+$/i.test(bySearch)) {
-      const normalizedId = bySearch.toUpperCase().startsWith("M") ? bySearch.toUpperCase() : `M${bySearch}`;
-      const sortedById = mergeSort(members, (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-      directHit = binarySearchById(sortedById, normalizedId);
-    }
+    const params = new URLSearchParams();
+    if (mTier !== "All") params.set("tier", mTier);
+    if (mMinPoints > 0) params.set("minPoints", mMinPoints.toString());
+    if (mSearch.trim()) params.set("search", mSearch.trim());
+    
+    let mappedSort = "points-desc";
+    if (mSortBy === "name") mappedSort = "name";
+    if (mSortBy === "joinDate") mappedSort = "joinDate";
+    params.set("sortBy", mappedSort);
 
-    const filtered = filterItems(members, [
-      (m) => (mTier === "All" ? true : m.tier === mTier),
-      (m) => m.points >= mMinPoints,
-      (m) =>
-        bySearch
-          ? m.name.toLowerCase().includes(bySearch.toLowerCase()) ||
-            m.id.toLowerCase().includes(bySearch.toLowerCase())
-          : true,
-    ]);
-
-    const compareFns: Record<typeof mSortBy, (a: Member, b: Member) => number> = {
-      points: (a, b) => b.points - a.points,
-      name: (a, b) => a.name.localeCompare(b.name),
-      joinDate: (a, b) => (a.joinDate < b.joinDate ? -1 : a.joinDate > b.joinDate ? 1 : 0),
-    };
-    const sorted = mergeSort(filtered, compareFns[mSortBy]);
-
-    lines.push("=".repeat(78));
-    lines.push("MEMBER PERFORMANCE REPORT".padEnd(50) + `Generated: ${isoDate(new Date())}`);
-    lines.push("=".repeat(78));
-    lines.push(`Filters -> Tier: ${mTier} | Min points: ${mMinPoints} | Search: "${bySearch || "none"}" | Sort: ${mSortBy}`);
-    lines.push("-".repeat(78));
-
-    if (directHit) {
-      lines.push(`DIRECT LOOKUP (binary search on ID "${directHit.id}"): FOUND`);
-      lines.push(`  ${directHit.name} | ${directHit.tier} | ${directHit.points.toLocaleString()} pts | joined ${formatDate(directHit.joinDate)}`);
-      lines.push("-".repeat(78));
-    }
-
-    lines.push(pad("NAME", 22) + pad("TIER", 10) + padL("POINTS", 10) + "   " + pad("JOINED", 12));
-    lines.push("-".repeat(78));
-    for (const m of sorted) {
-      lines.push(pad(m.name, 22) + pad(m.tier, 10) + padL(m.points.toLocaleString(), 10) + "   " + pad(formatDate(m.joinDate), 12));
-    }
-    lines.push("-".repeat(78));
-
-    const totalPoints = sorted.reduce((s, m) => s + m.points, 0);
-    const avgPoints = sorted.length ? Math.round(totalPoints / sorted.length) : 0;
-    const byTier: Record<string, number> = {};
-    for (const m of sorted) byTier[m.tier] = (byTier[m.tier] ?? 0) + 1;
-
-    lines.push(`Matched records: ${sorted.length}`);
-    lines.push(`Total points: ${totalPoints.toLocaleString()}   Average per member: ${avgPoints.toLocaleString()}`);
-    lines.push(`Tier breakdown: ${Object.entries(byTier).map(([t, c]) => `${t}=${c}`).join("  ") || "none"}`);
-    lines.push("=".repeat(78));
-
-    setOutput(lines);
+    navigate(`/report/member-points?${params.toString()}`);
   }
 
   function generateRedemptionReport() {
-    const lines: string[] = [];
-    const filtered = filterItems(requests, [
-      (r) => (rStatus === "All" ? true : r.status === rStatus),
-      (r) => {
-        if (rCategory === "All") return true;
-        const reward = REWARDS.find((rw) => rw.id === r.rewardId);
-        return reward?.category === rCategory;
-      },
-    ]);
-
-    const compareFns: Record<typeof rSortBy, (a: RedemptionRequest, b: RedemptionRequest) => number> = {
-      date: (a, b) => (a.requestDate < b.requestDate ? 1 : a.requestDate > b.requestDate ? -1 : 0),
-      points: (a, b) => b.pointsCost - a.pointsCost,
-    };
-    const sorted = mergeSort(filtered, compareFns[rSortBy]);
-
-    lines.push("=".repeat(84));
-    lines.push("REDEMPTION ACTIVITY REPORT".padEnd(55) + `Generated: ${isoDate(new Date())}`);
-    lines.push("=".repeat(84));
-    lines.push(`Filters -> Status: ${rStatus} | Category: ${rCategory} | Sort: ${rSortBy}`);
-    lines.push("-".repeat(84));
-    lines.push(
-      pad("REQ ID", 9) + pad("MEMBER", 18) + pad("REWARD", 22) + padL("POINTS", 8) + "   " + pad("STATUS", 10) + pad("DATE", 12)
-    );
-    lines.push("-".repeat(84));
-
-    for (const r of sorted) {
-      const member = members.find((m) => m.id === r.memberId);
-      const reward = REWARDS.find((rw) => rw.id === r.rewardId);
-      lines.push(
-        pad(r.id, 9) +
-          pad(member?.name ?? r.memberId, 18) +
-          pad(reward?.name ?? r.rewardId, 22) +
-          padL(r.pointsCost.toLocaleString(), 8) +
-          "   " +
-          pad(r.status, 10) +
-          pad(r.requestDate ? formatDate(r.requestDate) : "", 12)
-      );
+    const params = new URLSearchParams();
+    if (rStatus !== "All") params.set("status", rStatus);
+    
+    // ReportsTab filters by Category, but RedemptionRecord component expects rewardId or search for category...
+    // Actually, RedemptionRecord searches by reward name. We can pass the category as a search term if needed, or leave it out if not strictly supported.
+    if (rCategory !== "All") {
+      params.set("search", rCategory);
     }
-    lines.push("-".repeat(84));
+    
+    let mappedSort = "date-desc";
+    if (rSortBy === "points") mappedSort = "points-desc";
+    params.set("sortBy", mappedSort);
 
-    const totalPointsRedeemed = sorted.filter((r) => r.status === "Approved").reduce((s, r) => s + r.pointsCost, 0);
-    const byStatus: Record<string, number> = {};
-    for (const r of sorted) byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
-
-    lines.push(`Matched records: ${sorted.length}`);
-    lines.push(`Points redeemed (approved only): ${totalPointsRedeemed.toLocaleString()}`);
-    lines.push(`Status breakdown: ${Object.entries(byStatus).map(([s, c]) => `${s}=${c}`).join("  ") || "none"}`);
-    lines.push("=".repeat(84));
-
-    setOutput(lines);
+    navigate(`/report/redemption-record?${params.toString()}`);
   }
 
   const rewardCategories = ["All", ...Array.from(new Set(REWARDS.map((r) => r.category)))];
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6">
       <Card>
         <CardHeader
           title="Management Report Generator"
@@ -295,17 +195,6 @@ export default function ReportsTab({
             </button>
           </div>
         )}
-      </Card>
-
-      {/* Monospace Console Display */}
-      <Card className="overflow-hidden flex flex-col">
-        <CardHeader
-          title="Terminal Output Stream"
-          subtitle="Fixed-width formatted audit ledger for executive review"
-        />
-        <pre className="flex-1 max-h-[500px] overflow-auto whitespace-pre bg-surface-950 p-6 font-mono text-[11px] leading-relaxed text-brand-200 border-t border-surface-800">
-          {output.join("\n")}
-        </pre>
       </Card>
     </div>
   );

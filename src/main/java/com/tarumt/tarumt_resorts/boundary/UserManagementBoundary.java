@@ -7,24 +7,19 @@ import com.tarumt.tarumt_resorts.entity.Staff;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.tarumt.tarumt_resorts.adt.MyList;
-
 @RestController
 @RequestMapping("api/user-management")
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserManagementBoundary {
-    
-    // Dependency Injection
+
     private final UserManagementControl userManagementControl;
-    
+
     public UserManagementBoundary(UserManagementControl userManagementControl) {
         this.userManagementControl = userManagementControl;
     }
 
-    // Execute Frontend Request
-
     @GetMapping
-    public ResponseEntity<MyList<Staff>> getAllStaff() {
+    public ResponseEntity<Staff[]> getAllStaff() {
         return ResponseEntity.ok(userManagementControl.getAllStaff());
     }
 

@@ -20,13 +20,17 @@ public class UserManagementControl {
     }
 
     // Get all staff members using custom ADT
-    public MyList<Staff> getAllStaff() {
+    public Staff[] getAllStaff() {
         Iterable<Staff> staffIterable = staffDao.findAll();
         MyList<Staff> myStaffList = new MyArrayList<>();
         for (Staff staff : staffIterable) {
             myStaffList.add(staff);
         }
-        return myStaffList;
+        Staff[] result = new Staff[myStaffList.size()];
+        for (int i = 0; i < myStaffList.size(); i++) {
+            result[i] = myStaffList.get(i);
+        }
+        return result;
     }
 
     // Add a new staff member with SHA-256 hashed password
@@ -59,12 +63,14 @@ public class UserManagementControl {
             
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
                 hexString.append(hex);
             }
             return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error hashing password", e);
+            throw new RuntimeException("SHA-256 algorithm not found", e);
         }
     }
 }

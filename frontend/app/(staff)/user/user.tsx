@@ -52,7 +52,7 @@ export default function UserManagement() {
       const res = await fetch(API_BASE);
       if (res.ok) {
         const data = await res.json();
-        setUsers(data);
+        setUsers(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error("Failed to fetch staff accounts:", err);
@@ -82,27 +82,29 @@ export default function UserManagement() {
     }
   };
 
-  const filteredUsers = users
+  const safeUsers = Array.isArray(users) ? users : [];
+
+  const filteredUsers = safeUsers
     .filter((u) => {
-      if (roleFilter !== "all" && u.role.toLowerCase() !== roleFilter.toLowerCase()) {
+      if (roleFilter !== "all" && u.role?.toLowerCase() !== roleFilter.toLowerCase()) {
         return false;
       }
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return (
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          u.staffId.toLowerCase().includes(q)
+          u.name?.toLowerCase().includes(q) ||
+          u.email?.toLowerCase().includes(q) ||
+          u.staffId?.toLowerCase().includes(q)
         );
       }
       return true;
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
-  const activeCount = users.filter((s) => s.isActive).length;
-  const managerCount = users.filter((s) => s.role === "MANAGER").length;
-  const frontDeskCount = users.filter((s) => s.role === "FRONT_DESK").length;
-  const housekeepingCount = users.filter((s) => s.role === "HOUSEKEEPING").length;
+  const activeCount = safeUsers.filter((s) => s.isActive).length;
+  const managerCount = safeUsers.filter((s) => s.role === "MANAGER").length;
+  const frontDeskCount = safeUsers.filter((s) => s.role === "FRONT_DESK").length;
+  const housekeepingCount = safeUsers.filter((s) => s.role === "HOUSEKEEPING").length;
 
   return (
     <div className="flex-1 flex flex-col gap-8 pb-10">
@@ -163,7 +165,7 @@ export default function UserManagement() {
             </div>
           </div>
           <p className="text-2xl md:text-3xl font-bold font-mono text-surface-950 mt-3">
-            {users.length}
+            {safeUsers.length}
           </p>
           <span className="text-xs text-surface-500 font-light mt-1">
             {activeCount} Active Terminal Accounts
